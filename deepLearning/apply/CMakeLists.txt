@@ -1,0 +1,76 @@
+cmake_minimum_required(VERSION 3.12)
+project(uussmlmodels VERSION 0.1.1 LANGUAGES CXX)
+enable_testing()
+
+##########################################################################################
+#                    Define the compiler standard and requisites                         #
+##########################################################################################
+include(CheckCXXCompilerFlag)
+include(FindOpenMP)
+if (OPENMP_FOUND)
+   message("OpenMP found")
+   string(APPEND CMAKE_CXX_FLAGS " ${OpenMP_CXX_FLAGS}")
+endif()
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
+find_package(Torch REQUIRED)
+
+set(PUBLIC_HEADER_DIRECTORIES
+    include/uuss)
+set(PRIVATE_HEADER_DIRECTORIES
+    includeprivate)
+include_directories(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${RTSEIS_INCLUDE_DIR}
+    ${HDF5_INCLUDE_DIR}
+    ${TORCH_INCLUDE_DIRS}
+)
+
+set(LIB_SRC
+    src/threeComponentPicker/zrunet/processData.cpp
+    src/threeComponentPicker/zrunet/model.cpp)
+
+set(BUILD_SHARED_LIBS YES)
+add_library(uussmlmodels ${LIB_SRC})
+target_link_libraries(uussmlmodels
+                      PRIVATE ${RTSEIS_LIBRARY} ${HDF5_CXX_LIBRARIES} ${HDF5_LIBRARIES} ${TORCH_LIBRARIES})
+set_target_properties(uussmlmodels PROPERTIES
+                      CXX_STANDARD 17
+                      CXX_STANDARD_REQUIRED YES
+                      CXX_EXTENSIONS NO)
+target_include_directories(uussmlmodels PUBLIC ${PUBLIC_HEADER_FILES})
+target_include_directories(uussmlmodels PRIVATE ${PRIVATE_HEADER_FILES})
+if (OpenMP_CXX_FOUND)
+    target_link_libraries(uussmlmodels PUBLIC OpenMP::OpenMP_CXX)
+endif()
+###############################################################################
+#                                 Installation                                #
+###############################################################################
+include(GNUInstallDirs)
+#if (MLMODELS_WRAP_PYTHON)
+#   install(TARGETS matchedFilter pymflib
+#           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+#           LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#           PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+#else()
+   install(TARGETS uussmlmodels
+           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+           LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+           PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+#endif()
+
+##########################################################################################
+#                                     CPACK Packaging                                    #
+##########################################################################################
+set(CPACK_PACKAGE_NAME "mlmodels")
+set(CPACK_PACKAGE_VENDOR "The Internet")
+set(CPACK_PACKAGE_CONTACT "bbaker@seis.utah.edu")
+set(CPACK_PACKAGE_LICENSE "MIT")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Production level UUSS Machine learning models")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")

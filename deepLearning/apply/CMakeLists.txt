@@ -45,8 +45,8 @@ set(LIB_SRC
 
 set(BUILD_SHARED_LIBS YES)
 add_library(uussmlmodels ${LIB_SRC})
-target_link_libraries(uussmlmodels
-                      PRIVATE ${RTSEIS_LIBRARY} ${HDF5_CXX_LIBRARIES} ${HDF5_LIBRARIES} ${TORCH_LIBRARIES})
+target_link_libraries(uussmlmodels PRIVATE
+                      ${RTSEIS_LIBRARY} ${HDF5_CXX_LIBRARIES} ${HDF5_LIBRARIES} ${TORCH_LIBRARIES})
 set_target_properties(uussmlmodels PROPERTIES
                       CXX_STANDARD 17
                       CXX_STANDARD_REQUIRED YES
@@ -63,13 +63,21 @@ if (WRAP_PYTHON)
                python/waveformTemplate.cpp)
    set_property(TARGET pyuussmlmodels PROPERTY CXX_STD_14)
    set_property(TARGET pyuussmlmodels PROPERTY PREFIX "")
-   message("hey" ${CMAKE_SOURCE_DIR}/python/include)
    target_include_directories(pyuussmlmodels PRIVATE pybind11 ${CMAKE_SOURCE_DIR}/python/include)
 endif()
 
-###############################################################################
-#                                 Installation                                #
-###############################################################################
+##########################################################################################
+#                                          Unit Tests                                    #
+##########################################################################################
+add_executable(unitTests
+               testing/main.cpp
+               testing/zrunet.cpp)
+target_link_libraries(unitTests
+                      uussmlmodels ${RTSEIS_LIBRARY} ${GTEST_BOTH_LIBRARIES}
+                                   ${HDF5_CXX_LIBRARIES} ${TORCH_LIBRARIES})
+##########################################################################################
+#                                         Installation                                   #
+##########################################################################################
 include(GNUInstallDirs)
 if (WRAP_PYTHON)
    install(TARGETS uussmlmodels pyuussmlmodels

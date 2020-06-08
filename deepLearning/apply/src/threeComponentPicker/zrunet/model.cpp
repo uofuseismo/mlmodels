@@ -211,7 +211,10 @@ void readWeightsFromHDF5(const H5::Group h5Group, //File &h5File,
                          const bool gpu = false,
                          const bool verbose = false)
 {
-    if (verbose){fprintf(stdout, "Loading %s\n", dataSetName.c_str());}
+    if (verbose)
+    {
+        std::cout << "Loading: " << dataSetName << std::endl;
+    }
     torch::Tensor result;
     auto dataSet = h5Group.openDataSet(dataSetName);
     auto dataType = dataSet.getTypeClass();
@@ -234,8 +237,8 @@ void readWeightsFromHDF5(const H5::Group h5Group, //File &h5File,
     }
     if (verbose)
     {
-        fprintf(stdout, "(Rank, Size): %d, %llu\n", rank, length);
-        fprintf(stdout, "Dimensions: %s\n", cdims.c_str());
+        std::cout << "(Rank, Size): " << rank << "," << length << std::endl;
+        std::cout << "Dimensions: " << cdims << std::endl;
     }
     // Load the float data
     if (dataType == H5T_FLOAT)
@@ -282,7 +285,7 @@ void readWeightsFromHDF5(const H5::Group h5Group, //File &h5File,
     {
         if (sizeIn[i] != sizeRead[i]){ltrans = true;}
     }
-    if (verbose && ltrans){fprintf(stdout, "Transposing\n");}
+    if (verbose && ltrans){std::cout << "Tranposing..." << std::endl;}
     // TensorFlow and torch are off by a transpose
     if (ltrans && ndim == 3){result.transpose_(0, 2);}
     sizeRead = result.sizes();
@@ -324,45 +327,6 @@ void readBatchNormalizationWeightsFromHDF5(
                         bn->running_mean, gpu, verbose);
     readWeightsFromHDF5(h5Group, runningVarianceName,
                         bn->running_var, gpu, verbose);
-}
-
-/// Writes the weights to HDF5
-void dumpWeightsToHDF5(H5::Group &h5Group,
-                       const H5std_string &dataSetName,
-                       const torch::Tensor &weightsIn,
-                       const bool gpu = false,
-                       const bool verbose = false)
-{
-    if (verbose){fprintf(stdout, "Writing %s\n", dataSetName.c_str());}
-    // Get a local copy of the weights
-    torch::Tensor weights;
-    if (!gpu)
-    {
-        weights = weightsIn;
-    }
-    else
-    {
-        weights = weightsIn.to(torch::kCPU);
-    }
-    // Figure out sizes
-    auto sizeWrite = weights.sizes();
-    size_t rank = sizeWrite.size();
-    std::vector<hsize_t> dims(rank, 0);
-    for (int i=0; i<static_cast<int> (rank); ++i)
-    {
-        dims[i] = static_cast<hsize_t> (sizeWrite[i]);
-    }
-    // Create data space and dataset
-    H5::DataSpace dataSpace(rank, dims.data());
-    auto dataSet = h5Group.createDataSet(dataSetName,
-                                        H5::PredType::NATIVE_FLOAT,
-                                        dataSpace);
-    // Get a pointer to the data and write it
-    auto dPtr = weights.data_ptr<float> ();
-    dataSet.write(dPtr, H5::PredType::NATIVE_FLOAT, H5S_ALL);
-    // Clean up a bit
-    dataSet.close();
-    dataSpace.close();
 }
 
 /*!
@@ -794,6 +758,10 @@ template<UUSS::Device E>
 class Model<E>::ModelImpl
 {
 public:
+    ModelImpl() :
+        mHaveGPU(torch::cuda::is_available())
+    {
+    }
     void toGPU()
     {
         if (!mOnGPU && mUseGPU && mHaveGPU)
@@ -803,16 +771,13 @@ public:
         }
     }
     UNet mNetwork; 
-    const std::string mTrainingModelDirectory = "models/";
-    double mLearningRate = 0.0005;
     /// Classifies to group 0 when less than and group 1 when greater than tol
     double mPredictTol = 0.5;
-    int mEpochs = 20;
     const int mMinimumSeismogramLength = 16;
     bool mUseGPU = false;
     bool mOnGPU = false; /// Check if this is set on GPU yet
     bool mHaveCoefficients = false;
-    bool mHaveGPU = torch::cuda::is_available();
+    bool mHaveGPU = false;//torch::cuda::is_available();
 };
 
 /// Constructor for CPU

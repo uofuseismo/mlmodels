@@ -75,6 +75,7 @@ add_executable(unitTests
 target_link_libraries(unitTests
                       uussmlmodels ${RTSEIS_LIBRARY} ${GTEST_BOTH_LIBRARIES}
                                    ${HDF5_CXX_LIBRARIES} ${TORCH_LIBRARIES})
+target_include_directories(unitTests PRIVATE ${GTEST_INCLUDE_DIR})
 ##########################################################################################
 #                                         Installation                                   #
 ##########################################################################################

@@ -15,6 +15,7 @@ endif()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
 find_package(Torch REQUIRED)
+find_package(GTest REQUIRED)
 
 set(PUBLIC_HEADER_DIRECTORIES
     include/uuss)
@@ -27,6 +28,17 @@ include_directories(
     ${TORCH_INCLUDE_DIRS}
 )
 
+if (WRAP_PYTHON)
+   find_package(PythonInterp 3)
+   find_package(PythonLibs 3 REQUIRED)
+   message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
+   message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
+   message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
+   #string(APPEND CMAKE_CXX_FLAGS " -DPYBIND11_CPP17 ")
+   find_package(pybind11 REQUIRED)
+endif()
+
+# Set the source
 set(LIB_SRC
     src/threeComponentPicker/zrunet/processData.cpp
     src/threeComponentPicker/zrunet/model.cpp)
@@ -44,23 +56,34 @@ target_include_directories(uussmlmodels PRIVATE ${PRIVATE_HEADER_FILES})
 if (OpenMP_CXX_FOUND)
     target_link_libraries(uussmlmodels PUBLIC OpenMP::OpenMP_CXX)
 endif()
+
+# Python
+if (WRAP_PYTHON)
+   add_library(pyuussmlmodels MODULE
+               python/waveformTemplate.cpp)
+   set_property(TARGET pyuussmlmodels PROPERTY CXX_STD_14)
+   set_property(TARGET pyuussmlmodels PROPERTY PREFIX "")
+   message("hey" ${CMAKE_SOURCE_DIR}/python/include)
+   target_include_directories(pyuussmlmodels PRIVATE pybind11 ${CMAKE_SOURCE_DIR}/python/include)
+endif()
+
 ###############################################################################
 #                                 Installation                                #
 ###############################################################################
 include(GNUInstallDirs)
-#if (MLMODELS_WRAP_PYTHON)
-#   install(TARGETS matchedFilter pymflib
-#           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-#           LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-#           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-#           PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-#else()
+if (WRAP_PYTHON)
+   install(TARGETS uussmlmodels pyuussmlmodels
+           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+           LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+           PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+else()
    install(TARGETS uussmlmodels
            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
            PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-#endif()
+endif()
 
 ##########################################################################################
 #                                     CPACK Packaging                                    #

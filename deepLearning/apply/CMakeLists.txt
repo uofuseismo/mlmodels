@@ -17,6 +17,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 find_package(Torch REQUIRED)
 find_package(GTest REQUIRED)
 
+configure_file(${CMAKE_SOURCE_DIR}/include/private/version.hpp.in
+               ${CMAKE_SOURCE_DIR}/include/uuss/version.hpp)
 set(PUBLIC_HEADER_DIRECTORIES
     include/uuss)
 set(PRIVATE_HEADER_DIRECTORIES
@@ -38,8 +40,37 @@ if (WRAP_PYTHON)
    find_package(pybind11 REQUIRED)
 endif()
 
+##########################################################################################
+#                                 Download Models to Test                                #
+##########################################################################################
+if (NOT ${CMAKE_SOURCE_DIR}/testing/models/test_zrunet_p.h5)
+   message("Downloading files...")
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/model_P_006.h5
+        ${CMAKE_SOURCE_DIR}/testing/models/test_zrunet_p.h5
+        INACTIVITY_TIMEOUT 5)
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/PB.B206.EH1..txt
+        ${CMAKE_SOURCE_DIR}/testing/data/PB.B206.EH1.zrunet_p.txt
+        INACTIVITY_TIMEOUT 5)
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/PB.B206.EH2..txt
+        ${CMAKE_SOURCE_DIR}/testing/data/PB.B206.EH2.zrunet_p.txt
+        INACTIVITY_TIMEOUT 5)
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/PB.B206.EHZ..txt
+        ${CMAKE_SOURCE_DIR}/testing/data/PB.B206.EHZ.zrunet_p.txt
+        INACTIVITY_TIMEOUT 5)
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/PB.UNET.P.PYTHON.txt
+        ${CMAKE_SOURCE_DIR}/testing/data/PB.UNET.P.PYTHON.zrunet.txt
+        INACTIVITY_TIMEOUT 5)
+endif()
+
+
 # Set the source
 set(LIB_SRC
+    src/version.cpp
     src/threeComponentPicker/zrunet/processData.cpp
     src/threeComponentPicker/zrunet/model.cpp)
 
@@ -74,7 +105,7 @@ add_executable(unitTests
                testing/zrunet.cpp)
 target_link_libraries(unitTests
                       uussmlmodels ${RTSEIS_LIBRARY} ${GTEST_BOTH_LIBRARIES}
-                                   ${HDF5_CXX_LIBRARIES} ${TORCH_LIBRARIES})
+                                   ${HDF5_CXX_LIBRARIES} ${HDF5_LIBRARIES} ${TORCH_LIBRARIES})
 target_include_directories(unitTests PRIVATE ${GTEST_INCLUDE_DIR})
 ##########################################################################################
 #                                         Installation                                   #

@@ -77,7 +77,7 @@ set(LIB_SRC
 set(BUILD_SHARED_LIBS YES)
 add_library(uussmlmodels ${LIB_SRC})
 target_link_libraries(uussmlmodels PRIVATE
-                      ${RTSEIS_LIBRARY} ${HDF5_CXX_LIBRARIES} ${HDF5_LIBRARIES} ${TORCH_LIBRARIES})
+                      ${RTSEIS_LIBRARY} ${HDF5_LIBRARIES} ${TORCH_LIBRARIES})
 set_target_properties(uussmlmodels PROPERTIES
                       CXX_STANDARD 17
                       CXX_STANDARD_REQUIRED YES
@@ -105,7 +105,7 @@ add_executable(unitTests
                testing/zrunet.cpp)
 target_link_libraries(unitTests
                       uussmlmodels ${RTSEIS_LIBRARY} ${GTEST_BOTH_LIBRARIES}
-                                   ${HDF5_CXX_LIBRARIES} ${HDF5_LIBRARIES} ${TORCH_LIBRARIES})
+                                   ${HDF5_LIBRARIES} ${TORCH_LIBRARIES})
 target_include_directories(unitTests PRIVATE ${GTEST_INCLUDE_DIR})
 ##########################################################################################
 #                                         Installation                                   #

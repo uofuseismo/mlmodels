@@ -19,6 +19,7 @@
 #endif
 #include <torch/torch.h>
 #include <H5Cpp.h>
+#include "private/loadHDF5Weights.hpp"
 #include "uuss/threeComponentPicker/zrunet/model.hpp"
 
 using namespace UUSS::ThreeComponentPicker::ZRUNet;
@@ -203,131 +204,6 @@ bool rescaleAndCopy(const int npts,
 #endif
         return false;
     } 
-}
-
-/// Loads the weights in the convolutional layers
-void readWeightsFromHDF5(const H5::Group h5Group, //File &h5File,
-                         const H5std_string &dataSetName,
-                         torch::Tensor &weights,
-                         const bool gpu = false,
-                         const bool verbose = false)
-{
-    if (verbose)
-    {
-        std::cout << "Loading: " << dataSetName << std::endl;
-    }
-    torch::Tensor result;
-    auto dataSet = h5Group.openDataSet(dataSetName);
-    auto dataType = dataSet.getTypeClass();
-    // Figure out sizes
-    auto dataSpace = dataSet.getSpace();
-    auto rank = dataSpace.getSimpleExtentNdims();
-    std::vector<hsize_t> dims(rank);
-    auto dimsPtr = dims.data();
-    dataSpace.getSimpleExtentDims(dimsPtr, NULL);
-    H5::DataSpace memSpace(rank, dims.data());
-    // Compute space for result and, possibly, dump some information
-    hsize_t length = 1;
-    std::string cdims;
-    std::vector<int64_t> shape(rank); // Space for result
-    for (int i=0; i<static_cast<int> (rank); ++i)
-    {
-        length = length*dims[i];
-        shape[i] = static_cast<int64_t> (dims[i]);
-        if (verbose){cdims = cdims + std::to_string(dims[i]) + " ";}
-    }
-    if (verbose)
-    {
-        std::cout << "(Rank, Size): " << rank << "," << length << std::endl;
-        std::cout << "Dimensions: " << cdims << std::endl;
-    }
-    // Load the float data
-    if (dataType == H5T_FLOAT)
-    {
-        result = torch::zeros(shape,
-                              torch::TensorOptions()
-                              .dtype(torch::kFloat32)
-                              .requires_grad(false));
-        float *dataPtr = result.data_ptr<float> ();
-        dataSet.read(dataPtr, H5::PredType::NATIVE_FLOAT);//, memSpace, dataSpace);
-    }
-/*
-    else if (dataType == H5T_NATIVE_DOUBLE)
-    {
-        result = torch::zeros(shape,
-                              torch::TensorOptions()
-                              .dtype(torch::kDouble)
-                              .requires_grad(false));
-        double *dataPtr = result.data_ptr<double> (); 
-        dataSet.read(dataPtr, H5::PredType::NATIVE_DOUBLE, memSpace, dataSpace);
-    }
-*/
-    else
-    {
-        memSpace.close();
-        dataSpace.close();
-        dataSet.close();
-        throw std::runtime_error("Can only unpack floats\n");
-    }
-    memSpace.close();
-    dataSpace.close();
-    dataSet.close();
-    // Verify dimensions match
-    auto ndim = weights.dim();
-    if (ndim != result.dim())
-    {
-        throw std::runtime_error("Dimensions do not match\n");
-    }
-    // Make sure the each dimension's lengths make sense
-    auto sizeIn = weights.sizes();
-    auto sizeRead = result.sizes();
-    bool ltrans = false;
-    for (int i=0; i<static_cast<int> (sizeIn.size()); ++i) 
-    {
-        if (sizeIn[i] != sizeRead[i]){ltrans = true;}
-    }
-    if (verbose && ltrans){std::cout << "Tranposing..." << std::endl;}
-    // TensorFlow and torch are off by a transpose
-    if (ltrans && ndim == 3){result.transpose_(0, 2);}
-    sizeRead = result.sizes();
-    for (int i=0; i<static_cast<int> (sizeIn.size()); ++i)
-    {
-        if (sizeIn[i] != sizeRead[i])
-        {
-            auto errmsg = "Size mismatch (Dimension,Expecting,Read) = " 
-                        + std::to_string(i) + ","
-                        + std::to_string(sizeIn[i]) + ","
-                        + std::to_string(sizeRead[i]) + ")\n";
-            throw std::runtime_error(errmsg);
-        }
-    }
-    if (gpu)
-    {
-        weights = result.to(torch::kCUDA);
-    }
-    else
-    {
-        weights = result;
-    }
-}
-
-void readBatchNormalizationWeightsFromHDF5(
-    const H5::Group h5Group,
-    const H5std_string &dataSetName,
-    torch::nn::BatchNorm1d &bn,
-    const bool gpu = false,
-    const bool verbose = false)
-{
-    H5std_string gammaName = dataSetName + ".weight"; 
-    H5std_string biasName = dataSetName + ".bias";
-    H5std_string runningMeanName = dataSetName + ".running_mean";
-    H5std_string runningVarianceName = dataSetName + ".running_var";
-    readWeightsFromHDF5(h5Group, gammaName, bn->weight, gpu, verbose);
-    readWeightsFromHDF5(h5Group, biasName, bn->bias, gpu, verbose);
-    readWeightsFromHDF5(h5Group, runningMeanName,
-                        bn->running_mean, gpu, verbose);
-    readWeightsFromHDF5(h5Group, runningVarianceName,
-                        bn->running_var, gpu, verbose);
 }
 
 /*!
@@ -545,10 +421,15 @@ struct UNet : torch::nn::Module
                              const bool gpu = false,
                              const bool verbose = false)
     {
+/*
         H5::Exception::dontPrint();
         H5::H5File h5File(fileName, H5F_ACC_RDONLY);
 
         auto group = h5File.openGroup("/model_weights/sequential_1");
+*/
+        HDF5Loader group;
+        group.openFile(fileName);
+        group.openGroup("/model_weights/sequential_1"); 
         
 
         readWeightsFromHDF5(group, "conv1d_1_1.weight",
@@ -670,8 +551,8 @@ struct UNet : torch::nn::Module
         readBatchNormalizationWeightsFromHDF5(group, "bn_9", batch9,
                                               gpu, verbose);
 
-        group.close();
-        h5File.close();
+        //group.close();
+        //h5File.close();
     }
     /// Write the weights to a file
     /*

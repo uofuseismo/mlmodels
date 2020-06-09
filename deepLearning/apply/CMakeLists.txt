@@ -116,6 +116,7 @@ endif()
 ##########################################################################################
 add_executable(unitTests
                testing/main.cpp
+               testing/fmnet.cpp
                testing/zrunet.cpp)
 target_link_libraries(unitTests
                       uussmlmodels ${RTSEIS_LIBRARY} ${GTEST_BOTH_LIBRARIES}

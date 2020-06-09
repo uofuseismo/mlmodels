@@ -48,24 +48,36 @@ endif()
 if (NOT ${CMAKE_SOURCE_DIR}/testing/models/test_zrunet_p.h5)
    message("Downloading files...")
    file(DOWNLOAD
-        http://home.chpc.utah.edu/~u6024448/model_P_006.h5
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/model_P_006.h5
         ${CMAKE_SOURCE_DIR}/testing/models/test_zrunet_p.h5
         INACTIVITY_TIMEOUT 5)
    file(DOWNLOAD
-        http://home.chpc.utah.edu/~u6024448/PB.B206.EH1..txt
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/PB.B206.EH1..txt
         ${CMAKE_SOURCE_DIR}/testing/data/PB.B206.EH1.zrunet_p.txt
         INACTIVITY_TIMEOUT 5)
    file(DOWNLOAD
-        http://home.chpc.utah.edu/~u6024448/PB.B206.EH2..txt
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/PB.B206.EH2..txt
         ${CMAKE_SOURCE_DIR}/testing/data/PB.B206.EH2.zrunet_p.txt
         INACTIVITY_TIMEOUT 5)
    file(DOWNLOAD
-        http://home.chpc.utah.edu/~u6024448/PB.B206.EHZ..txt
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/PB.B206.EHZ..txt
         ${CMAKE_SOURCE_DIR}/testing/data/PB.B206.EHZ.zrunet_p.txt
         INACTIVITY_TIMEOUT 5)
    file(DOWNLOAD
-        http://home.chpc.utah.edu/~u6024448/PB.UNET.P.PYTHON.txt
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/PB.UNET.P.PYTHON.txt
         ${CMAKE_SOURCE_DIR}/testing/data/PB.UNET.P.PYTHON.zrunet.txt
+        INACTIVITY_TIMEOUT 5)
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/PB.B206.EH1.PROC.txt
+        ${CMAKE_SOURCE_DIR}/testing/data/PB.B206.EH1.PROC.zrunet_p.txt
+        INACTIVITY_TIMEOUT 5)
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/PB.B206.EH2.PROC.txt
+        ${CMAKE_SOURCE_DIR}/testing/data/PB.B206.EH2.PROC.zrunet_p.txt
+        INACTIVITY_TIMEOUT 5)
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/PB.B206.EHZ.PROC.txt
+        ${CMAKE_SOURCE_DIR}/testing/data/PB.B206.EHZ.PROC.zrunet_p.txt
         INACTIVITY_TIMEOUT 5)
 endif()
 

@@ -46,7 +46,6 @@ TEST(ThreeComponentPicker, ZRUnetCPU)
 {
     UUSS::ThreeComponentPicker::ZRUNet::Model<UUSS::Device::CPU> picker;
     EXPECT_NO_THROW(picker.loadWeightsFromHDF5("../testing/models/test_zrunet_p.h5"));
-    EXPECT_TRUE(picker.haveModelCoefficients());
     // Load data
     auto vTrace = loadTextFile("../testing/data/PB.B206.EHZ.zrunet_p.txt");
     auto nTrace = loadTextFile("../testing/data/PB.B206.EH1.zrunet_p.txt");
@@ -112,7 +111,6 @@ TEST(ThreeComponentPicker, ZRUNetGPU)
         UUSS::ThreeComponentPicker::ZRUNet::Model<UUSS::Device::GPU> model;
         EXPECT_NO_THROW(
             model.loadWeightsFromHDF5("../testing/models/test_zrunet_p.h5"));
-        EXPECT_TRUE(model.haveModelCoefficients());
     }
     catch (const std::exception &e)
     {

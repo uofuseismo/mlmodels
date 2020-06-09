@@ -6,6 +6,8 @@ enable_testing()
 #                    Define the compiler standard and requisites                         #
 ##########################################################################################
 include(CheckCXXCompilerFlag)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FindOpenMP)
 if (OPENMP_FOUND)
    message("OpenMP found")

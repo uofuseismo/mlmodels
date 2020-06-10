@@ -96,19 +96,18 @@ public:
      * @throws std::invalid_argument if nSamples is too small or any of the 
      *         arrays are NULL.
      */
-/*
-    void predictProbability(int nSamples,
-                            const double vertical[],
-                            const double north[],
-                            const double east[],
-                            double *proba[]) const;
-*/
     void predictProbability(int nSamples,
                             const float vertical[],
                             const float north[],
                             const float east[],
                             float *proba[]) const;
-    //void predictProbability(const torch::Tensor &X, torch::Tensor *Y);
+    /*! @copydoc predictProbability */
+    void predictProbability(int nSamples,
+                            const double vertical[],
+                            const double north[],
+                            const double east[],
+                            double *proba[]) const;
+
     /*!
      * @brief Predicts the sample's class from the probabilities.
      * @param[in] nSamples  The number of samples in the traces.  This must
@@ -129,7 +128,12 @@ public:
                  const float north[],
                  const float east[],
                  int *clss[]) const;
-    
+    /*! @copydoc predict */
+    void predict(int nSamples,
+                 const double vertical[],
+                 const double north[],
+                 const double east[],
+                 int *clss[]) const; 
     /*!
      * @brief Gets the minimum number of samples in a three component
      *        seismogram that can be handled by this network.

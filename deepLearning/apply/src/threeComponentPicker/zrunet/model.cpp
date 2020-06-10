@@ -421,138 +421,82 @@ struct UNet : torch::nn::Module
                              const bool gpu = false,
                              const bool verbose = false)
     {
-/*
-        H5::Exception::dontPrint();
-        H5::H5File h5File(fileName, H5F_ACC_RDONLY);
-
-        auto group = h5File.openGroup("/model_weights/sequential_1");
-*/
-        HDF5Loader group;
-        group.openFile(fileName);
-        group.openGroup("/model_weights/sequential_1"); 
+        HDF5Loader loader;
+        loader.openFile(fileName);
+        loader.openGroup("/model_weights/sequential_1"); 
         
-
-        readWeightsFromHDF5(group, "conv1d_1_1.weight",
-                            conv11->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_1_1.bias",
-                            conv11->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_1_2.weight",
-                            conv12->weight, gpu, verbose); 
-        readWeightsFromHDF5(group, "conv1d_1_2.bias",
-                            conv12->bias, gpu, verbose);
-        readBatchNormalizationWeightsFromHDF5(group, "bn_1", batch1,
+        readWeightsAndBiasFromHDF5(loader, "conv1d_1_1",
+                                   conv11, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_1_2",
+                                   conv12, gpu, verbose); 
+        readBatchNormalizationWeightsFromHDF5(loader, "bn_1", batch1,
                                               gpu, verbose);
 
-        readWeightsFromHDF5(group, "conv1d_2_1.weight",
-                            conv21->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_2_1.bias",
-                            conv21->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_2_2.weight",
-                            conv22->weight, gpu, verbose); 
-        readWeightsFromHDF5(group, "conv1d_2_2.bias",
-                            conv22->bias, gpu, verbose);
-        readBatchNormalizationWeightsFromHDF5(group, "bn_2", batch2,
+        readWeightsAndBiasFromHDF5(loader, "conv1d_2_1",
+                                   conv21, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_2_2",
+                                   conv22, gpu, verbose); 
+        readBatchNormalizationWeightsFromHDF5(loader, "bn_2", batch2,
                                               gpu, verbose);
 
-        readWeightsFromHDF5(group, "conv1d_3_1.weight",
-                            conv31->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_3_1.bias",
-                            conv31->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_3_2.weight",
-                            conv32->weight, gpu, verbose); 
-        readWeightsFromHDF5(group, "conv1d_3_2.bias",
-                            conv32->bias, gpu, verbose);
-        readBatchNormalizationWeightsFromHDF5(group, "bn_3", batch3,
+        readWeightsAndBiasFromHDF5(loader, "conv1d_3_1",
+                                   conv31, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_3_2",
+                                   conv32, gpu, verbose); 
+        readBatchNormalizationWeightsFromHDF5(loader, "bn_3", batch3,
                                               gpu, verbose);
 
-        readWeightsFromHDF5(group, "conv1d_4_1.weight",
-                            conv41->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_4_1.bias",
-                            conv41->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_4_2.weight",
-                            conv42->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_4_2.bias",
-                            conv42->bias, gpu, verbose);
-        readBatchNormalizationWeightsFromHDF5(group, "bn_4", batch4,
+        readWeightsAndBiasFromHDF5(loader, "conv1d_4_1",
+                                   conv41, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_4_2",
+                                   conv42, gpu, verbose);
+        readBatchNormalizationWeightsFromHDF5(loader, "bn_4", batch4,
                                               gpu, verbose);
 
-        readWeightsFromHDF5(group, "conv1d_5_1.weight",
-                            conv51->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_5_1.bias",
-                            conv51->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_5_2.weight",
-                            conv52->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_5_2.bias",
-                            conv52->bias, gpu, verbose);
-        readBatchNormalizationWeightsFromHDF5(group, "bn_5", batch5,
+        readWeightsAndBiasFromHDF5(loader, "conv1d_5_1",
+                                   conv51, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_5_2",
+                                   conv52, gpu, verbose);
+        readBatchNormalizationWeightsFromHDF5(loader, "bn_5", batch5,
                                               gpu, verbose);
 
-        readWeightsFromHDF5(group, "convTranspose1d_6_1.weight",
-                            uconv6->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "convTranspose1d_6_1.bias",
-                            uconv6->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_6_1.weight",
-                            conv61->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_6_1.bias",
-                            conv61->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_6_2.weight",
-                            conv62->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_6_2.bias",
-                            conv62->bias, gpu, verbose);
-        readBatchNormalizationWeightsFromHDF5(group, "bn_6", batch6,
+        readWeightsAndBiasFromHDF5(loader, "convTranspose1d_6_1",
+                                   uconv6, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_6_1",
+                                   conv61, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_6_2",
+                                   conv62, gpu, verbose);
+        readBatchNormalizationWeightsFromHDF5(loader, "bn_6", batch6,
                                               gpu, verbose);
 
-        readWeightsFromHDF5(group, "convTranspose1d_7_1.weight",
-                            uconv7->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "convTranspose1d_7_1.bias",
-                            uconv7->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_7_1.weight",
-                            conv71->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_7_1.bias",
-                            conv71->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_7_2.weight",
-                            conv72->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_7_2.bias",
-                            conv72->bias, gpu, verbose);
-        readBatchNormalizationWeightsFromHDF5(group, "bn_7", batch7,
+        readWeightsAndBiasFromHDF5(loader, "convTranspose1d_7_1",
+                                   uconv7, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_7_1",
+                                   conv71, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_7_2",
+                                   conv72, gpu, verbose);
+        readBatchNormalizationWeightsFromHDF5(loader, "bn_7", batch7,
                                               gpu, verbose);
 
-        readWeightsFromHDF5(group, "convTranspose1d_8_1.weight",
-                            uconv8->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "convTranspose1d_8_1.bias",
-                            uconv8->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_8_1.weight",
-                            conv81->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_8_1.bias",
-                            conv81->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_8_2.weight",
-                            conv82->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_8_2.bias",
-                            conv82->bias, gpu, verbose);
-        readBatchNormalizationWeightsFromHDF5(group, "bn_8", batch8,
+        readWeightsAndBiasFromHDF5(loader, "convTranspose1d_8_1",
+                                   uconv8, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_8_1",
+                                   conv81, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_8_2",
+                                   conv82, gpu, verbose);
+        readBatchNormalizationWeightsFromHDF5(loader, "bn_8", batch8,
                                               gpu, verbose);
 
-        readWeightsFromHDF5(group, "convTranspose1d_9_1.weight",
-                            uconv9->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "convTranspose1d_9_1.bias",
-                            uconv9->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_9_1.weight",
-                            conv91->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_9_1.bias",
-                            conv91->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_9_2.weight",
-                            conv92->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_9_2.bias",
-                            conv92->bias, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_9_3.weight",
-                            conv93->weight, gpu, verbose);
-        readWeightsFromHDF5(group, "conv1d_9_3.bias",
-                            conv93->bias, gpu, verbose);
-        readBatchNormalizationWeightsFromHDF5(group, "bn_9", batch9,
+        readWeightsAndBiasFromHDF5(loader, "convTranspose1d_9_1",
+                                   uconv9, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_9_1",
+                                   conv91, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_9_2",
+                                   conv92, gpu, verbose);
+        readWeightsAndBiasFromHDF5(loader, "conv1d_9_3",
+                                   conv93, gpu, verbose);
+        readBatchNormalizationWeightsFromHDF5(loader, "bn_9", batch9,
                                               gpu, verbose);
-
-        //group.close();
-        //h5File.close();
     }
     /// Write the weights to a file
     /*
@@ -585,47 +529,47 @@ struct UNet : torch::nn::Module
     int64_t mInputChannels = 3;
     int64_t mOutputChannels = 1;
 
-    torch::nn::Conv1d conv11;
-    torch::nn::Conv1d conv12;
-    torch::nn::BatchNorm1d batch1;
+    torch::nn::Conv1d conv11{nullptr};
+    torch::nn::Conv1d conv12{nullptr};
+    torch::nn::BatchNorm1d batch1{nullptr};
 
-    torch::nn::Conv1d conv21;
-    torch::nn::Conv1d conv22;
-    torch::nn::BatchNorm1d batch2;
+    torch::nn::Conv1d conv21{nullptr};
+    torch::nn::Conv1d conv22{nullptr};
+    torch::nn::BatchNorm1d batch2{nullptr};
 
-    torch::nn::Conv1d conv31;
-    torch::nn::Conv1d conv32;
-    torch::nn::BatchNorm1d batch3;
+    torch::nn::Conv1d conv31{nullptr};
+    torch::nn::Conv1d conv32{nullptr};
+    torch::nn::BatchNorm1d batch3{nullptr};
 
-    torch::nn::Conv1d conv41;
-    torch::nn::Conv1d conv42;
-    torch::nn::BatchNorm1d batch4;
+    torch::nn::Conv1d conv41{nullptr};
+    torch::nn::Conv1d conv42{nullptr};
+    torch::nn::BatchNorm1d batch4{nullptr};
 
-    torch::nn::Conv1d conv51;
-    torch::nn::Conv1d conv52;
-    torch::nn::BatchNorm1d batch5;
+    torch::nn::Conv1d conv51{nullptr};
+    torch::nn::Conv1d conv52{nullptr};
+    torch::nn::BatchNorm1d batch5{nullptr};
 
-    torch::nn::ConvTranspose1d uconv6;
-    torch::nn::Conv1d conv61;
-    torch::nn::Conv1d conv62;
-    torch::nn::BatchNorm1d batch6;
+    torch::nn::ConvTranspose1d uconv6{nullptr};
+    torch::nn::Conv1d conv61{nullptr};
+    torch::nn::Conv1d conv62{nullptr};
+    torch::nn::BatchNorm1d batch6{nullptr};
 
-    torch::nn::ConvTranspose1d uconv7;
-    torch::nn::Conv1d conv71;
-    torch::nn::Conv1d conv72;
-    torch::nn::BatchNorm1d batch7;
+    torch::nn::ConvTranspose1d uconv7{nullptr};
+    torch::nn::Conv1d conv71{nullptr};
+    torch::nn::Conv1d conv72{nullptr};
+    torch::nn::BatchNorm1d batch7{nullptr};
 
-    torch::nn::ConvTranspose1d uconv8;
-    torch::nn::Conv1d conv81;
-    torch::nn::Conv1d conv82;
-    torch::nn::BatchNorm1d batch8;
+    torch::nn::ConvTranspose1d uconv8{nullptr};
+    torch::nn::Conv1d conv81{nullptr};
+    torch::nn::Conv1d conv82{nullptr};
+    torch::nn::BatchNorm1d batch8{nullptr};
 
-    torch::nn::ConvTranspose1d uconv9;
-    torch::nn::Conv1d conv91;
-    torch::nn::Conv1d conv92;
-    torch::nn::BatchNorm1d batch9;
+    torch::nn::ConvTranspose1d uconv9{nullptr};
+    torch::nn::Conv1d conv91{nullptr};
+    torch::nn::Conv1d conv92{nullptr};
+    torch::nn::BatchNorm1d batch9{nullptr};
 
-    torch::nn::Conv1d conv93;
+    torch::nn::Conv1d conv93{nullptr};
 };
 
 }
@@ -718,13 +662,47 @@ void Model<E>::predict(const int nSamples,
     convertProbabilitiesToClass(nSamples, probaPtr, clssIn, tol);
 }
 
+/// Double precision interface
+template<UUSS::Device E>
+void Model<E>::predictProbability(int nSamples,
+                                  const double vertical[],
+                                  const double north[],
+                                  const double east[],
+                                  double *probaIn[]) const
+{
+    if (!isValidSeismogramLength(nSamples) != 0)
+    {
+        throw std::invalid_argument("nSamples = " + std::to_string(nSamples)
+                                  + " must be a multiple of "
+                                  + std::to_string(16));
+    }
+    double *proba = *probaIn;
+    if (vertical == nullptr || north == nullptr ||
+        east == nullptr || proba == nullptr)
+    {
+        if (vertical == nullptr)
+        {
+            throw std::invalid_argument("vertical is NULL");
+        }
+        if (north == nullptr){throw std::invalid_argument("north is NULL");}
+        if (east == nullptr){throw std::invalid_argument("east is NULL");}
+        throw std::invalid_argument("proba is NULL");
+    } 
+    std::vector<float> v4(nSamples), n4(nSamples), e4(nSamples), p4(nSamples);
+    std::copy(vertical, vertical+nSamples, v4.data());
+    std::copy(north,    north+nSamples,    n4.data());
+    std::copy(east,     east+nSamples,     e4.data());
+    float *p4Ptr = p4.data();
+    predictProbability(nSamples, v4.data(), n4.data(), e4.data(), &p4Ptr); 
+    std::copy(p4.begin(), p4.end(), proba);
+}
+
 /// Predicts the probability of a phase at all points in the time series
 template<>
-void Model<UUSS::Device::CPU>::predictProbability(const int nSamples,
-                                                  const float vertical[],
-                                                  const float north[],
-                                                  const float east[],
-                                                  float *probaIn[]) const
+void Model<UUSS::Device::CPU>::predictProbability(
+    const int nSamples,
+    const float vertical[], const float north[], const float east[],
+    float *probaIn[]) const
 {
     constexpr bool applySigmoid = true;
     // Require the model be in evaluation mode
@@ -764,11 +742,10 @@ void Model<UUSS::Device::CPU>::predictProbability(const int nSamples,
 }
 
 template<>
-void Model<UUSS::Device::GPU>::predictProbability(const int nSamples,
-                                                  const float vertical[],
-                                                  const float north[],
-                                                  const float east[],
-                                                  float *probaIn[]) const
+void Model<UUSS::Device::GPU>::predictProbability(
+    const int nSamples,
+    const float vertical[], const float north[], const float east[],
+    float *probaIn[]) const
 {
     constexpr bool applySigmoid = true;
     // Require the model be in evaluation mode
@@ -812,14 +789,10 @@ void Model<UUSS::Device::GPU>::predictProbability(const int nSamples,
 
 /// General case for sliding window
 template<>
-void Model<UUSS::Device::CPU>::predictProbability(const int nSamples,
-                                                  const int nSamplesInWindow,
-                                                  const int nCenter,
-                                                  const float vertical[],
-                                                  const float north[],
-                                                  const float east[],
-                                                  float *probaIn[],
-                                                  const int batchSize) const
+void Model<UUSS::Device::CPU>::predictProbability(
+    const int nSamples, const int nSamplesInWindow, const int nCenter,
+    const float vertical[],  const float north[], const float east[],
+    float *probaIn[], const int batchSize) const
 {
     constexpr bool applySigmoid = true;
     if (!haveModelCoefficients())
@@ -838,6 +811,10 @@ void Model<UUSS::Device::CPU>::predictProbability(const int nSamples,
                                   + std::to_string(nSamplesInWindow)
                                   + " must be a multiple of "
                                   + std::to_string(16));
+    }
+    if (batchSize < 1)
+    {
+        throw std::invalid_argument("Batch size must be positive");
     }
     float *proba = *probaIn;
     if (vertical == nullptr || north == nullptr ||
@@ -963,14 +940,10 @@ void Model<UUSS::Device::CPU>::predictProbability(const int nSamples,
 }
 
 template<>
-void Model<UUSS::Device::GPU>::predictProbability(const int nSamples,
-                                                  const int nSamplesInWindow,
-                                                  const int nCenter,
-                                                  const float vertical[],
-                                                  const float north[],
-                                                  const float east[],
-                                                  float *probaIn[],
-                                                  const int batchSize) const
+void Model<UUSS::Device::GPU>::predictProbability(
+    const int nSamples, const int nSamplesInWindow, const int nCenter,
+    const float vertical[], const float north[], const float east[],
+    float *probaIn[], const int batchSize) const
 {
     constexpr bool applySigmoid = true;
     if (!haveModelCoefficients())
@@ -989,6 +962,10 @@ void Model<UUSS::Device::GPU>::predictProbability(const int nSamples,
                                   + std::to_string(nSamplesInWindow)
                                   + " must be a multiple of "
                                   + std::to_string(16));
+    }
+    if (batchSize < 1)
+    {
+        throw std::invalid_argument("Batch size must be positive");
     }
     float *proba = *probaIn;
     if (vertical == nullptr || north == nullptr ||

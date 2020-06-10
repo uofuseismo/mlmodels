@@ -185,6 +185,57 @@ void readWeightsFromHDF5(HDF5Loader &loader,
         weights = result;
     }
 }
+/// @brief Convenience function to read weights and bias from HDF5.
+/// @param[in] loader       The HDF5 data loader with group containing the
+///                         weights and bias already opened.
+/// @param[in] dataSetName  The root name of the weights and bias to read.
+/// @param[in,out] conv     The 1D convolutional layer to be read. On
+///                         input the weight and biases tensor sizes must
+///                         be set.  On exit, the weights and biases are
+///                         set and, if necessary, offloaded to the device.
+/// @param[in] gpu   If true then the weights are to be put onto the GPU.
+/// @param[in] verbose  If true then write some information for debugging.
+/// @throws std::invalid_argument if the dataset can't be read or the sizes
+///         are inconsistent.
+[[maybe_unused]]
+void readWeightsAndBiasFromHDF5(
+    HDF5Loader &loader,
+    const std::string &dataSetName,
+    torch::nn::Conv1d &conv,
+    const bool gpu = false,
+    const bool verbose = false)
+{
+    auto weightName = dataSetName + ".weight";
+    auto biasName = dataSetName + ".bias";
+    readWeightsFromHDF5(loader, weightName, conv->weight, gpu, verbose);
+    readWeightsFromHDF5(loader, biasName,   conv->bias, gpu, verbose);
+}
+[[maybe_unused]]
+void readWeightsAndBiasFromHDF5(
+    HDF5Loader &loader,
+    const std::string &dataSetName,
+    torch::nn::Linear &fcn,
+    const bool gpu = false,
+    const bool verbose = false)
+{
+    auto weightName = dataSetName + ".weight";
+    auto biasName = dataSetName + ".bias";
+    readWeightsFromHDF5(loader, weightName, fcn->weight, gpu, verbose);
+    readWeightsFromHDF5(loader, biasName,   fcn->bias, gpu, verbose);
+}
+[[maybe_unused]]
+void readWeightsAndBiasFromHDF5(
+    HDF5Loader &loader,
+    const std::string &dataSetName,
+    torch::nn::ConvTranspose1d &uconv,
+    const bool gpu = false,
+    const bool verbose = false)
+{
+    auto weightName = dataSetName + ".weight";
+    auto biasName = dataSetName + ".bias";
+    readWeightsFromHDF5(loader, weightName, uconv->weight, gpu, verbose);
+    readWeightsFromHDF5(loader, biasName,   uconv->bias, gpu, verbose);
+}
 /// @brief Reads the batch normalization weights from HDF5.
 /// @param[in] loader       The HDF5 data loader with group containing the
 ///                         batch normalization weights already opened.

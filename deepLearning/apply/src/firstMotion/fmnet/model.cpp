@@ -303,6 +303,7 @@ int Model<E>::predict(const int nSamples, const float z[]) const
     }
 }
 
+/*
 /// Compute the probability of up/down/unknown on cpu
 template<>
 void Model<UUSS::Device::CPU>::predictProbability(
@@ -376,6 +377,165 @@ void Model<UUSS::Device::GPU>::predictProbability(
     *pUp = pPtr[0];
     *pDown = pPtr[1];
     *pUnknown = pPtr[2];
+}
+*/
+
+/// Compute the probability of up/down/unknown on a cpu
+template<>
+void Model<UUSS::Device::CPU>::predictProbability(
+    const int nSignals, const int nSamplesInSignal, const float z[],
+    float *probaUpIn[], float *probaDownIn[], float *probaUnknownIn[],
+    int batchSize) const
+{
+    if (!haveModelCoefficients())
+    {
+        throw std::runtime_error("Model does not have coefficients");
+    }
+    if (nSignals < 1){throw std::invalid_argument("No signals");}
+    if (batchSize < 1)
+    {
+        throw std::invalid_argument("Batch size must be positive");
+    }
+    int signalLength = getSignalLength();
+    if (nSamplesInSignal != signalLength)
+    {
+        throw std::invalid_argument("nSamplesInSignal = "
+                                  + std::to_string(nSamplesInSignal)
+                                  + " must equal "
+                                  + std::to_string(signalLength));
+    }
+    if (z == nullptr){throw std::invalid_argument("z is NULL");}
+    auto pUp = *probaUpIn;
+    auto pDown = *probaDownIn;
+    auto pUnknown = *probaUnknownIn;
+    if (pUp == nullptr){throw std::invalid_argument("pUp is NULL");}
+    if (pDown == nullptr){throw std::invalid_argument("pDown is NULL");}
+    if (pUnknown == nullptr){throw std::invalid_argument("pUnkown is NULL");}
+    // Initialize result (unknown has probability of 1)
+    std::fill(pUp, pUp + nSignals, 0);
+    std::fill(pDown, pDown + nSignals, 0);
+    std::fill(pUnknown, pUnknown + nSignals, 1);
+    // Allocate space
+    int batchUse = std::min(nSignals, batchSize);
+    auto X = torch::zeros({batchUse, 1, 400},
+                          torch::TensorOptions().dtype(torch::kFloat32)
+                          .requires_grad(false));
+    std::vector<bool> lAlive(batchUse, true);
+    // Loop on batches
+    for (int is0=0; is0<nSignals; is0=is0+batchUse)
+    {
+        // Extract signal, normalize, and copy
+        int js0 = is0;
+        int js1 = std::min(nSignals, js0 + batchUse);
+        for (int js=js0; js<js1; ++js)
+        {
+            int iSrc = js*signalLength;
+            int iDst = (js - js0)*signalLength;
+            float *signalPtr = X.data_ptr<float> () + iDst;
+            lAlive[js-js0] = rescaleAndCopy(signalLength, z + iSrc, signalPtr);
+        }
+        // Predict
+        auto p = pImpl->mNetwork.forward(X);
+        float *pPtr = p.data_ptr<float> ();
+        // Copy probabilities to output arrays
+        for (int js=js0; js<js1; ++js)
+        {
+            if (lAlive[js - js0])
+            {
+                pUp[js]      = pPtr[3*(js - js0)];
+                pDown[js]    = pPtr[3*(js - js0) + 1];
+                pUnknown[js] = pPtr[3*(js - js0) + 2];
+            }
+        }
+    }
+}
+
+/// Compute the probability of up/down/unkonwn on a gpu
+template<>
+void Model<UUSS::Device::GPU>::predictProbability(
+    const int nSignals, const int nSamplesInSignal, const float z[],
+    float *probaUpIn[], float *probaDownIn[], float *probaUnknownIn[],
+    int batchSize) const
+{
+    if (!haveModelCoefficients())
+    {
+        throw std::runtime_error("Model does not have coefficients");
+    }
+    if (nSignals < 1){throw std::invalid_argument("No signals");}
+    if (batchSize < 1)
+    {
+        throw std::invalid_argument("Batch size must be positive");
+    }
+    int signalLength = getSignalLength();
+    if (nSamplesInSignal != signalLength)
+    {
+        throw std::invalid_argument("nSamplesInSignal = "
+                                  + std::to_string(nSamplesInSignal)
+                                  + " must equal "
+                                  + std::to_string(signalLength));
+    }
+    if (z == nullptr){throw std::invalid_argument("z is NULL");}
+    auto pUp = *probaUpIn;
+    auto pDown = *probaDownIn;
+    auto pUnknown = *probaUnknownIn;
+    if (pUp == nullptr){throw std::invalid_argument("pUp is NULL");}
+    if (pDown == nullptr){throw std::invalid_argument("pDown is NULL");}
+    if (pUnknown == nullptr){throw std::invalid_argument("pUnkown is NULL");}
+    std::fill(pUp, pUp + nSignals, 0);
+    std::fill(pDown, pDown + nSignals, 0);
+    std::fill(pUnknown, pUnknown + nSignals, 1);
+    int batchUse = std::min(nSignals, batchSize);
+    auto X = torch::zeros({batchUse, 1, 400},
+                          torch::TensorOptions().dtype(torch::kFloat32)
+                          .requires_grad(false));
+    std::vector<bool> lAlive(batchUse, true);
+    for (int is0=0; is0<nSignals; is0=is0+batchUse)
+    {
+        int js0 = is0;
+        int js1 = std::min(nSignals, js0 + batchUse);
+        for (int js=js0; js<js1; ++js)
+        {
+            int iSrc = js*signalLength;
+            int iDst = (js - js0)*signalLength;
+            float *signalPtr = X.data_ptr<float> () + iDst;
+            lAlive[js-js0] = rescaleAndCopy(signalLength, z + iSrc, signalPtr);
+        }
+        auto signalGPU = X.to(torch::kCUDA);
+        auto pHost = pImpl->mNetwork.forward(signalGPU).to(torch::kCPU);
+        float *pPtr = pHost.data_ptr<float> ();
+        for (int js=js0; js<js1; ++js)
+        {
+            if (lAlive[js - js0])
+            {
+                pUp[js]      = pPtr[3*(js - js0)];
+                pDown[js]    = pPtr[3*(js - js0) + 1];
+                pUnknown[js] = pPtr[3*(js - js0) + 2];
+            }
+        }
+    }
+}
+
+/// For single channel
+template<UUSS::Device E>
+void Model<E>::predictProbability(
+    const int nSamples, const float z[],
+    float *pUp, float *pDown, float *pUnknown) const
+{
+    if (z == nullptr){throw std::invalid_argument("z is NULL");}
+    if (pUp == nullptr){throw std::invalid_argument("pUp is NULL");}
+    if (pDown == nullptr){throw std::invalid_argument("pDown is NULL");}
+    if (pUnknown == nullptr){throw std::invalid_argument("pUnkown is NULL");}
+    std::array<float, 1> pUpWork, pDownWork, pUnknownWork;
+    auto pUpPtr = pUpWork.data();
+    auto pDownPtr = pDownWork.data();
+    auto pUnknownPtr = pUnknownWork.data();
+    constexpr int nSignals = 1;
+    constexpr int batchSize = 1;
+    predictProbability(nSignals, nSamples, z,
+                       &pUpPtr, &pDownPtr, &pUnknownPtr, batchSize);
+    *pUp = pUpWork[0];
+    *pDown = pDownWork[0];
+    *pUnknown = pUnknownWork[0];
 }
 
 ///--------------------------------------------------------------------------///

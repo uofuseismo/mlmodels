@@ -95,6 +95,37 @@ public:
      * @sa \c setPolarityThreshold()
      */
     int predict(int nSamples, const float z[]) const;
+
+    /*!
+     * @brief Computes the probability of a waveform's polarity as being
+     *        up, down, or unknown.
+     * @param[in] nSignals  The number of signals.  This must be positive.
+     * @param[in] nSamplesInSignal  The number of samples in each signal.
+     *                              This must match \c getSignalLength(). 
+     * @param[in] z   The vertical channel signals from which to compute
+     *                the respective proababilities.  This is a row major
+     *                matrix with dimension [nSignals x nSamplesInSignal].
+     * @param[out] probaUp  The probability of an up polarity for the is'th
+     *                      signal.  This is an array whose dimension is
+     *                      [nSignals].
+     * @param[out] probaDown  The probability of a down polarity for the is'th
+     *                        signal.  This is an array whose dimension is
+     *                        [nSignals].
+     * @param[out] probaUnknown  The probability of unknown polarity for
+     *                           the is'th signal.  This is an array whose
+     *                           dimension is [nSignals].
+     * @param[in] batchSize  The number of signals for torch to process
+     *                       simultaneously.  This must be positive.
+     * @throws std::invalid_argument if nSignals is not positive,
+     *         nSamplesInSignal is not valid, any array is NULL.
+     * @throws std::runtime_error if the coefficients are not set.
+     */
+    void predictProbability(int nSignals, int nSamplesInSignal,
+                            const float z[],
+                            float *probaUp[],
+                            float *probaDown[],
+                            float *probaUnknown[],
+                            int batchSize = 32) const;
     /*!
      * @brief Computes the probability of a waveform's polarity as being up,
      *        down, and unknown.

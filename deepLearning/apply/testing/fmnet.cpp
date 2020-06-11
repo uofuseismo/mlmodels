@@ -61,6 +61,28 @@ TEST(FMNet, FMNetCPU)
         polarity.predictProbability(ex1.size(),
                                     ex1.data(), &pUp, &pDown, &pUnknown));
 std::cout << pUp << " " << pDown << " " << pUnknown << std::endl;
+    EXPECT_NO_THROW(
+        polarity.predictProbability(ex2.size(),
+                                    ex2.data(), &pUp, &pDown, &pUnknown));
+    EXPECT_NO_THROW(
+        polarity.predictProbability(ex3.size(),
+                                    ex3.data(), &pUp, &pDown, &pUnknown));
+    EXPECT_NO_THROW(
+        polarity.predictProbability(ex4.size(),
+                                    ex4.data(), &pUp, &pDown, &pUnknown));
+    EXPECT_NO_THROW(
+        polarity.predictProbability(ex5.size(),
+                                    ex5.data(), &pUp, &pDown, &pUnknown));
+    std::cout << polarity.predict(ex5.size(), ex5.data()) << std::endl;
+int result = polarity.predict(ex5.size(), ex5.data());
+int down =-1;
+#ifdef CHPC
+    EXPECT_NEAR(result, down, 1.e-10);
+#else
+    EXPECT_EQ(result, down);
+#endif
+std::cout << pUp << " " << pDown << " " << pUnknown << std::endl;
+
 }
 
 TEST(FMNet, FMNetGPU)

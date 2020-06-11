@@ -56,24 +56,31 @@ TEST(FMNet, FMNetCPU)
     std::vector<float> ex1, ex2, ex3, ex4, ex5;
     loadTextFile("../testing/data/fmnet_test_inputs.txt",
                  ex1, ex2, ex3, ex4, ex5);
-    float pUp, pDown, pUnknown;
+    std::vector<float> pUp(5, 0), pDown(5, 0), pUnknown(5, 0);
+    std::vector<float> pRefUp({0.0008, 0.0179, 0.0739, 0.5519, 0.0029});
+    std::vector<float> pRefDown({0.6310, 0.0350, 0.0029, 0.0008, 0.7787});
+    std::vector<float> pRefUnknown({0.3682, 0.9471, 0.9233, 0.4473, 0.2185});
     EXPECT_NO_THROW(
-        polarity.predictProbability(ex1.size(),
-                                    ex1.data(), &pUp, &pDown, &pUnknown));
-std::cout << pUp << " " << pDown << " " << pUnknown << std::endl;
+        polarity.predictProbability(ex1.size(), ex1.data(),
+                                    &pUp[0], &pDown[0], &pUnknown[0]));
     EXPECT_NO_THROW(
-        polarity.predictProbability(ex2.size(),
-                                    ex2.data(), &pUp, &pDown, &pUnknown));
+        polarity.predictProbability(ex2.size(), ex2.data(),
+                                    &pUp[1], &pDown[1], &pUnknown[1]));
     EXPECT_NO_THROW(
-        polarity.predictProbability(ex3.size(),
-                                    ex3.data(), &pUp, &pDown, &pUnknown));
+        polarity.predictProbability(ex3.size(), ex3.data(),
+                                    &pUp[2], &pDown[2], &pUnknown[2]));
     EXPECT_NO_THROW(
-        polarity.predictProbability(ex4.size(),
-                                    ex4.data(), &pUp, &pDown, &pUnknown));
+        polarity.predictProbability(ex4.size(), ex4.data(), &pUp[3],
+                                    &pDown[3], &pUnknown[3]));
     EXPECT_NO_THROW(
-        polarity.predictProbability(ex5.size(),
-                                    ex5.data(), &pUp, &pDown, &pUnknown));
-    std::cout << polarity.predict(ex5.size(), ex5.data()) << std::endl;
+        polarity.predictProbability(ex5.size(), ex5.data(),
+                                    &pUp[4], &pDown[4], &pUnknown[4]));
+    for (int i=0; i<static_cast<int> (pRefUp.size()); ++i)
+    {
+        EXPECT_NEAR(pRefUp[i], pUp[i], 1.e-3);
+        EXPECT_NEAR(pRefDown[i], pDown[i], 1.e-3);
+        EXPECT_NEAR(pRefUnknown[i], pUnknown[i], 1.e-3);
+    }
 int result = polarity.predict(ex5.size(), ex5.data());
 int down =-1;
 #ifdef CHPC
@@ -81,7 +88,7 @@ int down =-1;
 #else
     EXPECT_EQ(result, down);
 #endif
-std::cout << pUp << " " << pDown << " " << pUnknown << std::endl;
+//std::cout << pUp << " " << pDown << " " << pUnknown << std::endl;
 
 }
 

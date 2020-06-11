@@ -223,35 +223,35 @@ struct UNet : torch::nn::Module
         conv12(torch::nn::Conv1dOptions(64, 64, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         batch1(torch::nn::BatchNormOptions(64)
-           .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+           .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 2
         conv21(torch::nn::Conv1dOptions(64, 128, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         conv22(torch::nn::Conv1dOptions(128, 128, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         batch2(torch::nn::BatchNormOptions(128)
-           .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+           .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 3
         conv31(torch::nn::Conv1dOptions(128, 256, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         conv32(torch::nn::Conv1dOptions(256, 256, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         batch3(torch::nn::BatchNormOptions(256)
-           .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+           .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 4
         conv41(torch::nn::Conv1dOptions(256, 512, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         conv42(torch::nn::Conv1dOptions(512, 512, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         batch4(torch::nn::BatchNormOptions(512)
-           .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+           .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 5
         conv51(torch::nn::Conv1dOptions(512, 1024, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         conv52(torch::nn::Conv1dOptions(1024, 1024, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         batch5(torch::nn::BatchNormOptions(1024)
-           .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+           .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 6 -> begin expansion
         uconv6(torch::nn::ConvTranspose1dOptions(1024, 512, mUpsampleKernelSize)
               .stride(mUpsampleStride).bias(true)),
@@ -260,7 +260,7 @@ struct UNet : torch::nn::Module
         conv62(torch::nn::Conv1dOptions(512, 512, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         batch6(torch::nn::BatchNormOptions(512)
-           .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+           .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 7
         uconv7(torch::nn::ConvTranspose1dOptions(512, 256, mUpsampleKernelSize)
               .stride(mUpsampleStride).bias(true)),
@@ -269,7 +269,7 @@ struct UNet : torch::nn::Module
         conv72(torch::nn::Conv1dOptions(256, 256, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         batch7(torch::nn::BatchNormOptions(256)
-           .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+           .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 8
         uconv8(torch::nn::ConvTranspose1dOptions(256, 128, mUpsampleKernelSize)
               .stride(mUpsampleStride).bias(true)),
@@ -278,7 +278,7 @@ struct UNet : torch::nn::Module
         conv82(torch::nn::Conv1dOptions(128, 128, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         batch8(torch::nn::BatchNormOptions(128)
-           .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+           .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 9
         uconv9(torch::nn::ConvTranspose1dOptions(128, 64, mUpsampleKernelSize)
               .stride(mUpsampleStride).bias(true)),
@@ -287,7 +287,7 @@ struct UNet : torch::nn::Module
         conv92(torch::nn::Conv1dOptions(64, 64, mKernelSize)
            .stride(1).padding(mPadding).bias(true).dilation(1)),
         batch9(torch::nn::BatchNormOptions(64)
-           .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+           .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         conv93(torch::nn::Conv1dOptions(64, mOutputChannels, 1) // Not padding
            .stride(1).padding(0).bias(true).dilation(1))
     {

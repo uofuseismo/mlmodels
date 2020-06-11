@@ -70,7 +70,7 @@ void ProcessData::processWaveform(
     {
         throw std::invalid_argument("Sampling period = "
                                   + std::to_string(samplingPeriod)
-                                  + "%lf must be positive");
+                                  + "must be positive");
     }
     auto fnyq = 1/(2*samplingPeriod);
     if (fnyq < pImpl->mCorners.second)
@@ -79,7 +79,7 @@ void ProcessData::processWaveform(
     }
     if (npts < 1 || data == nullptr)
     {
-        if (npts < 1){throw std::invalid_argument("No data poitns");}
+        if (npts < 1){throw std::invalid_argument("No data points");}
         throw std::invalid_argument("Data is NULL");
     }
     // Set the data

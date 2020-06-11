@@ -40,8 +40,6 @@ T infinityNorm(const int n, const T x[], const T y[])
 
 TEST(ThreeComponentPicker, ProcessData)
 {
-    UUSS::ThreeComponentPicker::ZRUNet::Model<UUSS::Device::CPU> picker;
-    EXPECT_NO_THROW(picker.loadWeightsFromHDF5("../testing/models/test_zrunet_p.h5"));
     // Load data
     auto vTrace = loadTextFile("../testing/data/PB.B206.EHZ.zrunet_p.txt");
     auto nTrace = loadTextFile("../testing/data/PB.B206.EH1.zrunet_p.txt");
@@ -115,17 +113,16 @@ TEST(ThreeComponentPicker, ZRUnetCPU)
                                               vPtr, nPtr, ePtr, &pPtr));
     std::copy(probaExtra.data() + segment - nExtra, probaExtra.data() + segment,
               proba.data() + nSamples);
-    // Compare with python - I think dmax is like 0.009 which is plenty 
-    // sufficient for this activity.  A random audit of residuals (below)
-    // indicates error on the order of 1.e-4 to 1.e-5.
+    // Compare with python - I think dmax is like 0.0003 which is plenty .
+    // The first pass dmax was 0.009.  This is because PyTorch's default API
+    // switched the epsilon in the batch normalization.
     auto dmax = infinityNorm(nSamples+nExtra, proba.data(), probaRef.data());
-    //std::cout << dmax << std::endl;
     //for (int i=7500; i<7600; ++i)
     //{
     //      std::cout << proba[i] << "," << probaRef[i]
     //                << "," << proba[i] - probaRef[i] << std::endl;
     //}
-    EXPECT_NEAR(dmax, 0, 1.e-2);
+    EXPECT_NEAR(dmax, 0, 5.e-4);
     // Run batched variant with no overlap
     int batchSize = 8; // Good on a cpu
     std::vector<float> probaNew(nSamples + nExtra, 100);

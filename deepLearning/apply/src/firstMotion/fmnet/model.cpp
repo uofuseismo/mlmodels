@@ -70,25 +70,25 @@ struct FMNetwork : torch::nn::Module
         conv1(torch::nn::Conv1dOptions({1, 32, 21})
            .stride(1).padding(10).bias(true).dilation(1)),
         batch1(torch::nn::BatchNormOptions(32)
-            .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+            .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 2
         conv2(torch::nn::Conv1dOptions({32, 64, 15})
            .stride(1).padding(7).bias(true).dilation(1)),
         batch2(torch::nn::BatchNormOptions(64)
-            .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+            .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 3
         conv3(torch::nn::Conv1dOptions({64, 128, 11})
            .stride(1).padding(5).bias(true).dilation(1)),
         batch3(torch::nn::BatchNormOptions(128)
-            .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+            .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 4
         fcn1(torch::nn::LinearOptions({6400, 512}).bias(true)),
         batch4(torch::nn::BatchNormOptions(512)
-            .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+            .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 5
         fcn2(torch::nn::LinearOptions({512, 512}).bias(true)),
         batch5(torch::nn::BatchNormOptions(512)
-            .eps(0.001).momentum(0.99).affine(true).track_running_stats(true)),
+            .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 6
         fcn3(torch::nn::LinearOptions({512, 3}).bias(true))
     {
@@ -110,13 +110,16 @@ struct FMNetwork : torch::nn::Module
         register_module("fcn_3", fcn3);
     }
     /// Forward
-    torch::Tensor forward(torch::Tensor &x)
+    torch::Tensor forward(const torch::Tensor &xIn)
     {
         constexpr int64_t mMaxPoolSize = 2;
         constexpr int64_t mPoolStride = 2;
-        x = conv1->forward(x);
+//std::cout << conv1->weight << std::endl;
+//std::cout << conv1->bias << std::endl;
+        auto x = conv1->forward(xIn);
         x = torch::relu(x);
         x = batch1->forward(x);
+std::cout << x << std::endl;
         x = torch::max_pool1d(x, mMaxPoolSize, mPoolStride);
 
         x = conv2->forward(x);

@@ -79,12 +79,17 @@ if (NOT ${CMAKE_SOURCE_DIR}/testing/models/test_zrunet_p.h5)
         http://home.chpc.utah.edu/~u6024448/uussmlmodels/PB.B206.EHZ.PROC.txt
         ${CMAKE_SOURCE_DIR}/testing/data/PB.B206.EHZ.PROC.zrunet_p.txt
         INACTIVITY_TIMEOUT 5)
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/fmnet_test_005.h5
+        ${CMAKE_SOURCE_DIR}/testing/models/test_fmnet.h5
+        INACTIVITY_TIMEOUT 5)
 endif()
 
 
 # Set the source
 set(LIB_SRC
     src/version.cpp
+    src/firstMotion/fmnet/processData.cpp
     src/firstMotion/fmnet/model.cpp
     src/threeComponentPicker/zrunet/processData.cpp
     src/threeComponentPicker/zrunet/model.cpp)

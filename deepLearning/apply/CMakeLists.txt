@@ -124,14 +124,16 @@ add_executable(unitTests
                testing/main.cpp
                testing/fmnet.cpp
                testing/zrunet.cpp)
-target_link_libraries(unitTests
-                      uussmlmodels ${RTSEIS_LIBRARY} ${GTEST_BOTH_LIBRARIES}
-                                   ${HDF5_LIBRARIES} ${TORCH_LIBRARIES})
-target_include_directories(unitTests PRIVATE ${GTEST_INCLUDE_DIR})
+target_link_libraries(unitTests PRIVATE uussmlmodels ${TORCH_LIBRARIES} ${GTEST_BOTH_LIBRARIES})
+#${RTSEIS_LIBRARY} ${HDF5_LIBRARIES} ${TORCH_LIBRARIES}
+#                                  ${GTEST_BOTH_LIBRARIES})
+target_include_directories(unitTests PRIVATE ${GTEST_INCLUDE_DIRS})
 set_target_properties(unitTests PROPERTIES
                       CXX_STANDARD 17
                       CXX_STANDARD_REQUIRED YES
                       CXX_EXTENSIONS NO)
+add_test(NAME unitTests
+         COMMAND unitTests)
 ##########################################################################################
 #                                         Installation                                   #
 ##########################################################################################

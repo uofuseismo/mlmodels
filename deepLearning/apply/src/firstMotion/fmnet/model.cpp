@@ -114,12 +114,9 @@ struct FMNetwork : torch::nn::Module
     {
         constexpr int64_t mMaxPoolSize = 2;
         constexpr int64_t mPoolStride = 2;
-//std::cout << conv1->weight << std::endl;
-//std::cout << conv1->bias << std::endl;
         auto x = conv1->forward(xIn);
         x = torch::relu(x);
         x = batch1->forward(x);
-std::cout << x << std::endl;
         x = torch::max_pool1d(x, mMaxPoolSize, mPoolStride);
 
         x = conv2->forward(x);

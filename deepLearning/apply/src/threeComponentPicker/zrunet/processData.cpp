@@ -53,10 +53,11 @@ void ProcessData::processWaveform(
     for (int i=0; i<npts; ++i){dataIn[i] = static_cast<double> (data[i]);}
     std::vector<double> temp;
     processWaveform(npts, samplingPeriod, dataIn.data(), &temp);
-    processedData->resize(npts);
+    int nptsNew = static_cast<int> (temp.size());
+    processedData->resize(nptsNew, 0);
     auto dPtr = processedData->data();
     #pragma omp simd
-    for (int i=0; i<npts; ++i){dPtr[i] = static_cast<float> (temp[i]);}
+    for (int i=0; i<nptsNew; ++i){dPtr[i] = static_cast<float> (temp[i]);}
 }
 
 /// Processes the data

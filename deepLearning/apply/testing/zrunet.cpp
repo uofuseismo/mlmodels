@@ -235,8 +235,8 @@ TEST(ThreeComponentPicker, ZRUNetGPU)
         EXPECT_NO_THROW(
             gpuPicker.loadWeightsFromHDF5("../testing/models/test_zrunet_p.h5"));
 
-        int gpuBatchSize = 64;
-        std::vector<float> proba1(nSamples + nExtra, 0);
+        int gpuBatchSize = 32;
+        std::vector<float> proba1(nSamples + nExtra, 10);
         pPtr = proba1.data();
         EXPECT_NO_THROW(
             gpuPicker.predictProbability(nSamples + nExtra, segment, 0,

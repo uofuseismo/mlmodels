@@ -160,10 +160,11 @@ public:
      */
     int getInputNumberOfChannels() const noexcept;
     /*!
-     * @brief Determines whether or not picker is using the GPU or CPU.
-     * @result True indicates that the picker is using the GPU.
+     * @brief Determines the number of available devices when using a system
+     *        with multiple GPU's.
+     * @result The number of available GPU's.
      */ 
-    //bool useGPU() const noexcept;
+    int getNumberOfDevices() const noexcept; //bool useGPU() const noexcept;
 private:
     class ModelImpl;
     std::unique_ptr<ModelImpl> pImpl; 

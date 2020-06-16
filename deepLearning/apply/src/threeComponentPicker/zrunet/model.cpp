@@ -421,84 +421,85 @@ struct UNet : torch::nn::Module
     /// Loads the weights from file
     void loadWeightsFromHDF5(const std::string &fileName,
                              const bool gpu = false,
-                             const bool verbose = false)
+                             const bool verbose = false,
+                             const int device =-1)
     {
         HDF5Loader loader;
         loader.openFile(fileName);
         loader.openGroup("/model_weights/sequential_1"); 
         
         readWeightsAndBiasFromHDF5(loader, "conv1d_1_1",
-                                   conv11, gpu, verbose);
+                                   conv11, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_1_2",
-                                   conv12, gpu, verbose); 
+                                   conv12, gpu, verbose, device); 
         readBatchNormalizationWeightsFromHDF5(loader, "bn_1", batch1,
-                                              gpu, verbose);
+                                              gpu, verbose, device);
 
         readWeightsAndBiasFromHDF5(loader, "conv1d_2_1",
-                                   conv21, gpu, verbose);
+                                   conv21, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_2_2",
-                                   conv22, gpu, verbose); 
+                                   conv22, gpu, verbose, device); 
         readBatchNormalizationWeightsFromHDF5(loader, "bn_2", batch2,
-                                              gpu, verbose);
+                                              gpu, verbose, device);
 
         readWeightsAndBiasFromHDF5(loader, "conv1d_3_1",
-                                   conv31, gpu, verbose);
+                                   conv31, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_3_2",
-                                   conv32, gpu, verbose); 
+                                   conv32, gpu, verbose, device); 
         readBatchNormalizationWeightsFromHDF5(loader, "bn_3", batch3,
-                                              gpu, verbose);
+                                              gpu, verbose, device);
 
         readWeightsAndBiasFromHDF5(loader, "conv1d_4_1",
-                                   conv41, gpu, verbose);
+                                   conv41, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_4_2",
-                                   conv42, gpu, verbose);
+                                   conv42, gpu, verbose, device);
         readBatchNormalizationWeightsFromHDF5(loader, "bn_4", batch4,
-                                              gpu, verbose);
+                                              gpu, verbose, device);
 
         readWeightsAndBiasFromHDF5(loader, "conv1d_5_1",
-                                   conv51, gpu, verbose);
+                                   conv51, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_5_2",
-                                   conv52, gpu, verbose);
+                                   conv52, gpu, verbose, device);
         readBatchNormalizationWeightsFromHDF5(loader, "bn_5", batch5,
-                                              gpu, verbose);
+                                              gpu, verbose, device);
 
         readWeightsAndBiasFromHDF5(loader, "convTranspose1d_6_1",
-                                   uconv6, gpu, verbose);
+                                   uconv6, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_6_1",
-                                   conv61, gpu, verbose);
+                                   conv61, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_6_2",
-                                   conv62, gpu, verbose);
+                                   conv62, gpu, verbose, device);
         readBatchNormalizationWeightsFromHDF5(loader, "bn_6", batch6,
-                                              gpu, verbose);
+                                              gpu, verbose, device);
 
         readWeightsAndBiasFromHDF5(loader, "convTranspose1d_7_1",
-                                   uconv7, gpu, verbose);
+                                   uconv7, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_7_1",
-                                   conv71, gpu, verbose);
+                                   conv71, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_7_2",
-                                   conv72, gpu, verbose);
+                                   conv72, gpu, verbose, device);
         readBatchNormalizationWeightsFromHDF5(loader, "bn_7", batch7,
-                                              gpu, verbose);
+                                              gpu, verbose, device);
 
         readWeightsAndBiasFromHDF5(loader, "convTranspose1d_8_1",
-                                   uconv8, gpu, verbose);
+                                   uconv8, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_8_1",
-                                   conv81, gpu, verbose);
+                                   conv81, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_8_2",
-                                   conv82, gpu, verbose);
+                                   conv82, gpu, verbose, device);
         readBatchNormalizationWeightsFromHDF5(loader, "bn_8", batch8,
-                                              gpu, verbose);
+                                              gpu, verbose, device);
 
         readWeightsAndBiasFromHDF5(loader, "convTranspose1d_9_1",
-                                   uconv9, gpu, verbose);
+                                   uconv9, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_9_1",
-                                   conv91, gpu, verbose);
+                                   conv91, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_9_2",
-                                   conv92, gpu, verbose);
+                                   conv92, gpu, verbose, device);
         readWeightsAndBiasFromHDF5(loader, "conv1d_9_3",
-                                   conv93, gpu, verbose);
+                                   conv93, gpu, verbose, device);
         readBatchNormalizationWeightsFromHDF5(loader, "bn_9", batch9,
-                                              gpu, verbose);
+                                              gpu, verbose, device);
     }
     /// Write the weights to a file
     /*
@@ -594,11 +595,16 @@ public:
     {
         if (!mOnGPU && mUseGPU && mHaveGPU)
         {
-            mNetwork.to(torch::kCUDA);
+            for (const auto deviceID : mDeviceIDs)
+            {
+                auto dev16 = static_cast<int16_t> (deviceID);
+                mNetworks[deviceID].to({torch::kCUDA, dev16});
+            }
             mOnGPU = true;
         }
     }
-    UNet mNetwork; 
+    //UNet mNetwork; 
+    std::vector<UNet> mNetworks;
     /// Classifies to group 0 when less than and group 1 when greater than tol
     double mPredictTol = 0.5;
     const int mMinimumSeismogramLength = 16;
@@ -614,9 +620,10 @@ template<>
 Model<UUSS::Device::CPU>::Model() :
     pImpl(std::make_unique<ModelImpl> ())
 {
+    pImpl->mNetworks.resize(1);
     pImpl->mDeviceIDs.resize(1);
     pImpl->mDeviceIDs[0] = 0;
-    pImpl->mNetwork.eval();
+    pImpl->mNetworks[0].eval();
 }
 
 /// Cnostructor for GPU
@@ -635,16 +642,22 @@ Model<UUSS::Device::GPU>::Model() :
         cudaGetDeviceCount(&nGPUs);
         for (int gpuID=0; gpuID<nGPUs; ++gpuID)
         {
+            cudaSetDevice(gpuID);
             int deviceID = 0;
             cudaGetDevice(&deviceID);
-            std::cout << "Detected device: " << deviceID << std::endl; 
+            std::cout << "Detected device ID: " << deviceID << std::endl; 
             pImpl->mDeviceIDs.push_back(deviceID);
         }
         std::cout << "Number of devices found: "
                   << pImpl->mDeviceIDs.size() << std::endl;
+        pImpl->mNetworks.resize(nGPUs);
+        for (int gpuID=0; gpuID<nGPUs; ++gpuID)
+        {
+            pImpl->mNetworks[gpuID].eval();
+        }
     }
     pImpl->toGPU();
-    pImpl->mNetwork.eval();
+    //pImpl->mNetwork.eval();
 }
 
 /// Destructor
@@ -656,9 +669,22 @@ template<UUSS::Device E>
 void Model<E>::loadWeightsFromHDF5(const std::string &fileName,
                                    const bool verbose)
 {
-    pImpl->mNetwork.loadWeightsFromHDF5(fileName, pImpl->mUseGPU, verbose);
-    if (pImpl->mUseGPU){pImpl->toGPU();}
-    pImpl->mNetwork.eval();
+    if (!pImpl->mUseGPU)
+    {
+        pImpl->mNetworks[0].loadWeightsFromHDF5(fileName, false, verbose);
+        pImpl->mNetworks[0].eval();
+    }
+    else
+    {
+        for (const auto &dev : pImpl->mDeviceIDs)
+        {
+            std::cout << "Loading weights for device: " << dev << std::endl;
+            pImpl->mNetworks[dev].loadWeightsFromHDF5(fileName, true, verbose, dev); 
+            pImpl->mNetworks[dev].eval();
+        }
+        //pImpl->toGPU();
+    }
+    //pImpl->mNetwork.eval();
     pImpl->mHaveCoefficients = true;
 }
 
@@ -726,7 +752,7 @@ void Model<UUSS::Device::CPU>::predictProbability(
     {
         throw std::runtime_error("Model does not have coefficients");
     }
-    pImpl->mNetwork.eval();
+    //pImpl->mNetworks[0].eval();
     if (!isValidSeismogramLength(nSamples) != 0)
     {
         throw std::invalid_argument("nSamples = " + std::to_string(nSamples)
@@ -752,7 +778,7 @@ void Model<UUSS::Device::CPU>::predictProbability(
     float *xPtr = X.data_ptr<float> ();
     // Feature rescale
     rescaleAndCopy(nSamples, vertical, north, east, xPtr);
-    auto p = pImpl->mNetwork.forward(X, applySigmoid);
+    auto p = pImpl->mNetworks[0].forward(X, applySigmoid);
     float *pPtr = p.data_ptr<float> ();
     copy(nSamples, pPtr, proba);
 }
@@ -769,7 +795,7 @@ void Model<UUSS::Device::GPU>::predictProbability(
     {
         throw std::runtime_error("Model does not have coefficients");
     }
-    pImpl->mNetwork.eval();
+    //pImpl->mNetworks[0].eval();
     if (!isValidSeismogramLength(nSamples) != 0)
     {
         throw std::invalid_argument("nSamples = " + std::to_string(nSamples)
@@ -795,8 +821,8 @@ void Model<UUSS::Device::GPU>::predictProbability(
     float *xPtr = X.data_ptr<float> ();
     // Feature rescale
     rescaleAndCopy(nSamples, vertical, north, east, xPtr);
-    auto XGPU = X.to(torch::kCUDA);
-    auto p = pImpl->mNetwork.forward(XGPU, applySigmoid);
+    auto XGPU = X.to({torch::kCUDA, pImpl->mDeviceIDs[0]});
+    auto p = pImpl->mNetworks[0].forward(XGPU, applySigmoid);
     // Copy the answer
     auto pHost = p.to(torch::kCPU);
     float *pPtr = pHost.data_ptr<float> ();
@@ -874,7 +900,7 @@ void Model<UUSS::Device::CPU>::predictProbability(
             // Apply and copy back
             int nCopy = nWindows*nSamplesInWindow;
             assert(nCopy + iStart <= nSamples);
-            auto p = pImpl->mNetwork.forward(X, applySigmoid);
+            auto p = pImpl->mNetworks[0].forward(X, applySigmoid);
             float *pPtr = p.data_ptr<float> ();
             copy(nCopy, pPtr, proba + iStart);
             lastIndex = iStart + nCopy;
@@ -921,7 +947,7 @@ void Model<UUSS::Device::CPU>::predictProbability(
                                vertical+i1, north+i1, east+i1, xPtr);
                 nWindows = nWindows + 1;
             }
-            auto p = pImpl->mNetwork.forward(X, applySigmoid);
+            auto p = pImpl->mNetworks[0].forward(X, applySigmoid);
             float *pPtr = p.data_ptr<float> ();
             for (int iwin=0; iwin<nWindows; iwin++)
             {
@@ -949,7 +975,7 @@ void Model<UUSS::Device::CPU>::predictProbability(
         rescaleAndCopy(nSamplesInWindow,
                        vertical+i1, north+i1, east+i1, xPtr);
         int j1 = nSamplesInWindow - nRemainder;
-        auto p = pImpl->mNetwork.forward(Xlast, applySigmoid);
+        auto p = pImpl->mNetworks[0].forward(Xlast, applySigmoid);
         float *pPtr = p.data_ptr<float> ();
         copy(nRemainder, pPtr + j1, proba + lastIndex);
     }
@@ -995,20 +1021,39 @@ void Model<UUSS::Device::GPU>::predictProbability(
         if (east == nullptr){throw std::invalid_argument("east is NULL");}
         throw std::invalid_argument("proba is NULL");
     }
+    int nOriginalThreads = omp_get_max_threads();
+    int nDevices = getNumberOfDevices();
+    int nThreadsUse = std::min(nOriginalThreads, nDevices); 
+    omp_set_num_threads(nThreadsUse);
+    auto deviceIDs = pImpl->mDeviceIDs; 
     int lastIndex = 0;
+    UNet *networks = pImpl->mNetworks.data();
     if (nCenter == 0)
     {
-        auto X = torch::zeros({batchSize, 3, nSamplesInWindow},
-                               torch::TensorOptions().dtype(torch::kFloat32)
-                              .requires_grad(false));
-        int nUpdate = nSamplesInWindow*batchSize;
-        for (int iStart=0; iStart < nSamples; iStart = iStart + nUpdate)
+        //auto X = torch::zeros({batchSize, 3, nSamplesInWindow},
+        //                       torch::TensorOptions().dtype(torch::kFloat32)
+        //                      .requires_grad(false));
+        int iStart = 0;
+        for (int kloop=0; kloop<nSamples; ++kloop) // int iStart=0; iStart < nSamples; iStart = iStart + nUpdate)
         {
-            int nWindows = 0;
+            int nCopy = 0;
+            #pragma omp parallel \
+             shared(std::cout, iStart, vertical, north, east, proba) \
+             shared(deviceIDs, networks) \
+             default(none) \
+             reduction(+:nCopy)
+            {
+            int threadID = omp_get_thread_num();
+            int deviceID = deviceIDs[threadID];
+            auto X = torch::zeros({batchSize, 3, nSamplesInWindow},
+                                   torch::TensorOptions().dtype(torch::kFloat32)
+                                  .requires_grad(false));
             int nAdvance = nSamplesInWindow;
+            int nWindows = 0;
             for (int batch=0; batch<batchSize; ++batch)
             {
-                int i1 = iStart + batch*nAdvance;
+                int i1 = iStart + batch*nAdvance
+                       + threadID*batchSize*nAdvance;
                 int i2 = i1 + nSamplesInWindow;
                 if (i2 > nSamples){break;}
                 int j1 = 3*batch*nSamplesInWindow;
@@ -1017,15 +1062,18 @@ void Model<UUSS::Device::GPU>::predictProbability(
                                vertical+i1, north+i1, east+i1, xPtr);
                 nWindows = nWindows + 1;
             }
-            int nCopy = nWindows*nSamplesInWindow;
-            assert(nCopy + iStart <= nSamples);
-            auto XGPU = X.to({torch::kCUDA}); //X.to({torch::kCUDA, 0});
-            auto p = pImpl->mNetwork.forward(XGPU, applySigmoid);
+            nCopy = nWindows*nSamplesInWindow;
+            assert(nCopy + iStart + threadID*batchSize*nAdvance <= nSamples);
+            auto XGPU = X.to({torch::kCUDA, deviceID});
+            auto p = networks[threadID].forward(XGPU, applySigmoid);
             //std::cout << p.device().index() << std::endl;
             auto pHost = p.to(torch::kCPU);
             float *pPtr = pHost.data_ptr<float> ();
-            copy(nCopy, pPtr, proba + iStart);
-            lastIndex = iStart + nCopy;
+            copy(nCopy, pPtr, proba + iStart + threadID*batchSize*nAdvance);
+            }
+            iStart = iStart + nCopy;
+            lastIndex = iStart;// + nCopy;
+            if (iStart + nSamplesInWindow > nSamples){break;}
         }
     }
     else
@@ -1035,15 +1083,28 @@ void Model<UUSS::Device::GPU>::predictProbability(
         int iDst = nHalf + nCenter;
         int iSrc = 2*nCenter;
         int nAdvanceWindow = 2*nCenter;
-        auto X = torch::zeros({batchSize, 3, nSamplesInWindow},
-                               torch::TensorOptions().dtype(torch::kFloat32)
-                              .requires_grad(false));
+        //auto X = torch::zeros({batchSize, 3, nSamplesInWindow},
+        //                       torch::TensorOptions().dtype(torch::kFloat32)
+        //                      .requires_grad(false));
         for (int kloop=0; kloop<nSamples; ++kloop)
         {
             int nWindows = 0;
+            #pragma omp parallel \
+             shared(iDst, iSrc, nHalf, nAdvanceWindow, nDevices) \
+             shared(std::cout, vertical, north, east, proba, deviceIDs, networks) \
+             default(none) \
+             reduction(+:nWindows)
+            {
+            int threadID = omp_get_thread_num();
+            int deviceID = deviceIDs[threadID];
+            auto X = torch::zeros({batchSize, 3, nSamplesInWindow},
+                                   torch::TensorOptions().dtype(torch::kFloat32)
+                                  .requires_grad(false));
+
             for (int batch=0; batch<batchSize; ++batch)
             {
-                int i1 = iSrc + batch*nAdvanceWindow;
+                int i1 = iSrc + batch*nAdvanceWindow
+                       + threadID*batchSize*nAdvanceWindow;
                 int i2 = i1 + nSamplesInWindow;
                 if (i2 > nSamples){break;}
                 int j1 = 3*batch*nSamplesInWindow;
@@ -1052,17 +1113,20 @@ void Model<UUSS::Device::GPU>::predictProbability(
                                vertical+i1, north+i1, east+i1, xPtr);
                 nWindows = nWindows + 1;
             }
-            auto XGPU = X.to(torch::kCUDA); //X.to({torch::kCUDA, 0});
-            auto p = pImpl->mNetwork.forward(XGPU, applySigmoid);
-            //std::cout << p.device().index() << std::endl;
+            auto XGPU = X.to({torch::kCUDA, deviceID}); //X.to({torch::kCUDA, 0});
+            auto p = networks[threadID].forward(XGPU, applySigmoid);
             auto pHost = p.to(torch::kCPU);
             float *pPtr = pHost.data_ptr<float> ();
             for (int iwin=0; iwin<nWindows; iwin++)
             {
                 int jSrc = nHalf - nCenter + iwin*nSamplesInWindow;
-                int jDst = iDst + iwin*nAdvanceWindow;
+                int jDst = iDst + iwin*nAdvanceWindow
+                         + threadID*batchSize*nAdvanceWindow;
                 copy(nAdvanceWindow, pPtr + jSrc, proba + jDst);
             }
+
+            } // End parallel
+
             iSrc = iSrc + nAdvanceWindow*nWindows;
             iDst = iDst + nAdvanceWindow*nWindows;
             lastIndex = iDst;
@@ -1080,12 +1144,13 @@ void Model<UUSS::Device::GPU>::predictProbability(
         rescaleAndCopy(nSamplesInWindow,
                        vertical+i1, north+i1, east+i1, xPtr);
         int j1 = nSamplesInWindow - nRemainder;
-        auto XGPU = Xlast.to(torch::kCUDA);
-        auto p = pImpl->mNetwork.forward(XGPU, applySigmoid);
+        auto XGPU = Xlast.to({torch::kCUDA, 0});
+        auto p = pImpl->mNetworks[0].forward(XGPU, applySigmoid);
         auto pHost = p.to(torch::kCPU);
         float *pPtr = pHost.data_ptr<float> ();
         copy(nRemainder, pPtr + j1, proba + lastIndex);
     }
+    omp_set_num_threads(nOriginalThreads);
 }
 /// Determines if the model coefficients were loaded
 template<UUSS::Device E>
@@ -1111,11 +1176,18 @@ bool Model<E>::isValidSeismogramLength(
     return true;
 }
 
+/// Determines the number of devices
+template<UUSS::Device E>
+int Model<E>::getNumberOfDevices() const noexcept
+{
+    return static_cast<int> (pImpl->mDeviceIDs.size());
+}
+
 /// Return the number of channels
 template<UUSS::Device E>
 int Model<E>::getInputNumberOfChannels() const noexcept
 {
-    return pImpl->mNetwork.mInputChannels;
+    return pImpl->mNetworks[0].mInputChannels;
 }
 
 //-----------------------------------------------------------------------------//

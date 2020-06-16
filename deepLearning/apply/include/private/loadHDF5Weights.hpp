@@ -120,7 +120,8 @@ void readWeightsFromHDF5(HDF5Loader &loader,
                          const std::string &dataSetName,
                          torch::Tensor &weights,
                          const bool gpu = false,
-                         const bool verbose = false)
+                         const bool verbose = false,
+                         const int device = -1)
 {
     if (verbose){std::cout << "Loading " << dataSetName << std::endl;}
     // Load the data
@@ -178,7 +179,19 @@ void readWeightsFromHDF5(HDF5Loader &loader,
     }
     if (gpu)
     {
-        weights = result.to(torch::kCUDA);
+        if (device >= 0)
+        {
+            if (verbose)
+            {
+                std::cout << "Putting weights onto device: " << device
+                          << std::endl;
+            }
+            weights = result.to({torch::kCUDA, device});
+        }
+        else
+        {
+            weights = result.to(torch::kCUDA);
+        }
     }
     else
     {
@@ -203,12 +216,13 @@ void readWeightsAndBiasFromHDF5(
     const std::string &dataSetName,
     torch::nn::Conv1d &conv,
     const bool gpu = false,
-    const bool verbose = false)
+    const bool verbose = false,
+    const int device = -1)
 {
     auto weightName = dataSetName + ".weight";
     auto biasName = dataSetName + ".bias";
-    readWeightsFromHDF5(loader, weightName, conv->weight, gpu, verbose);
-    readWeightsFromHDF5(loader, biasName,   conv->bias, gpu, verbose);
+    readWeightsFromHDF5(loader, weightName, conv->weight, gpu, verbose, device);
+    readWeightsFromHDF5(loader, biasName,   conv->bias, gpu, verbose, device);
 }
 [[maybe_unused]]
 void readWeightsAndBiasFromHDF5(
@@ -216,12 +230,13 @@ void readWeightsAndBiasFromHDF5(
     const std::string &dataSetName,
     torch::nn::Linear &fcn,
     const bool gpu = false,
-    const bool verbose = false)
+    const bool verbose = false,
+    const int device = -1)
 {
     auto weightName = dataSetName + ".weight";
     auto biasName = dataSetName + ".bias";
-    readWeightsFromHDF5(loader, weightName, fcn->weight, gpu, verbose);
-    readWeightsFromHDF5(loader, biasName,   fcn->bias, gpu, verbose);
+    readWeightsFromHDF5(loader, weightName, fcn->weight, gpu, verbose, device);
+    readWeightsFromHDF5(loader, biasName,   fcn->bias, gpu, verbose, device);
 }
 [[maybe_unused]]
 void readWeightsAndBiasFromHDF5(
@@ -229,12 +244,14 @@ void readWeightsAndBiasFromHDF5(
     const std::string &dataSetName,
     torch::nn::ConvTranspose1d &uconv,
     const bool gpu = false,
-    const bool verbose = false)
+    const bool verbose = false,
+    const int device = -1)
 {
     auto weightName = dataSetName + ".weight";
     auto biasName = dataSetName + ".bias";
-    readWeightsFromHDF5(loader, weightName, uconv->weight, gpu, verbose);
-    readWeightsFromHDF5(loader, biasName,   uconv->bias, gpu, verbose);
+    readWeightsFromHDF5(loader, weightName, uconv->weight, gpu,
+                        verbose, device);
+    readWeightsFromHDF5(loader, biasName,   uconv->bias, gpu, verbose, device);
 }
 /// @brief Reads the batch normalization weights from HDF5.
 /// @param[in] loader       The HDF5 data loader with group containing the
@@ -257,18 +274,19 @@ void readBatchNormalizationWeightsFromHDF5(
     const std::string &dataSetName,
     torch::nn::BatchNorm1d &bn,
     const bool gpu = false,
-    const bool verbose = false)
+    const bool verbose = false,
+    const int device = -1)
 {
     auto gammaName = dataSetName + ".weight";
     auto biasName = dataSetName + ".bias";
     auto runningMeanName = dataSetName + ".running_mean";
     auto runningVarianceName = dataSetName + ".running_var";
-    readWeightsFromHDF5(loader, gammaName, bn->weight, gpu, verbose);
-    readWeightsFromHDF5(loader, biasName, bn->bias, gpu, verbose);
+    readWeightsFromHDF5(loader, gammaName, bn->weight, gpu, verbose, device);
+    readWeightsFromHDF5(loader, biasName, bn->bias, gpu, verbose, device);
     readWeightsFromHDF5(loader, runningMeanName,
-                        bn->running_mean, gpu, verbose);
+                        bn->running_mean, gpu, verbose, device);
     readWeightsFromHDF5(loader, runningVarianceName,
-                        bn->running_var, gpu, verbose);
+                        bn->running_var, gpu, verbose, device);
 }
 
 }

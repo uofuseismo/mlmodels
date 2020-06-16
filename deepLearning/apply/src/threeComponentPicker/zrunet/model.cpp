@@ -19,6 +19,8 @@
 #endif
 #include <torch/torch.h>
 #include <H5Cpp.h>
+#include <cuda.h>
+#include <cuda_runtime_api.h>
 #include "private/loadHDF5Weights.hpp"
 #include "uuss/threeComponentPicker/zrunet/model.hpp"
 
@@ -600,6 +602,7 @@ public:
     /// Classifies to group 0 when less than and group 1 when greater than tol
     double mPredictTol = 0.5;
     const int mMinimumSeismogramLength = 16;
+    std::vector<int> mDeviceIDs;
     bool mUseGPU = false;
     bool mOnGPU = false; /// Check if this is set on GPU yet
     bool mHaveCoefficients = false;
@@ -611,6 +614,8 @@ template<>
 Model<UUSS::Device::CPU>::Model() :
     pImpl(std::make_unique<ModelImpl> ())
 {
+    pImpl->mDeviceIDs.resize(1);
+    pImpl->mDeviceIDs[0] = 0;
     pImpl->mNetwork.eval();
 }
 
@@ -626,6 +631,17 @@ Model<UUSS::Device::GPU>::Model() :
     else
     {
         pImpl->mUseGPU = true;
+        int nGPUs = 0;
+        cudaGetDeviceCount(&nGPUs);
+        for (int gpuID=0; gpuID<nGPUs; ++gpuID)
+        {
+            int deviceID = 0;
+            cudaGetDevice(&deviceID);
+            std::cout << "Detected device: " << deviceID << std::endl; 
+            pImpl->mDeviceIDs.push_back(deviceID);
+        }
+        std::cout << "Number of devices found: "
+                  << pImpl->mDeviceIDs.size() << std::endl;
     }
     pImpl->toGPU();
     pImpl->mNetwork.eval();
@@ -1003,8 +1019,9 @@ void Model<UUSS::Device::GPU>::predictProbability(
             }
             int nCopy = nWindows*nSamplesInWindow;
             assert(nCopy + iStart <= nSamples);
-            auto XGPU = X.to(torch::kCUDA);
+            auto XGPU = X.to({torch::kCUDA}); //X.to({torch::kCUDA, 0});
             auto p = pImpl->mNetwork.forward(XGPU, applySigmoid);
+            //std::cout << p.device().index() << std::endl;
             auto pHost = p.to(torch::kCPU);
             float *pPtr = pHost.data_ptr<float> ();
             copy(nCopy, pPtr, proba + iStart);
@@ -1035,8 +1052,9 @@ void Model<UUSS::Device::GPU>::predictProbability(
                                vertical+i1, north+i1, east+i1, xPtr);
                 nWindows = nWindows + 1;
             }
-            auto XGPU = X.to(torch::kCUDA);
+            auto XGPU = X.to(torch::kCUDA); //X.to({torch::kCUDA, 0});
             auto p = pImpl->mNetwork.forward(XGPU, applySigmoid);
+            //std::cout << p.device().index() << std::endl;
             auto pHost = p.to(torch::kCPU);
             float *pPtr = pHost.data_ptr<float> ();
             for (int iwin=0; iwin<nWindows; iwin++)

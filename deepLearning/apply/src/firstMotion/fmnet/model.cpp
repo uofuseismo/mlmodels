@@ -417,7 +417,7 @@ void Model<UUSS::Device::CPU>::predictProbability(
     std::fill(pUnknown, pUnknown + nSignals, 1);
     // Allocate space
     int batchUse = std::min(nSignals, batchSize);
-    auto X = torch::zeros({batchUse, 1, 400},
+    auto X = torch::zeros({batchUse, 1, signalLength},
                           torch::TensorOptions().dtype(torch::kFloat32)
                           .requires_grad(false));
     std::vector<bool> lAlive(batchUse, true);
@@ -485,7 +485,7 @@ void Model<UUSS::Device::GPU>::predictProbability(
     std::fill(pDown, pDown + nSignals, 0);
     std::fill(pUnknown, pUnknown + nSignals, 1);
     int batchUse = std::min(nSignals, batchSize);
-    auto X = torch::zeros({batchUse, 1, 400},
+    auto X = torch::zeros({batchUse, 1, signalLength},
                           torch::TensorOptions().dtype(torch::kFloat32)
                           .requires_grad(false));
     std::vector<bool> lAlive(batchUse, true);

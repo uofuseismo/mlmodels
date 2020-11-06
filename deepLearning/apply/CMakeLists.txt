@@ -91,6 +91,7 @@ set(LIB_SRC
     src/version.cpp
     src/firstMotion/fmnet/processData.cpp
     src/firstMotion/fmnet/model.cpp
+    src/oneComponentPicker/zcnn/model.cpp
     src/threeComponentPicker/zrunet/processData.cpp
     src/threeComponentPicker/zrunet/model.cpp)
 

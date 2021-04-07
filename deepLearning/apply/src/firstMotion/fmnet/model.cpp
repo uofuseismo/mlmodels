@@ -236,6 +236,22 @@ Model<UUSS::Device::GPU>::Model () :
     pImpl->mNetwork.eval();
 }
 
+/// Move c'tor
+template<UUSS::Device E>
+Model<E>::Model(Model<E> &&model) noexcept
+{
+    *this = std::move(model);
+}
+
+/// Move assignment
+template<UUSS::Device E>
+Model<E>& Model<E>::operator=(Model<E> &&model) noexcept
+{
+    if (&model == this){return *this;}
+    pImpl = std::move(model.pImpl);
+    return *this;
+}
+
 /// Destructor
 template<UUSS::Device E>
 Model<E>::~Model() = default;

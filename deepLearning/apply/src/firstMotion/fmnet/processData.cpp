@@ -36,6 +36,20 @@ ProcessData::ProcessData() :
 {
 }
 
+/// Move c'tor
+ProcessData::ProcessData(ProcessData &&process) noexcept
+{
+    *this = std::move(process);
+}
+
+/// Move assignment
+ProcessData& ProcessData::operator=(ProcessData &&process) noexcept
+{
+    if (&process == this){return *this;}
+    pImpl = std::move(process.pImpl);
+    return *this;
+}
+
 /// Destructor
 ProcessData::~ProcessData() = default;
 

@@ -626,7 +626,7 @@ Model<UUSS::Device::CPU>::Model() :
     pImpl->mNetworks[0].eval();
 }
 
-/// Cnostructor for GPU
+/// Constructor for GPU
 template<>
 Model<UUSS::Device::GPU>::Model() :
     pImpl(std::make_unique<ModelImpl> ())
@@ -663,6 +663,22 @@ Model<UUSS::Device::GPU>::Model() :
 /// Destructor
 template<UUSS::Device E>
 Model<E>::~Model() = default;
+
+/// Move c'tor
+template<UUSS::Device E>
+Model<E>::Model(Model &&model) noexcept
+{
+    *this = std::move(model);
+}
+
+/// Move assignment
+template<UUSS::Device E>
+Model<E>& Model<E>::operator=(Model<E> &&model) noexcept
+{
+    if (&model == this){return *this;}
+    pImpl = std::move(model.pImpl);
+    return *this;
+}
 
 /// Load from weights
 template<UUSS::Device E>

@@ -57,7 +57,7 @@ public:
                          const float data[],
                          std::vector<float> *processedData);
     /// @result The sampling period of the processed signals.
-    [[nodiscard]] double getTargetSamplingPeriod() const;
+    [[nodiscard]] double getTargetSamplingPeriod() const noexcept;
 
     ProcessData(const ProcessData &p) = delete;
     ProcessData& operator=(const ProcessData &p) = delete;

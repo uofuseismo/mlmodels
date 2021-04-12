@@ -1,6 +1,7 @@
 #ifndef UUSSMLMODELS_FIRSTMOTION_FMNET_PROCESSDATA_HPP
 #define UUSSMLMODELS_FIRSTMOTION_FMNET_PROCESSDATA_HPP
 #include <memory>
+#include <vector>
 namespace UUSS::FirstMotion::FMNet
 {
 /// @class ProcessData "processData.hpp" "uuss/firstMotion/fmnet/processData.hpp"
@@ -45,7 +46,7 @@ public:
                          const float data[],
                          std::vector<float> *processedData);
     /// @result The sampling period of the processed signals.
-    [[nodiscard]] double getTargetSamplingPeriod() const;
+    [[nodiscard]] double getTargetSamplingPeriod() const noexcept;
     ProcessData& operator=(const ProcessData &p) = delete;
 private:
     class ProcessDataImpl;

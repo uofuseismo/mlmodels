@@ -1,6 +1,7 @@
 #ifndef UUSSMLMODELS_ONECOMPONENTPICKER_ZCNN_PROCESSDATA_HPP
 #define UUSSMLMODELS_ONECOMPONENTPICKER_ZCNN_PROCESSDATA_HPP
 #include <memory>
+#include <vector>
 namespace UUSS::OneComponentPicker::ZCNN
 {
 /// @brief This class is for applying a uniform data processing strategy to
@@ -44,7 +45,7 @@ public:
                          const float data[],
                          std::vector<float> *processedData);
     /// @result The sampling period of the processed signals.
-    [[nodiscard]] double getTargetSamplingPeriod() const;
+    [[nodiscard]] double getTargetSamplingPeriod() const noexcept;
     ProcessData(const ProcessData &p) = delete;
     ProcessData& operator=(const ProcessData &p) = delete;
 private:

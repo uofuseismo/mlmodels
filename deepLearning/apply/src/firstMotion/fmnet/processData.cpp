@@ -124,7 +124,7 @@ void ProcessData::processWaveform(
 }
 
 /// Get sampling period
-double ProcessData::getTargetSamplingPeriod() const
+double ProcessData::getTargetSamplingPeriod() const noexcept
 {
     return pImpl->mTargetSamplingPeriod;
 }

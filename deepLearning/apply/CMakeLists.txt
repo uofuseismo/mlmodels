@@ -112,11 +112,19 @@ endif()
 
 # Python
 if (WRAP_PYTHON)
+   find_package(pybind11 REQUIRED)
    add_library(pyuussmlmodels MODULE
-               python/waveformTemplate.cpp)
-   set_property(TARGET pyuussmlmodels PROPERTY CXX_STD_14)
-   set_property(TARGET pyuussmlmodels PROPERTY PREFIX "")
-   target_include_directories(pyuussmlmodels PRIVATE pybind11 ${CMAKE_SOURCE_DIR}/python/include)
+               python/pyuussmlmodels.cpp
+               python/oneComponentPicker/processData.cpp)
+   target_link_libraries(pyuussmlmodels PRIVATE
+                         pybind11::module uussmlmodels)
+   set_target_properties(pyuussmlmodels PROPERTIES
+                         PREFIX ""
+                         CXX_STANDARD 17
+                         CXX_STANDARD_REQUIRED YES 
+                         CXX_EXTENSIONS NO) 
+   target_include_directories(pyuussmlmodels PRIVATE pybind11
+                              ${CMAKE_SOURCE_DIR}/python)
 endif()
 
 ##########################################################################################
@@ -157,8 +165,8 @@ endif()
 ##########################################################################################
 #                                     CPACK Packaging                                    #
 ##########################################################################################
-set(CPACK_PACKAGE_NAME "mlmodels")
-set(CPACK_PACKAGE_VENDOR "The Internet")
+set(CPACK_PACKAGE_NAME "uussmlmodels")
+set(CPACK_PACKAGE_VENDOR "UUSS")
 set(CPACK_PACKAGE_CONTACT "bbaker@seis.utah.edu")
 set(CPACK_PACKAGE_LICENSE "MIT")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Production level UUSS Machine learning models")

@@ -24,11 +24,14 @@ public:
     /// Preprocess the input waveform.
     [[nodiscard]]
     std::vector<double> processWaveform(const std::vector<double> &x,
-                                        const double samplingRate = 100);
+                                        const double samplingPeriod = 0.01);
     /// @result The target sampling period in seconds.
     [[nodiscard]] double getTargetSamplingPeriod() const noexcept;
 
-    ProcessData& operator=(const ProcessData &process) = delete;
+    ProcessData(const ProcessData &process) = delete;
+    ProcessData(ProcessData &&process) noexcept = delete;
+    ProcessData& operator=(const ProcessData &process) noexcept = delete;
+    ProcessData& operator=(ProcessData &&process) = delete;
 private:
     std::unique_ptr<UUSS::OneComponentPicker::ZCNN::ProcessData> pImpl;
 };

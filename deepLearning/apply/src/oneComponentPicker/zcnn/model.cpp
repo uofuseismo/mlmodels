@@ -140,6 +140,7 @@ struct FMNetwork : torch::nn::Module
         x = batch5->forward(x);
 
         x = fcn3->forward(x);
+        x = torch::hardtanh(x, minVal, maxVal);
         return x;
     }
     /// Loads the weights from file
@@ -187,6 +188,8 @@ struct FMNetwork : torch::nn::Module
     torch::nn::Linear fcn2{nullptr};
     torch::nn::BatchNorm1d batch5{nullptr};
     torch::nn::Linear fcn3{nullptr};
+    const double minVal =-0.65;
+    const double maxVal = 0.65;
 };
 
 /// Structure with implementation

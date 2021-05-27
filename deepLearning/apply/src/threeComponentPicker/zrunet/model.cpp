@@ -1053,12 +1053,14 @@ void Model<UUSS::Device::GPU>::predictProbability(
         for (int kloop=0; kloop<nSamples; ++kloop) // int iStart=0; iStart < nSamples; iStart = iStart + nUpdate)
         {
             int nCopy = 0;
+/*
             #pragma omp parallel \
              shared(batchSize, std::cout, iStart, vertical, north, east) \
              shared(nSamples, nSamplesInWindow, proba, deviceIDs, networks) \
              shared(torch::kFloat32, torch::kCPU, torch::kCUDA) \
              default(none) \
              reduction(+:nCopy)
+*/
             {
             int threadID = omp_get_thread_num();
             int deviceID = deviceIDs[threadID];
@@ -1106,6 +1108,7 @@ void Model<UUSS::Device::GPU>::predictProbability(
         for (int kloop=0; kloop<nSamples; ++kloop)
         {
             int nWindows = 0;
+/*
             #pragma omp parallel \
              shared(batchSize, iDst, iSrc, nHalf, nAdvanceWindow, nDevices) \
              shared(std::cout, vertical, north, east, proba, deviceIDs) \
@@ -1113,6 +1116,7 @@ void Model<UUSS::Device::GPU>::predictProbability(
              shared(torch::kCPU, torch::kFloat32, torch::kCUDA) \
              default(none) \
              reduction(+:nWindows)
+*/
             {
             int threadID = omp_get_thread_num();
             int deviceID = deviceIDs[threadID];

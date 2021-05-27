@@ -597,7 +597,7 @@ public:
         {
             for (const auto deviceID : mDeviceIDs)
             {
-                auto dev16 = static_cast<int16_t> (deviceID);
+                auto dev16 = static_cast<int8_t> (deviceID);
                 mNetworks[deviceID].to({torch::kCUDA, dev16});
             }
             mOnGPU = true;
@@ -1054,8 +1054,9 @@ void Model<UUSS::Device::GPU>::predictProbability(
         {
             int nCopy = 0;
             #pragma omp parallel \
-             shared(std::cout, iStart, vertical, north, east, proba) \
-             shared(deviceIDs, networks) \
+             shared(batchSize, std::cout, iStart, vertical, north, east) \
+             shared(nSamples, nSamplesInWindow, proba, deviceIDs, networks) \
+             shared(torch::kFloat32, torch::kCPU, torch::kCUDA) \
              default(none) \
              reduction(+:nCopy)
             {
@@ -1106,8 +1107,10 @@ void Model<UUSS::Device::GPU>::predictProbability(
         {
             int nWindows = 0;
             #pragma omp parallel \
-             shared(iDst, iSrc, nHalf, nAdvanceWindow, nDevices) \
-             shared(std::cout, vertical, north, east, proba, deviceIDs, networks) \
+             shared(batchSize, iDst, iSrc, nHalf, nAdvanceWindow, nDevices) \
+             shared(std::cout, vertical, north, east, proba, deviceIDs) \
+             shared(nCenter, networks, nSamples, nSamplesInWindow) \
+             shared(torch::kCPU, torch::kFloat32, torch::kCUDA) \
              default(none) \
              reduction(+:nWindows)
             {

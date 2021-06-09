@@ -102,6 +102,15 @@ public:
                             const float east[],
                             float *proba[],
                             int batchSize = 32) const;
+    /// @copydoc predictProbability
+    void predictProbability(int nSamples,
+                            int nSamplesInWindow,
+                            int nCenter,
+                            const double vertical[],
+                            const double north[],
+                            const double east[],
+                            double *proba[],
+                            int batchSize = 32) const;
     /// @brief Predicts the posterior probabilities on a seismgoram.
     /// @param[in] nSamples  The number of samples in the traces.  This must
     ///                      be at least \c getMinimumSeismogramLength().

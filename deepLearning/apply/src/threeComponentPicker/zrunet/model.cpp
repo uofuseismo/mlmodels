@@ -845,6 +845,42 @@ void Model<UUSS::Device::GPU>::predictProbability(
     copy(nSamples, pPtr, proba);
 }
 
+/// Double precision interface
+template<UUSS::Device E>
+void Model<E>::predictProbability(
+    const int nSamples, const int nSamplesInWindow, const int nCenter,
+    const double vertical[],  const double north[], const double east[],
+    double *probaIn[], const int batchSize) const
+{
+    if (!isValidSeismogramLength(nSamples) != 0)
+    {
+        throw std::invalid_argument("nSamples = " + std::to_string(nSamples)
+                                  + " must be a multiple of "
+                                  + std::to_string(16));
+    }    
+    double *proba = *probaIn;
+    if (vertical == nullptr || north == nullptr ||
+        east == nullptr || proba == nullptr)
+    {
+        if (vertical == nullptr)
+        {
+            throw std::invalid_argument("vertical is NULL");
+        }
+        if (north == nullptr){throw std::invalid_argument("north is NULL");}
+        if (east == nullptr){throw std::invalid_argument("east is NULL");}
+        throw std::invalid_argument("proba is NULL");
+    }    
+    std::vector<float> v4(nSamples), n4(nSamples), e4(nSamples), p4(nSamples);
+    std::copy(vertical, vertical + nSamples, v4.data());
+    std::copy(north,    north + nSamples,    n4.data());
+    std::copy(east,     east + nSamples,     e4.data());
+    float *p4Ptr = p4.data();
+    predictProbability(nSamples, nSamplesInWindow, nCenter,
+                       v4.data(), n4.data(), e4.data(), &p4Ptr,
+                       batchSize); 
+    std::copy(p4.begin(), p4.end(), proba);
+}
+
 /// General case for sliding window
 template<>
 void Model<UUSS::Device::CPU>::predictProbability(

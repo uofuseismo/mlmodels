@@ -19,8 +19,8 @@
 #endif
 #include <torch/torch.h>
 #include <H5Cpp.h>
-#include <cuda.h>
-#include <cuda_runtime_api.h>
+//#include <cuda.h>
+//#include <cuda_runtime_api.h>
 #include "private/loadHDF5Weights.hpp"
 #include "uuss/threeComponentPicker/zrunet/model.hpp"
 
@@ -609,6 +609,7 @@ public:
     double mPredictTol = 0.5;
     const int mMinimumSeismogramLength = 16;
     std::vector<int> mDeviceIDs;
+    int mDeviceIDUse = 0;
     bool mUseGPU = false;
     bool mOnGPU = false; /// Check if this is set on GPU yet
     bool mHaveCoefficients = false;
@@ -638,9 +639,13 @@ Model<UUSS::Device::GPU>::Model() :
     else
     {
         pImpl->mUseGPU = true;
-        int nGPUs = 0;
-        cudaGetDeviceCount(&nGPUs);
-        for (int gpuID=0; gpuID<nGPUs; ++gpuID)
+        auto nGPUs = static_cast<int> (torch::cuda::device_count());
+        for (int gpuID = 0; gpuID < nGPUs; ++gpuID)
+        {
+            pImpl->mDeviceIDs.push_back(gpuID);
+        }
+/*
+        for (int gpuID = 0; gpuID < nGPUs; ++gpuID)
         {
             cudaSetDevice(gpuID);
             int deviceID = 0;
@@ -648,6 +653,7 @@ Model<UUSS::Device::GPU>::Model() :
             std::cout << "Detected device ID: " << deviceID << std::endl; 
             pImpl->mDeviceIDs.push_back(deviceID);
         }
+*/
         std::cout << "Number of devices found: "
                   << pImpl->mDeviceIDs.size() << std::endl;
         pImpl->mNetworks.resize(nGPUs);
@@ -694,9 +700,13 @@ void Model<E>::loadWeightsFromHDF5(const std::string &fileName,
     {
         for (const auto &dev : pImpl->mDeviceIDs)
         {
-            std::cout << "Loading weights for device: " << dev << std::endl;
-            pImpl->mNetworks[dev].loadWeightsFromHDF5(fileName, true, verbose, dev); 
-            pImpl->mNetworks[dev].eval();
+            if (dev == pImpl->mDeviceIDUse)
+            {
+                std::cout << "Loading weights for device: " << dev << std::endl;
+                pImpl->mNetworks[dev].loadWeightsFromHDF5(fileName, true,
+                                                          verbose, dev); 
+                pImpl->mNetworks[dev].eval();
+            }
         }
         //pImpl->toGPU();
     }
@@ -837,7 +847,7 @@ void Model<UUSS::Device::GPU>::predictProbability(
     float *xPtr = X.data_ptr<float> ();
     // Feature rescale
     rescaleAndCopy(nSamples, vertical, north, east, xPtr);
-    auto XGPU = X.to({torch::kCUDA, pImpl->mDeviceIDs[0]});
+    auto XGPU = X.to({torch::kCUDA, pImpl->mDeviceIDUse}); //pImpl->mDeviceIDs[0]});
     auto p = pImpl->mNetworks[0].forward(XGPU, applySigmoid);
     // Copy the answer
     auto pHost = p.to(torch::kCPU);
@@ -1074,8 +1084,9 @@ void Model<UUSS::Device::GPU>::predictProbability(
         throw std::invalid_argument("proba is NULL");
     }
     int nOriginalThreads = omp_get_max_threads();
-    int nDevices = getNumberOfDevices();
-    int nThreadsUse = std::min(nOriginalThreads, nDevices); 
+    //int nDevices = getNumberOfDevices();
+    //int nThreadsUse = std::min(nOriginalThreads, nDevices);
+    int nThreadsUse = 1;
     omp_set_num_threads(nThreadsUse);
     auto deviceIDs = pImpl->mDeviceIDs; 
     int lastIndex = 0;

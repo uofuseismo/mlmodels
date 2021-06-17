@@ -7,9 +7,7 @@ using namespace UUSS::OneComponentPicker::ZCNN;
 
 namespace
 {
-/*!
- * @brief Computes the absolute max value of an array.
- */
+/// @brief Computes the absolute max value of an array.
 template<class T> T getMaxAbs(const int npts, const T *__restrict__ v)
 {
 #ifdef USE_PSTL
@@ -20,18 +18,16 @@ template<class T> T getMaxAbs(const int npts, const T *__restrict__ v)
     auto amax = std::max( std::abs(*result.first), std::abs(*result.second) );
     return amax;
 }
-/*!
- * @brief Performs a min/max normalization and copies.
- * @param[in] npts     The number of points
- * @param[in] z        The vertical trace.  This has dimension [npts].
- * @param[in] n        The north trace.  This has dimension [npts].
- * @param[in] e        The east trae.  This has dimension [npts].
- * @param[out] tensor  The rescaled data for the neural network.
- *                     This has dimension [3 x npts] and is stored
- *                     row major format.
- * @retval True indicates that this is a live trace.
- * @retval False indicates that this is a dead trace.
- */
+/// @brief Performs a min/max normalization and copies.
+/// @param[in] npts     The number of points
+/// @param[in] z        The vertical trace.  This has dimension [npts].
+/// @param[in] n        The north trace.  This has dimension [npts].
+/// @param[in] e        The east trae.  This has dimension [npts].
+/// @param[out] tensor  The rescaled data for the neural network.
+///                     This has dimension [3 x npts] and is stored
+///                     row major format.
+/// @retval True indicates that this is a live trace.
+/// @retval False indicates that this is a dead trace.
 template<class T>
 bool rescaleAndCopy(const int npts,
                     const T *__restrict__ z,
@@ -62,10 +58,10 @@ bool rescaleAndCopy(const int npts,
 
 }
 
-struct FMNetwork : torch::nn::Module
+struct ZCNNPNetwork : torch::nn::Module
 {
     // C'tor
-    FMNetwork() :
+    ZCNNPNetwork() :
         // 1
         conv1(torch::nn::Conv1dOptions({1, 32, 21})
            .stride(1).padding(10).bias(true).dilation(1)),
@@ -205,7 +201,7 @@ public:
             mOnGPU = true;
         }
     }
-    FMNetwork mNetwork;
+    ZCNNPNetwork mNetwork;
     double mSamplingPeriod = 0.01;
     int mSignalLength = 400;
     bool mUseGPU = false;
@@ -219,6 +215,7 @@ template<>
 Model<UUSS::Device::CPU>::Model() :
     pImpl(std::make_unique<ZCNNImpl> ())
 {
+std::cout << "initia" << std::endl;
     pImpl->mNetwork.eval();
 }
 

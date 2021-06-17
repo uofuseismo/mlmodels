@@ -83,6 +83,14 @@ if (NOT ${CMAKE_SOURCE_DIR}/testing/models/test_zrunet_p.h5)
         http://home.chpc.utah.edu/~u6024448/uussmlmodels/fmnet_test_005.h5
         ${CMAKE_SOURCE_DIR}/testing/models/test_fmnet.h5
         INACTIVITY_TIMEOUT 5)
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/p_signals_zcnn_p.csv
+        ${CMAKE_SOURCE_DIR}/testing/data/p_signals_zcnn_p.csv
+        INACTIVITY_TIMEOUT 5)
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/zrcnnpick_p_005.h5
+        ${CMAKE_SOURCE_DIR}/testing/models/test_zrcnnpick_p.h5
+        INACTIVITY_TIMEOUT 5)
 endif()
 
 
@@ -132,6 +140,7 @@ endif()
 ##########################################################################################
 add_executable(unitTests
                testing/main.cpp
+               testing/zrcnn.cpp
                testing/fmnet.cpp
                testing/zrunet.cpp)
 target_link_libraries(unitTests PRIVATE uussmlmodels ${TORCH_LIBRARIES} ${GTEST_BOTH_LIBRARIES})

@@ -83,6 +83,42 @@ public:
         H5Sclose(dataSpace); 
         H5Dclose(dataSet);
     }
+    /// Reads the dataset
+    void readDataSet(const std::string &dataSetName,
+                     std::vector<hsize_t> *dims, std::vector<double> *values)
+    {
+        values->clear();
+        dims->clear();
+        if (!H5Lexists(mGroup, dataSetName.c_str(), H5P_DEFAULT))
+        {
+            throw std::invalid_argument(dataSetName + " doesn't exist");
+        }
+        auto dataSet = H5Dopen2(mGroup, dataSetName.c_str(), H5P_DEFAULT);
+        auto dataSpace = H5Dget_space(dataSet);
+        auto rank = H5Sget_simple_extent_ndims(dataSpace);
+        dims->resize(rank);
+        H5Sget_simple_extent_dims(dataSpace, dims->data(), NULL);
+        hsize_t length = 1;
+        for (int i=0; i<static_cast<int> (dims->size()); ++i)
+        {
+            length = length*dims->at(i);
+        }
+        // Now read the data
+        values->resize(length, 0); 
+        auto memSpace = H5Screate_simple(rank, dims->data(), NULL);
+        auto status = H5Dread(dataSet, H5T_NATIVE_DOUBLE, memSpace, dataSpace,
+                              H5P_DEFAULT, values->data());
+        if (status != 0)
+        {
+            std::cerr << "Failed to read dataset" << std::endl;
+            values->clear();
+            dims->clear();
+        }
+        // Release HDF5 resources
+        H5Sclose(memSpace);
+        H5Sclose(dataSpace); 
+        H5Dclose(dataSet);
+    }
     /// Closes the group
     void closeGroup() noexcept
     {

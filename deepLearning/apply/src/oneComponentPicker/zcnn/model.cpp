@@ -170,7 +170,13 @@ struct ZCNNPNetwork : torch::nn::Module
                                               gpu, verbose);
 
         readWeightsAndBiasFromHDF5(loader, "fcn_3", fcn3, gpu, verbose);
+        loader.closeGroup();
 
+        loader.openGroup("/model_bias");
+        std::vector<double> biasV;
+        std::vector<hsize_t> dims;
+        loader.readDataSet("bias", &dims, &biasV);
+        bias = biasV.at(0);
     }
 //private:
     torch::nn::Conv1d conv1{nullptr};
@@ -184,8 +190,9 @@ struct ZCNNPNetwork : torch::nn::Module
     torch::nn::Linear fcn2{nullptr};
     torch::nn::BatchNorm1d batch5{nullptr};
     torch::nn::Linear fcn3{nullptr};
-    const double minVal =-0.65;
-    const double maxVal = 0.65;
+    const double minVal =-0.75;
+    const double maxVal = 0.75;
+    double bias = 0;
 };
 
 /// Structure with implementation
@@ -203,6 +210,7 @@ public:
     }
     ZCNNPNetwork mNetwork;
     double mSamplingPeriod = 0.01;
+    double mBias = 0;
     int mSignalLength = 400;
     bool mUseGPU = false;
     bool mOnGPU = false;
@@ -215,8 +223,8 @@ template<>
 Model<UUSS::Device::CPU>::Model() :
     pImpl(std::make_unique<ZCNNImpl> ())
 {
-std::cout << "initia" << std::endl;
     pImpl->mNetwork.eval();
+    pImpl->mBias = pImpl->mNetwork.bias;
 }
 
 /// C'tor
@@ -234,6 +242,7 @@ Model<UUSS::Device::GPU>::Model () :
     }
     pImpl->toGPU();
     pImpl->mNetwork.eval();
+    pImpl->mBias = pImpl->mNetwork.bias;
 }
 
 /// Destructor

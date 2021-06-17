@@ -88,7 +88,7 @@ if (NOT ${CMAKE_SOURCE_DIR}/testing/models/test_zrunet_p.h5)
         ${CMAKE_SOURCE_DIR}/testing/data/p_signals_zcnn_p.csv
         INACTIVITY_TIMEOUT 5)
    file(DOWNLOAD
-        http://home.chpc.utah.edu/~u6024448/uussmlmodels/zrcnnpick_p_005.h5
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/test_zrcnnpick_p.h5
         ${CMAKE_SOURCE_DIR}/testing/models/test_zrcnnpick_p.h5
         INACTIVITY_TIMEOUT 5)
 endif()

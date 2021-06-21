@@ -1,6 +1,4 @@
-#include <cstdio>
-#include <cstdlib>
-#include <cmath>
+#include <iostream>
 #include <rtseis/postProcessing/singleChannel/waveform.hpp>
 #include "uuss/oneComponentPicker/zcnn/processData.hpp"
 
@@ -20,7 +18,9 @@ public:
     bool mDoTaper = true;
     /// Bandpass filter data
     int mFilterPoles = 2;
-    std::pair<double, double> mCorners = {1, 20}; // 1 Hz to 17 Hz
+    /// Number of times to apply the bandpass filter
+    int nCascades = 2;
+    std::pair<double, double> mCorners = {2, 18}; // 2 Hz to 18 Hz
     RTSeis::PostProcessing::SingleChannel::IIRPrototype mPrototype
         = RTSeis::PostProcessing::SingleChannel::IIRPrototype::BUTTERWORTH;
     double mRipple = 5; // Ripple for Chebyshev 1 or 2 - not applicable
@@ -57,19 +57,19 @@ ProcessData::~ProcessData() = default;
 void ProcessData::processWaveform(
     const int npts,
     const double samplingPeriod,
-    const float data[],
+    const float *__restrict__ data,
     std::vector<float> *processedData)
 {
     std::vector<double> dataIn(npts);
-    #pragma omp simd
-    for (int i=0; i<npts; ++i){dataIn[i] = static_cast<double> (data[i]);}
+    double *__restrict__ dataInPtr = dataIn.data();
+    std::copy(data, data + npts, dataInPtr);
     std::vector<double> temp;
     processWaveform(npts, samplingPeriod, dataIn.data(), &temp);
     int nptsNew = static_cast<int> (temp.size());
     processedData->resize(nptsNew, 0);
-    auto dPtr = processedData->data();
-    #pragma omp simd
-    for (int i=0; i<nptsNew; ++i){dPtr[i] = static_cast<float> (temp[i]);}
+    const double *__restrict__ tempPtr = temp.data();
+    float *__restrict__ dPtr = processedData->data();
+    std::copy(tempPtr, tempPtr + nptsNew, dPtr);
 }
 
 /// Processes the data
@@ -105,11 +105,14 @@ void ProcessData::processWaveform(
     if (pImpl->mDoTaper){pImpl->mWave.taper(pImpl->mTaperPct);}
     // (3) Filter: Note that the bandpass will prevent aliasing
     //     when downsampling the 200 Hz stations.
-    pImpl->mWave.iirBandpassFilter(pImpl->mFilterPoles,
-                                   pImpl->mCorners,
-                                   pImpl->mPrototype,
-                                   pImpl->mRipple,
-                                   pImpl->mZeroPhase);
+    for (int i = 0; i < pImpl->nCascades; ++i)
+    {
+        pImpl->mWave.iirBandpassFilter(pImpl->mFilterPoles,
+                                       pImpl->mCorners,
+                                       pImpl->mPrototype,
+                                       pImpl->mRipple,
+                                       pImpl->mZeroPhase);
+    }
     // (4) Potentially esample to target sampling period (e.g., 100 Hz)
     if (std::abs(samplingPeriod - pImpl->mTargetSamplingPeriod) > 1.e-5)
     {

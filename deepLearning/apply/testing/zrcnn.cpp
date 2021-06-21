@@ -89,7 +89,7 @@ TEST(ZCNN, Picker)
         }
         else
         {
-            EXPECT_TRUE(false);
+            std::cerr << "Shouldn't be here" << std::endl;
         } 
     }
     std::vector<double> perts(nSignals);

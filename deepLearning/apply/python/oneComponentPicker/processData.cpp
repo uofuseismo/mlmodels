@@ -17,13 +17,13 @@ ProcessData::~ProcessData() = default;
 std::vector<double> ProcessData::processWaveform(const std::vector<double> &x, 
                                                  const double samplingPeriod)
 {
-    std::vector<double> y(x.size(), 0);
     if (samplingPeriod <= 0)
     {
         throw std::invalid_argument("Sampling rate = "
                                   + std::to_string(samplingPeriod)
                                   + " must be positive");
     }
+    std::vector<double> y;
     pImpl->processWaveform(x.size(), samplingPeriod, x.data(), &y);
     return y;
 }
@@ -42,7 +42,7 @@ void PUUSSMLModels::OneComponentPicker::ZCNN::initializeProcessing(
     p.def(pybind11::init<> ());
     p.doc() = "Performs the preprocessing to use Zach Ross's fully connected neural network pick regressor architecture on UUSS data.\n\nProperties:\n\ntarget_sampling_period is the sampling period of the processed waveform in seconds.";
 
-    p.def("apply",
+    p.def("process_waveform",
           &ProcessData::processWaveform,
           "Performs the appropriate preprocessing to the waveform with the given sampling period in seconds.");
     p.def_property_readonly("target_sampling_period",

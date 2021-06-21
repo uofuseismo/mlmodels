@@ -19,8 +19,8 @@ public:
     /// Bandpass filter data
     int mFilterPoles = 2;
     /// Number of times to apply the bandpass filter
-    int nCascades = 2;
-    std::pair<double, double> mCorners = {2, 18}; // 2 Hz to 18 Hz
+    int nCascades = 1;
+    std::pair<double, double> mCorners = {1, 17}; // 1 Hz to 17 Hz
     RTSeis::PostProcessing::SingleChannel::IIRPrototype mPrototype
         = RTSeis::PostProcessing::SingleChannel::IIRPrototype::BUTTERWORTH;
     double mRipple = 5; // Ripple for Chebyshev 1 or 2 - not applicable

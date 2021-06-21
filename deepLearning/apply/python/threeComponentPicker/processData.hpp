@@ -21,6 +21,13 @@ public:
     ProcessData();
     /// Destructor
     ~ProcessData();
+    /// Preprocess the three component signal.
+    [[nodiscard]]
+    std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
+        processWaveform3C(const std::tuple<std::vector<double>,
+                                           std::vector<double>,
+                                           std::vector<double>> &waveforms,
+                          const double samplingPeriod = 0.01);
     /// Preprocess the input waveform.
     [[nodiscard]]
     std::vector<double> processWaveform(const std::vector<double> &x,

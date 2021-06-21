@@ -1,6 +1,7 @@
 #include "uuss/version.hpp"
 #include "oneComponentPicker/model.hpp"
 #include "oneComponentPicker/processData.hpp"
+#include "threeComponentPicker/processData.hpp"
 #include <pybind11/pybind11.h>
 
 PYBIND11_MODULE(pyuussmlmodels, modules)
@@ -22,4 +23,13 @@ PYBIND11_MODULE(pyuussmlmodels, modules)
     
     auto firstMotionZCNN = firstMotion.def_submodule("ZCNN");
     firstMotionZCNN.attr("__doc__") = "Evalutes the first motion classifier described in P Wave Arrival Picking and First‐Motion Polarity Determination With Deep Learning.";
+
+    // Three component picker
+    auto threeComponentPicker = modules.def_submodule("ThreeComponentPicker");
+    threeComponentPicker.attr("__doc__") = "MOdules for detection and picking on three-component seismograms.";
+    
+    auto threeComponentPickerZCNN = threeComponentPicker.def_submodule("ZCNN");
+    threeComponentPickerZCNN.attr("__doc__") = "Extends the arrival time regressor described in P Wave Arrival Picking and First-Motion Polarity Determination With Deep Learning to S waves.";
+    PUUSSMLModels::ThreeComponentPicker::ZCNN::initializeProcessing(threeComponentPickerZCNN);
+
 }

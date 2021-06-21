@@ -102,7 +102,8 @@ set(LIB_SRC
     src/oneComponentPicker/zcnn/model.cpp
     src/oneComponentPicker/zcnn/processData.cpp
     src/threeComponentPicker/zrunet/processData.cpp
-    src/threeComponentPicker/zrunet/model.cpp)
+    src/threeComponentPicker/zrunet/model.cpp
+    src/threeComponentPicker/zcnn/processData.cpp)
 
 set(BUILD_SHARED_LIBS YES)
 add_library(uussmlmodels ${LIB_SRC})
@@ -123,7 +124,8 @@ if (WRAP_PYTHON)
    find_package(pybind11 REQUIRED)
    add_library(pyuussmlmodels MODULE
                python/pyuussmlmodels.cpp
-               python/oneComponentPicker/processData.cpp)
+               python/oneComponentPicker/processData.cpp
+               python/threeComponentPicker/processData.cpp)
    target_link_libraries(pyuussmlmodels PRIVATE
                          pybind11::module uussmlmodels)
    set_target_properties(pyuussmlmodels PROPERTIES

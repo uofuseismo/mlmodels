@@ -2,6 +2,7 @@
 #include "oneComponentPicker/model.hpp"
 #include "oneComponentPicker/processData.hpp"
 #include "threeComponentPicker/processData.hpp"
+#include "firstMotion/processData.hpp"
 #include <pybind11/pybind11.h>
 
 PYBIND11_MODULE(pyuussmlmodels, modules)
@@ -21,8 +22,9 @@ PYBIND11_MODULE(pyuussmlmodels, modules)
     auto firstMotion = modules.def_submodule("FirstMotion");
     firstMotion.attr("__doc__") = "Modules for estimating first motions.";
     
-    auto firstMotionZCNN = firstMotion.def_submodule("ZCNN");
-    firstMotionZCNN.attr("__doc__") = "Evalutes the first motion classifier described in P Wave Arrival Picking and First‐Motion Polarity Determination With Deep Learning.";
+    auto firstMotionFMNet = firstMotion.def_submodule("FMNet");
+    firstMotionFMNet.attr("__doc__") = "Evalutes the first motion classifier described in P Wave Arrival Picking and First‐Motion Polarity Determination With Deep Learning.";
+    PUUSSMLModels::FirstMotion::FMNet::initializeProcessing(firstMotionFMNet);
 
     // Three component picker
     auto threeComponentPicker = modules.def_submodule("ThreeComponentPicker");

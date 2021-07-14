@@ -125,6 +125,7 @@ if (WRAP_PYTHON)
    add_library(pyuussmlmodels MODULE
                python/pyuussmlmodels.cpp
                python/oneComponentPicker/processData.cpp
+               python/firstMotion/processData.cpp
                python/threeComponentPicker/processData.cpp)
    target_link_libraries(pyuussmlmodels PRIVATE
                          pybind11::module uussmlmodels)

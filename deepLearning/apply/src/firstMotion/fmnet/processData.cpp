@@ -20,6 +20,8 @@ public:
     bool mDoTaper = true;
     /// Bandpass filter data
     int mFilterPoles = 2;
+    /// Number of cascades
+    int mCascades = 1;
     std::pair<double, double> mCorners = {1, 17}; // 1 Hz to 17 Hz
     RTSeis::PostProcessing::SingleChannel::IIRPrototype mPrototype
         = RTSeis::PostProcessing::SingleChannel::IIRPrototype::BUTTERWORTH;
@@ -105,11 +107,14 @@ void ProcessData::processWaveform(
     if (pImpl->mDoTaper){pImpl->mWave.taper(pImpl->mTaperPct);}
     // (3) Filter: Note that the bandpass will prevent aliasing
     //     when downsampling the 200 Hz stations.
-    pImpl->mWave.iirBandpassFilter(pImpl->mFilterPoles,
-                                   pImpl->mCorners,
-                                   pImpl->mPrototype,
-                                   pImpl->mRipple,
-                                   pImpl->mZeroPhase);
+    for (int i = 0; i < pImpl->mCascades; ++i)
+    {
+        pImpl->mWave.iirBandpassFilter(pImpl->mFilterPoles,
+                                       pImpl->mCorners,
+                                       pImpl->mPrototype,
+                                       pImpl->mRipple,
+                                       pImpl->mZeroPhase);
+    }
     // (4) Potentially esample to target sampling period (e.g., 100 Hz)
     if (std::abs(samplingPeriod - pImpl->mTargetSamplingPeriod) > 1.e-5)
     {

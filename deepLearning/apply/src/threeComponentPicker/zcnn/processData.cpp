@@ -1,5 +1,4 @@
-#include <cstdio>
-#include <cstdlib>
+#include <iostream>
 #include <cmath>
 #include <rtseis/postProcessing/singleChannel/waveform.hpp>
 #include "uuss/threeComponentPicker/zcnn/processData.hpp"
@@ -56,6 +55,38 @@ ProcessData& ProcessData::operator=(ProcessData &&process) noexcept
 
 /// Destructor
 ProcessData::~ProcessData() = default;
+
+/// Processes waveforms
+template<typename U>
+std::tuple<std::vector<U>, std::vector<U>, std::vector<U>>
+ProcessData::processWaveforms(
+    const std::tuple<const std::vector<U> &,
+                     const std::vector<U> &,
+                     const std::vector<U> &> &waveforms,
+    const double samplingPeriod)
+{
+    if (samplingPeriod <= 0)
+    {
+        throw std::invalid_argument("Sampling period must be positive");
+    }
+    auto z = std::get<0> (waveforms);
+    auto n = std::get<1> (waveforms);
+    auto e = std::get<2> (waveforms);
+    if (z.empty()){throw std::invalid_argument("z is empty");}
+    if (n.empty()){throw std::invalid_argument("n is empty");}
+    if (e.empty()){throw std::invalid_argument("e is empty");}
+    if (z.size() != n.size() || z.size() != e.size())
+    {
+        std::cerr << "Warning - inconsistent sizes" << std::endl;
+    } 
+    std::vector<U> zp;
+    std::vector<U> np;
+    std::vector<U> ep;
+    processWaveform(z.size(), samplingPeriod, z.data(), &zp);
+    processWaveform(n.size(), samplingPeriod, n.data(), &np);
+    processWaveform(e.size(), samplingPeriod, e.data(), &ep);
+    return std::tuple(zp, np, ep);
+}
 
 /// Processes the data
 void ProcessData::processWaveform(
@@ -135,3 +166,22 @@ double ProcessData::getTargetSamplingPeriod() const noexcept
 {
     return pImpl->mTargetSamplingPeriod;
 }
+
+///--------------------------------------------------------------------------///
+///                              Template Instantiation                      ///
+///--------------------------------------------------------------------------///
+template
+std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
+UUSS::ThreeComponentPicker::ZCNN::ProcessData::processWaveforms(
+    const std::tuple<const std::vector<double> &,
+                     const std::vector<double> &,
+                     const std::vector<double> &> &waveforms,
+    double samplingPeriod);
+
+template
+std::tuple<std::vector<float>, std::vector<float>, std::vector<float>>
+UUSS::ThreeComponentPicker::ZCNN::ProcessData::processWaveforms(
+    const std::tuple<const std::vector<float> &,
+                     const std::vector<float> &,
+                     const std::vector<float> &> &waveforms,
+    double samplingPeriod);

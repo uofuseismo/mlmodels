@@ -34,16 +34,15 @@ ZCNN::ProcessData::processWaveform(const std::vector<double> &x,
 }
 
 std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
-ZCNN::ProcessData::processWaveform3C(
-    const std::tuple<std::vector<double>,
-    std::vector<double>,
-    std::vector<double>> &waveforms,
-    const double samplingPeriod)
+ZCNN::ProcessData::processWaveforms3C(const std::vector<double> &z, 
+                                      const std::vector<double> &n, 
+                                      const std::vector<double> &e,
+                                      const double samplingPeriod)
 {
-    auto vp = processWaveform(std::get<0> (waveforms), samplingPeriod);
-    auto np = processWaveform(std::get<1> (waveforms), samplingPeriod);
-    auto ep = processWaveform(std::get<2> (waveforms), samplingPeriod);
-    return std::tuple(vp, np, ep);
+    auto t = std::tuple<const std::vector<double> &,
+                        const std::vector<double> &,
+                        const std::vector<double> &> (z, n, e); 
+    return pImpl->processWaveforms(t, samplingPeriod);
 }
 
 
@@ -65,7 +64,7 @@ void PUUSSMLModels::ThreeComponentPicker::ZCNN::initializeProcessing(
           &ProcessData::processWaveform,
           "Performs the appropriate preprocessing to the waveform with the given sampling period in seconds.");
     p.def("process_three_component_waveform",
-          &ProcessData::processWaveform3C,
+          &ProcessData::processWaveforms3C,
           "Processes a three-component waveform.  The input waveforms are ordered (vertical, north, east).  The resulting waveforms are the processed (vertical, north, east) waveforms."); 
     p.def_property_readonly("target_sampling_period",
                             &ProcessData::getTargetSamplingPeriod,
@@ -101,16 +100,15 @@ ZRUNet::ProcessData::processWaveform(const std::vector<double> &x,
 }
 
 std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
-ZRUNet::ProcessData::processWaveform3C(
-    const std::tuple<std::vector<double>,
-    std::vector<double>,
-    std::vector<double>> &waveforms,
-    const double samplingPeriod)
+ZRUNet::ProcessData::processWaveforms3C(const std::vector<double> &z,
+                                        const std::vector<double> &n,
+                                        const std::vector<double> &e,
+                                        const double samplingPeriod)
 {
-    auto vp = processWaveform(std::get<0> (waveforms), samplingPeriod);
-    auto np = processWaveform(std::get<1> (waveforms), samplingPeriod);
-    auto ep = processWaveform(std::get<2> (waveforms), samplingPeriod); 
-    return std::tuple(vp, np, ep);
+    auto t = std::tuple<const std::vector<double> &,
+                        const std::vector<double> &,
+                        const std::vector<double> &> (z, n, e); 
+    return pImpl->processWaveforms(t, samplingPeriod); 
 }
 
 /// Get the start sampling period 
@@ -132,7 +130,7 @@ void PUUSSMLModels::ThreeComponentPicker::ZRUNet::initializeProcessing(
           &ProcessData::processWaveform,
           "Performs the appropriate preprocessing to the waveform with the given sampling period in seconds.");
     p.def("process_three_component_waveform",
-          &ProcessData::processWaveform3C,
+          &ProcessData::processWaveforms3C,
           "Processes a three-component waveform.  The input waveforms are ordered (vertical, north, east).  The resulting waveforms are the processed (vertical, north, east) waveforms."); 
     p.def_property_readonly("target_sampling_period",
                             &ProcessData::getTargetSamplingPeriod,

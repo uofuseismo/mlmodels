@@ -30,10 +30,10 @@ public:
     /// Preprocess the three component signal.
     [[nodiscard]]
     std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
-        processWaveform3C(const std::tuple<std::vector<double>,
-                                           std::vector<double>,
-                                           std::vector<double>> &waveforms,
-                          const double samplingPeriod = 0.01);
+        processWaveforms3C(const std::vector<double> &z, 
+                           const std::vector<double> &n, 
+                           const std::vector<double> &e,
+                           const double samplingPeriod = 0.01);
     /// Preprocess the input waveform.
     [[nodiscard]]
     std::vector<double> processWaveform(const std::vector<double> &x,
@@ -64,10 +64,10 @@ public:
     /// Preprocess the three component signal.
     [[nodiscard]]
     std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
-        processWaveform3C(const std::tuple<std::vector<double>,
-                                           std::vector<double>,
-                                           std::vector<double>> &waveforms,
-                          const double samplingPeriod = 0.01);
+        processWaveforms3C(const std::vector<double> &z, 
+                           const std::vector<double> &n, 
+                           const std::vector<double> &e,
+                           const double samplingPeriod = 0.01);
     /// Preprocess the input waveform.
     [[nodiscard]]
     std::vector<double> processWaveform(const std::vector<double> &x, 

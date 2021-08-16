@@ -56,7 +56,6 @@ public:
     void processWaveform(int npts, double samplingPeriod,
                          const float data[],
                          std::vector<float> *processedData);
-
     /// @brief Processes the data.
     /// @param[in] waveforms   The waveforms stored as a (vertical, north, east)
     ///                        tuple.

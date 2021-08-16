@@ -56,6 +56,24 @@ public:
     void processWaveform(int npts, double samplingPeriod,
                          const float data[],
                          std::vector<float> *processedData);
+
+    /// @brief Processes the data.
+    /// @param[in] waveforms   The waveforms stored as a (vertical, north, east)
+    ///                        tuple.
+    /// @result The processed waveforms stored as (vertical, north, east) tuple.
+    /// @throws std::invalid_argument if the sampling period is invalid or
+    ///         any signals are empty.
+    /// @note If you permute the order of the input tuple then the output
+    ///       tuple will be in that order, e.g., an (e,n,z) will result
+    ///       in an (e,n,z) ordered output tuple.
+    template<typename U>
+    [[nodiscard]]
+    std::tuple<std::vector<U>, std::vector<U>, std::vector<U>>
+    processWaveforms(const std::tuple<const std::vector<U> &,
+                                      const std::vector<U> &,
+                                      const std::vector<U> &> &waveforms,
+                     double samplingPeriod);
+
     /// @result The sampling period of the processed signals.
     [[nodiscard]] double getTargetSamplingPeriod() const noexcept;
 

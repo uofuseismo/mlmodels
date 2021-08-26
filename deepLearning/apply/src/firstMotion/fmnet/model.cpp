@@ -60,8 +60,6 @@ bool rescaleAndCopy(const int npts,
     }
 }
 
-}
-
 struct FMNetwork : torch::nn::Module
 {
     // C'tor
@@ -188,6 +186,8 @@ struct FMNetwork : torch::nn::Module
     torch::nn::BatchNorm1d batch5{nullptr};
     torch::nn::Linear fcn3{nullptr};
 };
+
+}
 
 /// Structure with implementation
 template<UUSS::Device E>

@@ -19,6 +19,9 @@
 #endif
 #include <torch/torch.h>
 #include <H5Cpp.h>
+#if defined(_OPENMP)
+#include <omp.h>
+#endif
 //#include <cuda.h>
 //#include <cuda_runtime_api.h>
 #include "private/loadHDF5Weights.hpp"
@@ -1083,11 +1086,15 @@ void Model<UUSS::Device::GPU>::predictProbability(
         if (east == nullptr){throw std::invalid_argument("east is NULL");}
         throw std::invalid_argument("proba is NULL");
     }
+#if defined(_OPENMP)
     int nOriginalThreads = omp_get_max_threads();
+#endif
     //int nDevices = getNumberOfDevices();
     //int nThreadsUse = std::min(nOriginalThreads, nDevices);
+#if defined(_OPENMP)
     int nThreadsUse = 1;
     omp_set_num_threads(nThreadsUse);
+#endif
     auto deviceIDs = pImpl->mDeviceIDs; 
     int lastIndex = 0;
     UNet *networks = pImpl->mNetworks.data();
@@ -1109,7 +1116,10 @@ void Model<UUSS::Device::GPU>::predictProbability(
              reduction(+:nCopy)
 */
             {
-            int threadID = omp_get_thread_num();
+            int threadID = 0;
+#if defined(_OPENMP)
+            threadID = omp_get_thread_num();
+#endif
             int deviceID = deviceIDs[threadID];
             auto X = torch::zeros({batchSize, 3, nSamplesInWindow},
                                    torch::TensorOptions().dtype(torch::kFloat32)
@@ -1165,7 +1175,10 @@ void Model<UUSS::Device::GPU>::predictProbability(
              reduction(+:nWindows)
 */
             {
-            int threadID = omp_get_thread_num();
+            int threadID = 0;
+#if defined(_OPENMP)
+            threadID = omp_get_thread_num();
+#endif
             int deviceID = deviceIDs[threadID];
             auto X = torch::zeros({batchSize, 3, nSamplesInWindow},
                                    torch::TensorOptions().dtype(torch::kFloat32)
@@ -1220,7 +1233,9 @@ void Model<UUSS::Device::GPU>::predictProbability(
         float *pPtr = pHost.data_ptr<float> ();
         copy(nRemainder, pPtr + j1, proba + lastIndex);
     }
+#if defined(_OPENMP)
     omp_set_num_threads(nOriginalThreads);
+#endif
 }
 /// Determines if the model coefficients were loaded
 template<UUSS::Device E>

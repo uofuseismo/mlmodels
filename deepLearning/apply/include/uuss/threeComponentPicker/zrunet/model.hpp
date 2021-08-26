@@ -3,11 +3,6 @@
 #include <memory>
 #include "uuss/enums.hpp"
 // Forward declarations
-namespace torch
-{
-class Tensor;
-}
-
 namespace UUSS::ThreeComponentPicker::ZRUNet
 {
 /// @class Model "model.hpp" "uuss/threeComponentPicker/zrunet/model.hpp"

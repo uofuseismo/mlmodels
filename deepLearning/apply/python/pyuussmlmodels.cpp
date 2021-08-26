@@ -28,10 +28,13 @@ PYBIND11_MODULE(pyuussmlmodels, modules)
 
     // Three component picker
     auto threeComponentPicker = modules.def_submodule("ThreeComponentPicker");
-    threeComponentPicker.attr("__doc__") = "MOdules for detection and picking on three-component seismograms.";
+    threeComponentPicker.attr("__doc__") = "Modules for detection and picking on three-component seismograms.";
     
     auto threeComponentPickerZCNN = threeComponentPicker.def_submodule("ZCNN");
     threeComponentPickerZCNN.attr("__doc__") = "Extends the arrival time regressor described in P Wave Arrival Picking and First-Motion Polarity Determination With Deep Learning to S waves.";
     PUUSSMLModels::ThreeComponentPicker::ZCNN::initializeProcessing(threeComponentPickerZCNN);
+
+    auto threeComponentPickerZRUNet = threeComponentPicker.def_submodule("ZRUNet");
+    threeComponentPickerZRUNet.attr("__doc__") = "Performs the pre-processing for the three-component UNet detector.";
 
 }

@@ -49,14 +49,14 @@ public:
     void loadWeightsFromHDF5(const std::string &fileName,
                              bool verbose = false);
     /// @result True indicates that the model coefficients are set.
-    bool haveModelCoefficients() const noexcept;
+    [[nodiscard]] bool haveModelCoefficients() const noexcept;
     /// @result The expected input signal length.
     /// @note The first underlying fully-connected layer requires a flattened
     ///       layer of expected length.  Therefore, the input signal must have
     ///       a specified length as to conform with the model architecture.
-    int getSignalLength() const noexcept;
+    [[nodiscard]] int getSignalLength() const noexcept;
     /// @result The assumed sampling p;eriod of the input signal in seconds.
-    double getSamplingPeriod() const noexcept;
+    [[nodiscard]] double getSamplingPeriod() const noexcept;
 
     /// @brief Computes the probability of a waveform's polarity as being
     ///        up, down, or unknown.
@@ -97,9 +97,9 @@ public:
     /// @result The pick time in seconds relative from the trace start. 
     /// @throws std::invalid_argument if nSamples does not equal
     ///         \c getSignalLength() or z is NULL.
-    float predict(int nSamples, const float z[]) const;
+    [[nodiscard]] float predict(int nSamples, const float z[]) const;
     /// @copydoc predict
-    double predict(int nSamples, const double z[]) const;
+    [[nodiscard]] double predict(int nSamples, const double z[]) const;
 
     Model(const Model &model) = delete;
     Model& operator=(const Model &model) = delete;

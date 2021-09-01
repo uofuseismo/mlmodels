@@ -1,6 +1,12 @@
+#include <iostream>
+#include <cmath>
 #include <torch/torch.h>
+#include "uuss/forwardSimulation/eikonet/model.hpp"
 
-//using namespace UUSS::ForwardSimulation::Eikonet;
+using namespace UUSS::ForwardSimulation::EikoNet;
+
+namespace
+{
 
 struct EikonetNetwork : torch::nn::Module
 {
@@ -15,20 +21,16 @@ struct EikonetNetwork : torch::nn::Module
     {
         for (size_t layer = 0; layer < mLayers; ++layer)
         {
-            torch::nn::Linear fc{torch::nn::LinearOptions({512, 512})
-                                 .bias(true)};
-            resnetFullyConnected1.push_back(std::move(fc));
+            torch::nn::Linear fc1{torch::nn::LinearOptions({512, 512})
+                                  .bias(true)};
+            resnetFullyConnected1.push_back(std::move(fc1));
+            torch::nn::Linear fc2{torch::nn::LinearOptions({512, 512})
+                                  .bias(true)};
+            resnetFullyConnected2.push_back(std::move(fc2));
+            torch::nn::Linear fc3{torch::nn::LinearOptions({512, 512})
+                                  .bias(true)};
+            resnetFullyConnected3.push_back(std::move(fc3));
         }
-        for (size_t layer = 0; layer < mLayers; ++layer)
-        {
-//            resnetFullyConnected2.push_back
-//                (torch::nn::LinearOptions({512, 512}).bias(true));
-        }
-        for (size_t layer = 0; layer < mLayers; ++layer)
-        {
-//            resnetFullyConnected3.push_back
-//                (torch::nn::LinearOptions({512, 512}).bias(true));
-        } 
       /* 
         // 1
         rnFC1(torch::nn::Conv1dOptions({1, 32, 21})
@@ -85,3 +87,69 @@ struct EikonetNetwork : torch::nn::Module
     torch::nn::Linear fc9{nullptr};
     size_t mLayers = 10;
 };
+
+}
+
+///--------------------------------------------------------------------------///
+///                               Implementation                             ///
+///--------------------------------------------------------------------------///
+class Model::ModelImpl
+{
+public:
+    EikonetNetwork mModel;
+    bool mHaveModelCoefficients = false;
+};
+
+Model::Model() :
+    pImpl(std::make_unique<ModelImpl> ())
+{
+}
+
+Model::~Model() = default;
+
+/// Have model coefficients?
+bool Model::haveModelCoefficients() const noexcept
+{
+    return pImpl->mHaveModelCoefficients;
+}
+
+/// Compute source/receiver travel time
+template<typename U>
+U Model::computeTravelTime(const std::tuple<U, U, U> &sourceLocation,
+                           const std::tuple<U, U, U> &receiverLocation) const
+{
+    //
+    auto xs = std::get<0> (sourceLocation);
+    auto ys = std::get<1> (sourceLocation);
+    auto zs = std::get<2> (sourceLocation);
+    auto xr = std::get<0> (receiverLocation);
+    auto yr = std::get<1> (receiverLocation);
+    auto zr = std::get<2> (receiverLocation);
+    auto distance = std::hypot(xr - xs, yr - ys, zr - zs);
+    auto X = torch::zeros({1, 6}, 
+                          torch::TensorOptions().dtype(torch::kFloat32)
+                          .requires_grad(false));
+    float *xPtr = X.data_ptr<float> (); 
+    xPtr[0] = static_cast<float> (xs);
+    xPtr[1] = static_cast<float> (ys);
+    xPtr[2] = static_cast<float> (zs);
+    xPtr[3] = static_cast<float> (xr);
+    xPtr[4] = static_cast<float> (yr);
+    xPtr[5] = static_cast<float> (zr);
+
+    auto Y = pImpl->mModel.forward(X);
+    //auto yHost = pImpl->mNetwork.forward(X).to(torch::kCPU);
+    float *yPtr = Y.data_ptr<float> ();
+    return static_cast<U> (yPtr[0]*distance);
+}
+
+///--------------------------------------------------------------------------///
+///                        Template Instantiation                            ///
+///--------------------------------------------------------------------------///
+template double Model::computeTravelTime(
+    const std::tuple<double, double, double> &sourceLocation,
+    const std::tuple<double, double, double> &receiverLocation) const;
+template float Model::computeTravelTime(
+    const std::tuple<float, float, float> &sourceLocation,
+    const std::tuple<float, float, float> &receiverLocation) const;
+

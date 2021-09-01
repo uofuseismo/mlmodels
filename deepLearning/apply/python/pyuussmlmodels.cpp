@@ -36,5 +36,6 @@ PYBIND11_MODULE(pyuussmlmodels, modules)
 
     auto threeComponentPickerZRUNet = threeComponentPicker.def_submodule("ZRUNet");
     threeComponentPickerZRUNet.attr("__doc__") = "Performs the pre-processing for the three-component UNet detector.";
+    PUUSSMLModels::ThreeComponentPicker::ZRUNet::initializeProcessing(threeComponentPickerZRUNet);
 
 }

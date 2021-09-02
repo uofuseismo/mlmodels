@@ -25,10 +25,10 @@ public:
     double mRipple = 5; // Ripple for Chebyshev 1 or 2 - not applicable
     const bool mZeroPhase = false; // Filter has to be causal for picking
     /// Will be closer to a real-time implementation
-    RTSeis::PostProcessing::SingleChannel::InterpolationMethod  mInterpolationMethod
-        = RTSeis::PostProcessing::SingleChannel::InterpolationMethod::WEIGHTED_AVERAGE_SLOPES;
     //RTSeis::PostProcessing::SingleChannel::InterpolationMethod  mInterpolationMethod
-    //= RTSeis::PostProcessing::SingleChannel::InterpolationMethod::DFT;//WEIGHTED_AVERAGE_SLOPES;
+    //    = RTSeis::PostProcessing::SingleChannel::InterpolationMethod::WEIGHTED_AVERAGE_SLOPES;
+    RTSeis::PostProcessing::SingleChannel::InterpolationMethod  mInterpolationMethod
+       = RTSeis::PostProcessing::SingleChannel::InterpolationMethod::DFT;//WEIGHTED_AVERAGE_SLOPES;
 }; 
 
 /// Constructor

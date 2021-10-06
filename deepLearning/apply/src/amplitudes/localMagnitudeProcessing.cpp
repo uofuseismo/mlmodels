@@ -173,9 +173,14 @@ void LocalMagnitudeProcessing::processWaveform(
     {
         auto ratio = samplingPeriod/pImpl->mTargetSamplingPeriod;
         auto nPointsNew = static_cast<int> (std::round(npts*ratio));
-        std::vector<double> xWork(*processedData);
+        auto xWork = RTSeis::Utilities::Interpolation::interpft(*processedData,
+                                                                nPointsNew);
+        processedData->resize(nPointsNew, 0);
+        std::copy(xWork.begin(), xWork.end(), processedData->begin());
+/*
         processedData->resize(nPointsNew, 0);
         RTSeis::Utilities::Interpolation::interpft(npts, xWork.data(),
                                                    nPointsNew, &yPtr);
+*/
     }
 }

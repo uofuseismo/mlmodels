@@ -40,7 +40,8 @@ void createMinMaxSignal(const std::vector<T> &input,
     auto nSamples = static_cast<int> (input.size());
     result->resize(input.size(), 0);
     if (nSamples < 3){return;} // Really makes no sense
-    auto dSignal = std::adjacent_difference(input.begin(), input.end());
+    std::vector<T> dSignal(input);
+    std::adjacent_difference(input.begin(), input.end(), dSignal.begin());
     int *__restrict__ resultPtr = result->data();
     // If derivative changes sign then it's a local min/max
     #pragma omp simd
@@ -207,7 +208,7 @@ void LocalMagnitudeProcessing::processWaveform(
     }
 }
 
-/// 
+/// Min/max signal
 template<typename U>
 void LocalMagnitudeProcessing::computeMinMaxSignal(
     const std::vector<U> &x, std::vector<int> *minMaxSignal)
@@ -218,3 +219,12 @@ void LocalMagnitudeProcessing::computeMinMaxSignal(
     }
     createMinMaxSignal(x, minMaxSignal);
 }
+
+///--------------------------------------------------------------------------///
+///                          Template Instantiation                          ///
+///--------------------------------------------------------------------------///
+template void UUSS::Amplitudes::LocalMagnitudeProcessing::computeMinMaxSignal(
+    const std::vector<double> &x, std::vector<int> *minMaxSignal);
+template void UUSS::Amplitudes::LocalMagnitudeProcessing::computeMinMaxSignal(
+    const std::vector<float> &x, std::vector<int> *minMaxSignal);
+

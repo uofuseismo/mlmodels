@@ -142,6 +142,7 @@ void LocalMagnitudeProcessing::processWaveform(
         throw std::invalid_argument("Unsupported sampling rate: "
                                   + std::to_string(samplingRate));
     }
+    parameters.setSamplingRate(samplingRate);
     // Follow the workflow for Jiggle
     parameters.setDetrendType(pImpl->mDemeanType);
     parameters.setTaper(pImpl->mTaperPercentage, pImpl->mWindowType);

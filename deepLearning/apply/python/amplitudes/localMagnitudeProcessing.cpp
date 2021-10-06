@@ -31,7 +31,20 @@ std::vector<double> LocalMagnitudeProcessing::processWaveform(
                                   + " must be positive");
     }
     std::vector<double> y;
-    pImpl->processWaveform(channel, gain, x.size(),
+    bool isVelocity = true;
+    if (channel[1] == 'N' || channel[1] == 'n')
+    {
+        isVelocity = false;
+    }
+    else if (channel[1] == 'H' || channel[1] == 'h')
+    {
+        isVelocity = true;
+    }
+    else
+    {
+        throw std::invalid_argument("Unhandled channel: " + channel);
+    }
+    pImpl->processWaveform(isVelocity, gain, x.size(),
                            samplingPeriod, x.data(), &y);
     return y;
 }

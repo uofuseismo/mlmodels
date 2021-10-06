@@ -56,6 +56,14 @@ public:
                          int npts, double samplingPeriod,
                          const float data[],
                          std::vector<float> *processedData);
+    void processWaveform(bool isVelocity, double gain,
+                         int npts, double samplingPeriod,
+                         const double data[],
+                         std::vector<double> *processedData);
+    void processWaveform(bool isVelocity, double gain,
+                         int npts, double samplingPeriod,
+                         const float data[],
+                         std::vector<float> *processedData);
     /// @result The sampling period of the processed signals.
     [[nodiscard]] double getTargetSamplingPeriod() const noexcept;
     LocalMagnitudeProcessing& operator=(const LocalMagnitudeProcessing &p) = delete;

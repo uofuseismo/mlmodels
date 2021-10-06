@@ -11,6 +11,29 @@
 
 using namespace UUSS::Amplitudes;
 
+namespace
+{
+bool isVelocityChannel(const std::string &channel)
+{
+    if (channel.size() < 3)
+    {
+        throw std::invalid_argument("Channel size must be 3");
+    }
+    if (channel[1] == 'H' || channel[1] == 'h')
+    {
+        return true; //isVelocity = true;
+    }
+    else if (channel[1] == 'N' || channel[1] == 'n')
+    {
+        return false; //isVelocity = false;
+    }
+    else
+    {
+        throw std::invalid_argument("Unhandled channel: " + channel);
+    }
+}
+}
+
 class LocalMagnitudeProcessing::LocalMagnitudeProcessingImpl
 {
 public:
@@ -47,7 +70,7 @@ LocalMagnitudeProcessing::~LocalMagnitudeProcessing() = default;
 
 /// Processes the data
 void LocalMagnitudeProcessing::processWaveform(
-    const std::string &channel, const double gain,
+    const bool isVelocity, const double gain,
     const int npts,
     const double samplingPeriod,
     const float data[],
@@ -56,7 +79,7 @@ void LocalMagnitudeProcessing::processWaveform(
     std::vector<double> dataIn(npts);
     std::copy(data, data + npts, dataIn.begin());
     std::vector<double> temp;
-    processWaveform(channel, gain, npts, samplingPeriod, dataIn.data(), &temp);
+    processWaveform(isVelocity, gain, npts, samplingPeriod, dataIn.data(), &temp);
     int nptsNew = static_cast<int> (temp.size());
     processedData->resize(nptsNew, 0);
     const auto tPtr = temp.data();
@@ -64,9 +87,41 @@ void LocalMagnitudeProcessing::processWaveform(
     std::copy(tPtr, tPtr + nptsNew, dPtr);
 }
 
-/// Processes the data
 void LocalMagnitudeProcessing::processWaveform(
     const std::string &channel, const double gain,
+    const int npts,
+    const double samplingPeriod,
+    const float data[],
+    std::vector<float> *processedData)
+{
+    if (channel.size() != 3)
+    {
+        throw std::invalid_argument("Channel must have length 3");
+    }
+    bool isVelocity = isVelocityChannel(channel);
+    processWaveform(isVelocity, gain, npts, samplingPeriod,
+                    data, processedData);
+}
+
+void LocalMagnitudeProcessing::processWaveform(
+    const std::string &channel, const double gain,
+    const int npts,
+    const double samplingPeriod,
+    const double data[],
+    std::vector<double> *processedData)
+{
+    if (channel.size() != 3)
+    {
+        throw std::invalid_argument("Channel must have length 3");
+    }
+    bool isVelocity = isVelocityChannel(channel);
+    processWaveform(isVelocity, gain, npts, samplingPeriod,
+                    data, processedData);
+}
+
+/// Processes the data
+void LocalMagnitudeProcessing::processWaveform(
+    const bool isVelocity, const double gain,
     const int npts,
     const double samplingPeriod,
     const double data[],
@@ -79,30 +134,6 @@ void LocalMagnitudeProcessing::processWaveform(
     if (npts < 1){throw std::invalid_argument("No samples");}
     if (data == nullptr){throw std::invalid_argument("Data is NULL");}
     if (gain == 0){throw std::invalid_argument("Gain is zero");}
-    if (channel.size() != 3)
-    {
-        throw std::invalid_argument("Channel must have length 3");
-    }
-    // Klunky way to do this
-    bool isVelocity = true;
-    if (channel[1] == 'H' || channel[1] == 'h')
-    {
-        isVelocity = true;
-    }
-    else if (channel[1] == 'N' || channel[1] == 'n')
-    {
-        isVelocity = false;
-    }
-    else
-    {
-        throw std::invalid_argument("Unhandled channel: " + channel);
-    }
-    if (samplingPeriod <= 0)
-    {
-        throw std::invalid_argument("Sampling period = "
-                                  + std::to_string(samplingPeriod)
-                                  + "must be positive");
-    }
     // Filter only valid for a handful of discrete frequencies
     const double samplingRate = 1/samplingPeriod;
     RTSeis::Amplitude::TimeDomainWoodAndersonParameters parameters;

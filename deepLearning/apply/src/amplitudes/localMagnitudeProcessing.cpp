@@ -47,7 +47,7 @@ void createMinMaxSignal(const std::vector<T> &input,
     #pragma omp simd
     for (int i = 1; i < static_cast<int> (dSignal.size() - 1); ++i)
     {
-        if (std::signbit(dSignal[i]) == std::signbit(dSignal[i+1]))
+        if (std::signbit(dSignal[i]) != std::signbit(dSignal[i+1]))
         {
             resultPtr[i] = 1;
             if (dSignal[i+1] > dSignal[i]){resultPtr[i] = -1;}

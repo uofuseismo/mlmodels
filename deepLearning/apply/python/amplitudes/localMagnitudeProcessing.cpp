@@ -60,6 +60,14 @@ double LocalMagnitudeProcessing::getTargetSamplingPeriod() const noexcept
     return pImpl->getTargetSamplingPeriod();
 }
 
+std::vector<int> LocalMagnitudeProcessing::computeMinMaxSignal(
+    const std::vector<double> &x)
+{
+    std::vector<int> result;
+    pImpl->computeMinMaxSignal(x, &result);
+    return result;
+}
+
 /// Create class
 void PUUSSMLModels::Amplitudes::initializeLocalMagnitudeProcessing(
     pybind11::module &m)
@@ -71,6 +79,9 @@ void PUUSSMLModels::Amplitudes::initializeLocalMagnitudeProcessing(
     p.def("process_waveform",
           &LocalMagnitudeProcessing::processWaveform,
           "Performs the appropriate preprocessing to the waveform/channel/gain with the given sampling period in seconds.  The gain should result in the resulting amplitude of meters/second or meters/second/second.");
+    p.def("compute_min_max_signal",
+          &LocalMagnitudeProcessing::computeMinMaxSignal,
+          "From the processed waveform this computes a signal that is 1 for a local maximum, -1 for a local minimum, and 0 otherwise");
     p.def_property_readonly("target_sampling_period",
                             &LocalMagnitudeProcessing::getTargetSamplingPeriod,
                             "The sampling period of the processed waveform in seconds.");

@@ -22,6 +22,8 @@ public:
                                         const double gain,
                                         const std::vector<double> &x, 
                                         const double samplingPeriod = 0.01);
+    [[nodiscard]]
+    std::vector<int> computeMinMaxSignal(const std::vector<double> &x);
     /// @result The target sampling period in seconds.
     [[nodiscard]] double getTargetSamplingPeriod() const noexcept;
 

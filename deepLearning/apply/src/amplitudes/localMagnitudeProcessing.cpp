@@ -1,6 +1,7 @@
 #include <string>
 #include <vector>
 #include <cmath>
+#include <numeric>
 #include <rtseis/postProcessing/singleChannel/waveform.hpp>
 #include <rtseis/amplitude/timeDomainWoodAnderson.hpp>
 #include <rtseis/amplitude/timeDomainWoodAndersonParameters.hpp>
@@ -32,6 +33,27 @@ bool isVelocityChannel(const std::string &channel)
         throw std::invalid_argument("Unhandled channel: " + channel);
     }
 }
+template<typename T>
+void createMinMaxSignal(const std::vector<T> &input, 
+                        std::vector<int> *result)
+{
+    auto nSamples = static_cast<int> (input.size());
+    result->resize(input.size(), 0);
+    if (nSamples < 3){return;} // Really makes no sense
+    auto dSignal = std::adjacent_difference(input.begin(), input.end());
+    int *__restrict__ resultPtr = result->data();
+    // If derivative changes sign then it's a local min/max
+    #pragma omp simd
+    for (int i = 1; i < static_cast<int> (dSignal.size() - 1); ++i)
+    {
+        if (std::signbit(dSignal[i]) == std::signbit(dSignal[i+1]))
+        {
+            resultPtr[i] = 1;
+            if (dSignal[i+1] > dSignal[i]){resultPtr[i] = -1;}
+        }
+    }
+}
+
 }
 
 class LocalMagnitudeProcessing::LocalMagnitudeProcessingImpl
@@ -183,4 +205,16 @@ void LocalMagnitudeProcessing::processWaveform(
                                                    nPointsNew, &yPtr);
 */
     }
+}
+
+/// 
+template<typename U>
+void LocalMagnitudeProcessing::computeMinMaxSignal(
+    const std::vector<U> &x, std::vector<int> *minMaxSignal)
+{
+    if (minMaxSignal == nullptr)
+    {
+        throw std::invalid_argument("minMaxSignal is NULL");
+    }
+    createMinMaxSignal(x, minMaxSignal);
 }

@@ -64,6 +64,9 @@ public:
                          int npts, double samplingPeriod,
                          const float data[],
                          std::vector<float> *processedData);
+    template<typename U>
+    void computeMinMaxSignal(const std::vector<U> &processedData,
+                             std::vector<int> *minMaxSignal);
     /// @result The sampling period of the processed signals.
     [[nodiscard]] double getTargetSamplingPeriod() const noexcept;
     LocalMagnitudeProcessing& operator=(const LocalMagnitudeProcessing &p) = delete;

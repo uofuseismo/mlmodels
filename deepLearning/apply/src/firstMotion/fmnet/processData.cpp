@@ -1,5 +1,4 @@
-#include <cstdio>
-#include <cstdlib>
+#include <iostream>
 #include <cmath>
 #include <rtseis/postProcessing/singleChannel/waveform.hpp>
 #include "uuss/firstMotion/fmnet/processData.hpp"
@@ -59,19 +58,22 @@ ProcessData::~ProcessData() = default;
 void ProcessData::processWaveform(
     const int npts,
     const double samplingPeriod,
-    const float data[],
+    const float *__restrict__ data,
     std::vector<float> *processedData)
 {
     std::vector<double> dataIn(npts);
-    #pragma omp simd
-    for (int i=0; i<npts; ++i){dataIn[i] = static_cast<double> (data[i]);}
+    std::copy(data, data + npts, dataIn.begin());
+    //#pragma omp simd
+    //for (int i=0; i<npts; ++i){dataIn[i] = static_cast<double> (data[i]);}
     std::vector<double> temp;
     processWaveform(npts, samplingPeriod, dataIn.data(), &temp);
     int nptsNew = static_cast<int> (temp.size());
     processedData->resize(nptsNew, 0);
+    const auto tPtr = temp.data();
     auto dPtr = processedData->data();
-    #pragma omp simd
-    for (int i=0; i<nptsNew; ++i){dPtr[i] = static_cast<float> (temp[i]);}
+    std::copy(tPtr, tPtr + nptsNew, dPtr);
+    //#pragma omp simd
+    //for (int i=0; i<nptsNew; ++i){dPtr[i] = static_cast<float> (temp[i]);}
 }
 
 /// Processes the data

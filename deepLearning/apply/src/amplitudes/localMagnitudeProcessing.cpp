@@ -50,6 +50,25 @@ void LocalMagnitudeProcessing::processWaveform(
     const std::string &channel, const double gain,
     const int npts,
     const double samplingPeriod,
+    const float data[],
+    std::vector<float> *processedData)
+{
+    std::vector<double> dataIn(npts);
+    std::copy(data, data + npts, dataIn.begin());
+    std::vector<double> temp;
+    processWaveform(channel, gain, npts, samplingPeriod, dataIn.data(), &temp);
+    int nptsNew = static_cast<int> (temp.size());
+    processedData->resize(nptsNew, 0);
+    const auto tPtr = temp.data();
+    auto dPtr = processedData->data();
+    std::copy(tPtr, tPtr + nptsNew, dPtr);
+}
+
+/// Processes the data
+void LocalMagnitudeProcessing::processWaveform(
+    const std::string &channel, const double gain,
+    const int npts,
+    const double samplingPeriod,
     const double data[],
     std::vector<double> *processedData)
 {

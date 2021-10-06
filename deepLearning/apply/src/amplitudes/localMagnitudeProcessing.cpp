@@ -36,6 +36,12 @@ LocalMagnitudeProcessing::LocalMagnitudeProcessing() :
 {
 }
 
+/// Target sampling period
+double LocalMagnitudeProcessing::getTargetSamplingPeriod() const noexcept
+{
+    return pImpl->mTargetSamplingPeriod;
+}
+
 /// Destructor
 LocalMagnitudeProcessing::~LocalMagnitudeProcessing() = default;
 

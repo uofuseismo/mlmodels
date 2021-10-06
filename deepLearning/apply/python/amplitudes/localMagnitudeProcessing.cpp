@@ -2,6 +2,7 @@
 #include <vector>
 #include "localMagnitudeProcessing.hpp"
 #include "uuss/amplitudes/localMagnitudeProcessing.hpp"
+#include <pybind11/stl.h>
 
 using namespace PUUSSMLModels::Amplitudes;
 

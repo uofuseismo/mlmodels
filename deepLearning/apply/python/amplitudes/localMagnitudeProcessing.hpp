@@ -2,7 +2,6 @@
 #define PUUSSMLMODEL_AMPLITUDES_LOCALMAGNITUDEPROCESSING_HPP
 #include <memory>
 #include <pybind11/pybind11.h>
-#include <pybind11/stl_bind.h>
 // Forward declarations
 namespace UUSS::Amplitudes
 {

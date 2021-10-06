@@ -97,6 +97,7 @@ endif()
 # Set the source
 set(LIB_SRC
     src/version.cpp
+    src/amplitudes/localMagnitudeProcessing.cpp
     src/firstMotion/fmnet/processData.cpp
     src/firstMotion/fmnet/model.cpp
     src/oneComponentPicker/zcnn/model.cpp
@@ -126,7 +127,8 @@ if (WRAP_PYTHON)
                python/pyuussmlmodels.cpp
                python/oneComponentPicker/processData.cpp
                python/firstMotion/processData.cpp
-               python/threeComponentPicker/processData.cpp)
+               python/threeComponentPicker/processData.cpp
+               python/amplitudes/localMagnitudeProcessing.cpp)
    target_link_libraries(pyuussmlmodels PRIVATE
                          pybind11::module uussmlmodels)
    set_target_properties(pyuussmlmodels PROPERTIES

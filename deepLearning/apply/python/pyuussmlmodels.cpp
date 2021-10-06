@@ -3,6 +3,7 @@
 #include "oneComponentPicker/processData.hpp"
 #include "threeComponentPicker/processData.hpp"
 #include "firstMotion/processData.hpp"
+#include "amplitudes/localMagnitudeProcessing.hpp"
 #include <pybind11/pybind11.h>
 
 PYBIND11_MODULE(pyuussmlmodels, modules)
@@ -38,4 +39,7 @@ PYBIND11_MODULE(pyuussmlmodels, modules)
     threeComponentPickerZRUNet.attr("__doc__") = "Performs the pre-processing for the three-component UNet detector.";
     PUUSSMLModels::ThreeComponentPicker::ZRUNet::initializeProcessing(threeComponentPickerZRUNet);
 
+    auto amplitudes = modules.def_submodule("Amplitudes");
+    amplitudes.attr("__doc__") = "Modules for computing amplitudes to be used in local magnitude calculations.";
+    PUUSSMLModels::Amplitudes::initializeLocalMagnitudeProcessing(amplitudes);
 }

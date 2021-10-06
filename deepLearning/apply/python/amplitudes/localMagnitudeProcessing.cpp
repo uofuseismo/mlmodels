@@ -15,14 +15,16 @@ LocalMagnitudeProcessing::LocalMagnitudeProcessing() :
 LocalMagnitudeProcessing::~LocalMagnitudeProcessing() = default;
 
 std::vector<double> LocalMagnitudeProcessing::processWaveform(
-    const std::string &channel, const double gain,
+    const bool isVelocity, const double gain,
     const std::vector<double> &x,
     const double samplingPeriod)
 {
+/*
     if (channel.size() != 3)
     {
         throw std::invalid_argument("Channel.size should be length 3");
     }
+*/
     if (gain == 0){throw std::invalid_argument("Gain is zero");}
     if (samplingPeriod <= 0)
     {
@@ -31,6 +33,7 @@ std::vector<double> LocalMagnitudeProcessing::processWaveform(
                                   + " must be positive");
     }
     std::vector<double> y;
+/*
     bool isVelocity = true;
     if (channel[1] == 'N' || channel[1] == 'n')
     {
@@ -44,6 +47,7 @@ std::vector<double> LocalMagnitudeProcessing::processWaveform(
     {
         throw std::invalid_argument("Unhandled channel: " + channel);
     }
+*/
     pImpl->processWaveform(isVelocity, gain, x.size(),
                            samplingPeriod, x.data(), &y);
     return y;

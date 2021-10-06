@@ -19,7 +19,7 @@ public:
     ~LocalMagnitudeProcessing();
     /// Preprocess the input waveform.
     [[nodiscard]]
-    std::vector<double> processWaveform(const std::string &channel,
+    std::vector<double> processWaveform(const bool isVelocity, //std::string &channel,
                                         const double gain,
                                         const std::vector<double> &x, 
                                         const double samplingPeriod = 0.01);

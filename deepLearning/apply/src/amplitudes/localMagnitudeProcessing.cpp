@@ -149,11 +149,13 @@ void LocalMagnitudeProcessing::processWaveform(
     parameters.setTaper(pImpl->mTaperPercentage, pImpl->mWindowType);
     if (isVelocity)
     {
+        parameters.setInputUnits(RTSeis::Amplitude::InputUnits::Velocity);
         parameters.setHighPassRCFilter(pImpl->mQ,
                                        pImpl->mHighPassFilterVelocity);
     }
     else
     {
+        parameters.setInputUnits(RTSeis::Amplitude::InputUnits::Acceleration);
         parameters.setHighPassRCFilter(pImpl->mQ,
                                        pImpl->mHighPassFilterAcceleration);
     }

@@ -143,6 +143,7 @@ void LocalMagnitudeProcessing::processWaveform(
                                   + std::to_string(samplingRate));
     }
     parameters.setSamplingRate(samplingRate);
+    parameters.setSimpleResponse(gain);
     // Follow the workflow for Jiggle
     parameters.setDetrendType(pImpl->mDemeanType);
     parameters.setTaper(pImpl->mTaperPercentage, pImpl->mWindowType);

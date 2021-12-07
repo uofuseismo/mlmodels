@@ -24,6 +24,7 @@
 #endif
 //#include <cuda.h>
 //#include <cuda_runtime_api.h>
+#include <rtseis/utilities/normalization/zscore.hpp>
 #include "private/loadHDF5Weights.hpp"
 #include "uuss/threeComponentPicker/zrunet/model.hpp"
 
@@ -42,9 +43,7 @@ void copy(const int n, const T *x, T *y)
 #endif
 }
 
-/*!
- * @brief Maps probabilities to a binary class.
- */
+/// @brief Maps probabilities to a binary class.
 template<class T>
 void convertProbabilitiesToClass(const int n,
                                  const float proba[],
@@ -62,9 +61,7 @@ void convertProbabilitiesToClass(const int n,
     }
 }
 
-/*!
- * @brief Computes the accuracy in the predicions.
- */
+/// @brief Computes the accuracy in the predicions.
 template<class T>
 T computeAccuracy(const int n,
                   const T *yObs,
@@ -134,9 +131,7 @@ struct ConfusionMatrix computeConfusionMatrix(const int n,
     return cm;
 }
 
-/*!
- * @brief Computes the absolute max value of an array.
- */
+/// @brief Computes the absolute max value of an array.
 template<class T> T getMaxAbs(const int npts, const T *__restrict__ v)
 {
 #ifdef USE_PSTL
@@ -148,18 +143,27 @@ template<class T> T getMaxAbs(const int npts, const T *__restrict__ v)
     return amax;
 }
 
-/*!
- * @brief Performs a min/max normalization and copies.
- * @param[in] npts     The number of points
- * @param[in] z        The vertical trace.  This has dimension [npts].
- * @param[in] n        The north trace.  This has dimension [npts].
- * @param[in] e        The east trae.  This has dimension [npts].
- * @param[out] tensor  The rescaled data for the neural network.
- *                     This has dimension [3 x npts] and is stored
- *                     row major format.
- * @retval True indicates that this is a live trace.
- * @retval False indicates that this is a dead trace.
- */
+template<class T> T getRange(const int npts, const T *__restrict__ v)
+{
+#ifdef USE_PSTL
+    auto [vMin, vMax] = std::minmax_element(std::execution::unseq, v, v+npts);
+#else
+    auto [vMin, vMax] = std::minmax_element(v, v+npts);
+#endif
+    T range = vMax - vMin;
+    return range;
+}
+
+/// @brief Performs a min/max normalization and copies.
+/// @param[in] npts     The number of points
+/// @param[in] z        The vertical trace.  This has dimension [npts].
+/// @param[in] n        The north trace.  This has dimension [npts].
+/// @param[in] e        The east trae.  This has dimension [npts].
+/// @param[out] tensor  The rescaled data for the neural network.
+///                     This has dimension [3 x npts] and is stored
+///                     row major format.
+/// @retval True indicates that this is a live trace.
+/// @retval False indicates that this is a dead trace.
 template<class T>
 bool rescaleAndCopy(const int npts,
                     const T *__restrict__ z,
@@ -167,34 +171,35 @@ bool rescaleAndCopy(const int npts,
                     const T *__restrict__ e,
                     T *__restrict__ tensor)
 {
-    auto zmax = getMaxAbs(npts, z);
-    auto nmax = getMaxAbs(npts, n);
-    auto emax = getMaxAbs(npts, e);
-    auto maxVal = std::max(zmax, std::max(nmax, emax));
+    constexpr T zero = 0;
+    auto zMax = getMaxAbs(npts, z);
+    auto nMax = getMaxAbs(npts, n);
+    auto eMax = getMaxAbs(npts, e);
+    auto maxVal = std::max(zMax, std::max(nMax, eMax));
     if (maxVal != 0)
     {
-        auto xnorm = 1.0/maxVal;
+        auto xnorm = static_cast<T> (1.0/maxVal);
 #ifdef USE_PSTL
         std::transform(std::execution::unseq,
-                       n, n+npts, tensor,
+                       n, n + npts, tensor,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
         std::transform(std::execution::unseq,
-                       e, e+npts, tensor+npts,
+                       e, e + npts, tensor + npts,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
         std::transform(std::execution::unseq,
-                       z, z+npts, tensor+2*npts,
+                       z, z + npts, tensor + 2*npts,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
 #else
-        std::transform(n, n+npts, tensor,
+        std::transform(n, n + npts, tensor,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
-        std::transform(e, e+npts, tensor+npts,
+        std::transform(e, e + npts, tensor + npts,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
-        std::transform(z, z+npts, tensor+2*npts,
+        std::transform(z, z + npts, tensor + 2*npts,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
 #endif
@@ -203,18 +208,80 @@ bool rescaleAndCopy(const int npts,
     else
     {
 #ifdef USE_PSTL
-        std::fill(std::execution::unseq, tensor, tensor+3*npts, 0);
+        std::fill(std::execution::unseq, tensor, tensor + 3*npts, zero);
 #else
-        std::fill(tensor, tensor+3*npts, 0);
+        std::fill(tensor, tensor + 3*npts, zero);
 #endif
         return false;
     } 
 }
 
-/*!
- * @brief Defines the UNet network architecture.
- * @copyright Ben Baker distributed under the MIT license.
- */
+/// @brief Performs a Z-Score normalization to each channel and copies.
+/// @param[in] npts     The number of points
+/// @param[in] z        The vertical trace.  This has dimension [npts].
+/// @param[in] n        The north trace.  This has dimension [npts].
+/// @param[in] e        The east trae.  This has dimension [npts].
+/// @param[out] tensor  The rescaled data for the neural network.
+///                     This has dimension [3 x npts] and is stored
+///                     row major format.
+/// @retval True indicates that this is a live trace.
+/// @retval False indicates that this is a dead trace.
+template<class T>
+bool standardizeAndCopy(const int npts,
+                        const T *__restrict__ z,
+                        const T *__restrict__ n, 
+                        const T *__restrict__ e,
+                        T *__restrict__ tensor)
+{
+    constexpr T zero = 0;
+    constexpr T tol = std::numeric_limits<T>::epsilon();
+    auto zRange = getRange(npts, z);
+    auto nRange = getRange(npts, n);
+    auto eRange = getRange(npts, e);
+    bool notDead = false;
+    if (npts < 2){throw std::invalid_argument("At least 2 points needed");}
+    RTSeis::Utilities::Normalization::ZScore zScore;
+    // Standardize N 
+    if (std::abs(nRange) > tol)
+    {
+        zScore.initialize(npts, n);
+        auto tPtr = tensor;
+        zScore.apply(npts, n, &tPtr);
+        notDead = true;
+    }
+    else
+    {
+        std::fill(tensor + npts, tensor + npts, zero);
+    }
+    // Standardize E
+    if (std::abs(eRange) > tol)
+    {
+        zScore.initialize(npts, e);
+        auto tPtr = tensor + npts;
+        zScore.apply(npts, e, &tPtr);
+        notDead = true;
+    }
+    else
+    {
+        std::fill(tensor + npts, tensor + 2*npts, zero);
+    }
+    // Standardize Z
+    if (std::abs(zRange) > tol)
+    {
+        zScore.initialize(npts, z);
+        auto tPtr = tensor + 2*npts;
+        zScore.apply(npts, z, &tPtr);
+        notDead = true;
+    }
+    else
+    {
+        std::fill(tensor + 2*npts, tensor + 3*npts, zero);
+    }
+    return notDead;
+}
+
+/// @brief Defines the UNet network architecture.
+/// @copyright Ben Baker distributed under the MIT license.
 struct UNet : torch::nn::Module
 {
     /// Constructor
@@ -583,9 +650,7 @@ struct UNet : torch::nn::Module
 //                           End anonamous namespace                          //
 //----------------------------------------------------------------------------//
 
-/*!
- * @brief Implementation.
- */
+/// @brief Implementation.
 template<UUSS::Device E>
 class Model<E>::ModelImpl
 {

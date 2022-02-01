@@ -7,9 +7,7 @@ using namespace UUSS::FirstMotion::FMNet;
 
 namespace
 {
-/*!
- * @brief Computes the absolute max value of an array.
- */
+/// @brief Computes the absolute max value of an array.
 template<class T> T getMaxAbs(const int npts, const T *__restrict__ v)
 {
 #ifdef USE_PSTL
@@ -20,18 +18,16 @@ template<class T> T getMaxAbs(const int npts, const T *__restrict__ v)
     auto amax = std::max( std::abs(*result.first), std::abs(*result.second) );
     return amax;
 }
-/*!
- * @brief Performs a min/max normalization and copies.
- * @param[in] npts     The number of points
- * @param[in] z        The vertical trace.  This has dimension [npts].
- * @param[in] n        The north trace.  This has dimension [npts].
- * @param[in] e        The east trae.  This has dimension [npts].
- * @param[out] tensor  The rescaled data for the neural network.
- *                     This has dimension [3 x npts] and is stored
- *                     row major format.
- * @retval True indicates that this is a live trace.
- * @retval False indicates that this is a dead trace.
- */
+/// @brief Performs a min/max normalization and copies.
+/// @param[in] npts     The number of points
+/// @param[in] z        The vertical trace.  This has dimension [npts].
+/// @param[in] n        The north trace.  This has dimension [npts].
+/// @param[in] e        The east trae.  This has dimension [npts].
+/// @param[out] tensor  The rescaled data for the neural network.
+///                     This has dimension [3 x npts] and is stored
+///                     row major format.
+/// @retval True indicates that this is a live trace.
+/// @retval False indicates that this is a dead trace.
 template<class T>
 bool rescaleAndCopy(const int npts,
                     const T *__restrict__ z,
@@ -438,12 +434,12 @@ void Model<UUSS::Device::CPU>::predictProbability(
                           .requires_grad(false));
     std::vector<bool> lAlive(batchUse, true);
     // Loop on batches
-    for (int is0=0; is0<nSignals; is0=is0+batchUse)
+    for (int is0 = 0; is0 < nSignals; is0 = is0 + batchUse)
     {
         // Extract signal, normalize, and copy
         int js0 = is0;
         int js1 = std::min(nSignals, js0 + batchUse);
-        for (int js=js0; js<js1; ++js)
+        for (int js = js0; js < js1; ++js)
         {
             int iSrc = js*signalLength;
             int iDst = (js - js0)*signalLength;
@@ -505,11 +501,11 @@ void Model<UUSS::Device::GPU>::predictProbability(
                           torch::TensorOptions().dtype(torch::kFloat32)
                           .requires_grad(false));
     std::vector<bool> lAlive(batchUse, true);
-    for (int is0=0; is0<nSignals; is0=is0+batchUse)
+    for (int is0 = 0; is0 < nSignals; is0 = is0 + batchUse)
     {
         int js0 = is0;
         int js1 = std::min(nSignals, js0 + batchUse);
-        for (int js=js0; js<js1; ++js)
+        for (int js = js0; js < js1; ++js)
         {
             int iSrc = js*signalLength;
             int iDst = (js - js0)*signalLength;
@@ -519,7 +515,7 @@ void Model<UUSS::Device::GPU>::predictProbability(
         auto signalGPU = X.to(torch::kCUDA);
         auto pHost = pImpl->mNetwork.forward(signalGPU).to(torch::kCPU);
         float *pPtr = pHost.data_ptr<float> ();
-        for (int js=js0; js<js1; ++js)
+        for (int js = js0; js < js1; ++js)
         {
             if (lAlive[js - js0])
             {

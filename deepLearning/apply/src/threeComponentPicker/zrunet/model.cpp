@@ -241,7 +241,10 @@ bool standardizeAndCopy(const int npts,
     bool notDead = false;
     if (npts < 2){throw std::invalid_argument("At least 2 points needed");}
     RTSeis::Utilities::Normalization::ZScore zScore;
-    // Standardize N 
+    // Standardize N.
+    // N.B. There's a check in RTSeis to avoid a division by zero.  However,
+    // that's only possible to hit if all the samples in the signal are
+    // identical.  The range condition ensures this is not the case.
     if (std::abs(nRange) > tol)
     {
         zScore.initialize(npts, n);
@@ -681,7 +684,7 @@ public:
     bool mUseGPU = false;
     bool mOnGPU = false; /// Check if this is set on GPU yet
     bool mHaveCoefficients = false;
-    bool mHaveGPU = false;//torch::cuda::is_available();
+    bool mHaveGPU = torch::cuda::is_available();
 };
 
 /// Constructor for CPU
@@ -700,9 +703,13 @@ template<>
 Model<UUSS::Device::GPU>::Model() :
     pImpl(std::make_unique<ModelImpl> ())
 {
-    if (!torch::cuda::is_available())
+    if (!pImpl->mHaveGPU)
     {
-        std::cerr << "CUDA not available - using CPU" << std::endl;
+        throw std::runtime_error("CUDA not available"); // - using CPU" << std::endl;
+        pImpl->mNetworks.resize(1);
+        pImpl->mDeviceIDs.resize(1);
+        pImpl->mDeviceIDs[0] = 0;
+        pImpl->mNetworks[0].eval();
     }
     else
     {
@@ -725,7 +732,7 @@ Model<UUSS::Device::GPU>::Model() :
         std::cout << "Number of devices found: "
                   << pImpl->mDeviceIDs.size() << std::endl;
         pImpl->mNetworks.resize(nGPUs);
-        for (int gpuID=0; gpuID<nGPUs; ++gpuID)
+        for (int gpuID = 0;  gpuID < nGPUs; ++gpuID)
         {
             pImpl->mNetworks[gpuID].eval();
         }

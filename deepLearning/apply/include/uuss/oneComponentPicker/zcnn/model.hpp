@@ -66,17 +66,9 @@ public:
     /// @param[in] z   The vertical channel signals from which to compute
     ///                the respective proababilities.  This is a row major
     ///                matrix with dimension [nSignals x nSamplesInSignal].
-    /// @param[out] probaUp  The probability of an up polarity for the is'th
-    ///                      signal.  This is an array whose dimension is
-    ///                      [nSignals].
-    /// @param[out] probaDown  The probability of a down polarity for the is'th
-    ///                        signal.  This is an array whose dimension is
-    ///                        [nSignals].
-    /// @param[out] probaUnknown  The probability of unknown polarity for
-    ///                           the is'th signal.  This is an array whose
-    ///                           dimension is [nSignals].
-    /// @param[in] batchSize  The number of signals for torch to process
-    ///                      simultaneously.  This must be positive.
+    /// @param[out] pickTimes  The pick times relative from the trace start.
+    /// @param[in] batchSize   The number of signals for torch to process
+    ///                        simultaneously.  This must be positive.
     /// @throws std::invalid_argument if nSignals is not positive,
     ///         nSamplesInSignal is not valid, any array is NULL.
     /// @throws std::runtime_error if the coefficients are not set.

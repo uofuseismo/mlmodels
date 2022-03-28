@@ -83,6 +83,7 @@ ZRUNet::ProcessData::ProcessData() :
 /// Destructor
 ZRUNet::ProcessData::~ProcessData() = default;
 
+/*
 /// Process a 1C waveform
 std::vector<double>
 ZRUNet::ProcessData::processWaveform(const std::vector<double> &x,
@@ -98,7 +99,27 @@ ZRUNet::ProcessData::processWaveform(const std::vector<double> &x,
     pImpl->processWaveform(x.size(), samplingPeriod, x.data(), &y);
     return y;
 }
+*/
 
+std::vector<double>
+ZRUNet::ProcessData::processWaveform(
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x,
+    const double samplingPeriod)
+{
+    if (samplingPeriod <= 0)
+    {
+        throw std::invalid_argument("Sampling rate = "
+                                  + std::to_string(samplingPeriod)
+                                  + " must be positive");
+    }
+    std::vector<double> xWork(x.size());
+    std::memcpy(xWork.data(), x.data(), xWork.size()*sizeof(double));
+    std::vector<double> y;
+    pImpl->processWaveform(xWork.size(), samplingPeriod, xWork.data(), &y);
+    return y;
+}
+
+/*
 std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
 ZRUNet::ProcessData::processWaveforms3C(const std::vector<double> &z,
                                         const std::vector<double> &n,
@@ -108,6 +129,34 @@ ZRUNet::ProcessData::processWaveforms3C(const std::vector<double> &z,
     auto t = std::tuple<const std::vector<double> &,
                         const std::vector<double> &,
                         const std::vector<double> &> (z, n, e); 
+    return pImpl->processWaveforms(t, samplingPeriod); 
+}
+*/
+std::tuple<std::vector<double>, std::vector<double>, std::vector<double>>
+ZRUNet::ProcessData::processWaveforms3C(
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &z,
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &n,
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &e,
+    const double samplingPeriod)
+{
+    if (samplingPeriod <= 0)
+    {
+        throw std::invalid_argument("Sampling rate = "
+                                  + std::to_string(samplingPeriod)
+                                  + " must be positive");
+    }
+    std::vector<double> zWork(z.size());
+    std::memcpy(zWork.data(), z.data(), zWork.size()*sizeof(double));
+
+    std::vector<double> nWork(n.size());
+    std::memcpy(nWork.data(), n.data(), nWork.size()*sizeof(double));
+
+    std::vector<double> eWork(e.size());
+    std::memcpy(eWork.data(), e.data(), eWork.size()*sizeof(double));
+
+    auto t = std::tuple<const std::vector<double> &,
+                        const std::vector<double> &,
+                        const std::vector<double> &> (zWork, nWork, eWork); 
     return pImpl->processWaveforms(t, samplingPeriod); 
 }
 

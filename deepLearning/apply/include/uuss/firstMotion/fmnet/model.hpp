@@ -48,6 +48,10 @@ public:
     ///         improperly formatted.
     void loadWeightsFromHDF5(const std::string &fileName,
                              bool verbose = false);
+    /// @brief Loads the model weights from a typical torchscript output.
+    /// @param[in] fileName  The name of the pt file containing the fitted
+    ///                      model coefficients.
+    void loadWeightsFromPT(const std::string &fileName);
     /// @result True indicates that the model coefficients are set.
     [[nodiscard]] bool haveModelCoefficients() const noexcept;
     /// @brief Gets the expected input signal length.

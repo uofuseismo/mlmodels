@@ -71,7 +71,7 @@ public:
     processWaveforms(const std::tuple<const std::vector<U> &,
                                       const std::vector<U> &,
                                       const std::vector<U> &> &waveforms,
-                     double samplingPeriod);
+                                      double samplingPeriod);
 
     /// @result The sampling period of the processed signals.
     [[nodiscard]] double getTargetSamplingPeriod() const noexcept;

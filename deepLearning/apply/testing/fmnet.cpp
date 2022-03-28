@@ -51,6 +51,16 @@ TEST(FMNet, FMNetCPU)
     double tol = 0.4;
     EXPECT_NO_THROW(polarity.setPolarityThreshold(tol));
     EXPECT_NEAR(polarity.getPolarityThreshold(), tol, 1.e-8);
+/*
+try
+{
+polarity.loadWeightsFromPT("/data/machineLearning/rossFirstMotion/finetuned_models/models_005_scripted.pt");
+}
+catch (const std::exception &e)
+{
+ std::cerr << e.what() << std::endl;
+}
+*/
     EXPECT_NO_THROW(
         polarity.loadWeightsFromHDF5("../testing/models/test_fmnet.h5"));
     std::vector<float> ex1, ex2, ex3, ex4, ex5;

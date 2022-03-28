@@ -1,5 +1,6 @@
 #include <string>
 #include <torch/torch.h>
+#include <torch/script.h>
 #include "uuss/firstMotion/fmnet/model.hpp"
 #include "private/loadHDF5Weights.hpp"
 
@@ -169,6 +170,76 @@ struct FMNetwork : torch::nn::Module
         readWeightsAndBiasFromHDF5(loader, "fcn_3", fcn3, gpu, verbose);
 
     }
+    /// Loads the weights from file
+    void loadWeightsFromPT(const std::string &fileName,
+                           const torch::Device &device)
+    {
+//https://github.com/prabhuomkar/pytorch-cpp/blob/3be503337f58e16ef6e90e00449354ba4c262897/tutorials/basics/pytorch_basics/main.cpp
+//std::cout << "Load" << std::endl;
+        auto pt = torch::jit::load(fileName);
+/*
+for (const auto &m : pt.named_children())
+{
+ std::cout << m.name << std::endl;
+}
+for (const auto &module : pt.modules()) //pt.attributes())
+{
+ for (const auto &attr : module.attributes())
+ {
+ std::cout << attr << std::endl;
+ }
+//std::cout << module.attributes() << std::endl;
+}
+std::cout << "LOasded" << std::endl;
+*/
+        conv1->weight = pt.attr("conv1").toModule().attr("weight").toTensor().to(device);
+        conv1->bias   = pt.attr("conv1").toModule().attr("bias").toTensor().to(device);
+        batch1->weight       = pt.attr("bn1").toModule().attr("weight").toTensor().to(device);
+        batch1->bias         = pt.attr("bn1").toModule().attr("bias").toTensor().to(device);
+        batch1->running_mean = pt.attr("bn1").toModule().attr("running_mean").toTensor().to(device);
+        batch1->running_var  = pt.attr("bn1").toModule().attr("running_var").toTensor().to(device);
+
+        conv2->weight = pt.attr("conv2").toModule().attr("weight").toTensor().to(device);
+        conv2->bias   = pt.attr("conv2").toModule().attr("bias").toTensor().to(device);
+        batch2->weight       = pt.attr("bn2").toModule().attr("weight").toTensor().to(device);
+        batch2->bias         = pt.attr("bn2").toModule().attr("bias").toTensor().to(device);
+        batch2->running_mean = pt.attr("bn2").toModule().attr("running_mean").toTensor().to(device);
+        batch2->running_var  = pt.attr("bn2").toModule().attr("running_var").toTensor().to(device);
+
+        conv3->weight = pt.attr("conv3").toModule().attr("weight").toTensor().to(device);
+        conv3->bias   = pt.attr("conv3").toModule().attr("bias").toTensor().to(device);
+        batch3->weight       = pt.attr("bn3").toModule().attr("weight").toTensor().to(device);
+        batch3->bias         = pt.attr("bn3").toModule().attr("bias").toTensor().to(device);
+        batch3->running_mean = pt.attr("bn3").toModule().attr("running_mean").toTensor().to(device);
+        batch3->running_var  = pt.attr("bn3").toModule().attr("running_var").toTensor().to(device);
+
+        fcn1->weight  = pt.attr("fcn1").toModule().attr("weight").toTensor().to(device);
+        fcn1->bias    = pt.attr("fcn1").toModule().attr("bias").toTensor().to(device);
+        batch4->weight       = pt.attr("bn4").toModule().attr("weight").toTensor().to(device);
+        batch4->bias         = pt.attr("bn4").toModule().attr("bias").toTensor().to(device);
+        batch4->running_mean = pt.attr("bn4").toModule().attr("running_mean").toTensor().to(device);
+        batch4->running_var  = pt.attr("bn4").toModule().attr("running_var").toTensor().to(device);
+
+        fcn2->weight  = pt.attr("fcn2").toModule().attr("weight").toTensor().to(device);
+        fcn2->bias    = pt.attr("fcn2").toModule().attr("bias").toTensor().to(device);
+        batch5->weight       = pt.attr("bn5").toModule().attr("weight").toTensor().to(device);
+        batch5->bias         = pt.attr("bn5").toModule().attr("bias").toTensor().to(device);
+        batch5->running_mean = pt.attr("bn5").toModule().attr("running_mean").toTensor().to(device);
+        batch5->running_var  = pt.attr("bn5").toModule().attr("running_var").toTensor().to(device);
+
+        fcn3->weight  = pt.attr("fcn3").toModule().attr("weight").toTensor().to(device);
+        fcn3->bias    = pt.attr("fcn3").toModule().attr("bias").toTensor().to(device);
+    }
+    void loadGPUWeightsFromPT(const std::string &fileName)
+    {
+        torch::Device device{torch::kCUDA};
+        loadWeightsFromPT(fileName, device);
+    }
+    void loadCPUWeightsFromPT(const std::string &fileName)
+    {
+        torch::Device device{torch::kCPU};
+        loadWeightsFromPT(fileName, device);
+    } 
 //private:
     torch::nn::Conv1d conv1{nullptr};
     torch::nn::BatchNorm1d batch1{nullptr};
@@ -259,6 +330,23 @@ void Model<E>::loadWeightsFromHDF5(const std::string &fileName,
 {
     pImpl->mNetwork.loadWeightsFromHDF5(fileName, pImpl->mUseGPU, verbose);
     if (pImpl->mUseGPU){pImpl->toGPU();}
+    pImpl->mNetwork.eval();
+    pImpl->mHaveCoefficients = true;
+}
+
+/// Load from weights
+template<UUSS::Device E>
+void Model<E>::loadWeightsFromPT(const std::string &fileName)
+{
+    if (E == UUSS::Device::CPU)
+    {
+        pImpl->mNetwork.loadCPUWeightsFromPT(fileName);
+    }
+    else
+    {
+        pImpl->mNetwork.loadGPUWeightsFromPT(fileName);
+        pImpl->toGPU();
+    }
     pImpl->mNetwork.eval();
     pImpl->mHaveCoefficients = true;
 }

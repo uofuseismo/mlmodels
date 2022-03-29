@@ -5,6 +5,9 @@
 
 using namespace UUSS::OneComponentPicker::ZCNN;
 
+#define SIGNAL_LENGTH 400
+#define SAMPLING_PERIOD 0.01
+
 namespace
 {
 /// @brief Computes the absolute max value of an array.
@@ -209,9 +212,9 @@ public:
         }
     }
     ZCNNPNetwork mNetwork;
-    double mSamplingPeriod = 0.01;
+    //double mSamplingPeriod = 0.01;
     double mBias = 0;
-    int mSignalLength = 400;
+    //int mSignalLength = 400;
     bool mUseGPU = false;
     bool mOnGPU = false;
     bool mHaveCoefficients = false;
@@ -262,16 +265,16 @@ void Model<E>::loadWeightsFromHDF5(const std::string &fileName,
 
 /// Returns the input signal length
 template<UUSS::Device E>
-int Model<E>::getSignalLength() const noexcept
+int Model<E>::getSignalLength() noexcept
 {
-    return pImpl->mSignalLength;
+    return SIGNAL_LENGTH; //pImpl->mSignalLength;
 }
 
 /// Returns the sampling period
 template<UUSS::Device E>
-double Model<E>::getSamplingPeriod() const noexcept
+double Model<E>::getSamplingPeriod() noexcept
 {
-    return pImpl->mSamplingPeriod;
+    return SAMPLING_PERIOD; //pImpl->mSamplingPeriod;
 }
 
 /// Are the model coefficients set?

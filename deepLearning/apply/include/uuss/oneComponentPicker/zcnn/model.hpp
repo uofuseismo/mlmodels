@@ -54,9 +54,9 @@ public:
     /// @note The first underlying fully-connected layer requires a flattened
     ///       layer of expected length.  Therefore, the input signal must have
     ///       a specified length as to conform with the model architecture.
-    [[nodiscard]] int getSignalLength() const noexcept;
+    [[nodiscard]] static int getSignalLength() noexcept;
     /// @result The assumed sampling p;eriod of the input signal in seconds.
-    [[nodiscard]] double getSamplingPeriod() const noexcept;
+    [[nodiscard]] static double getSamplingPeriod() noexcept;
 
     /// @brief Computes the probability of a waveform's polarity as being
     ///        up, down, or unknown.

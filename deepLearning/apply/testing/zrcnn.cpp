@@ -49,6 +49,10 @@ TEST(ZCNN, Picker)
     loadTextFile("../testing/data/p_signals_zcnn_p.csv", ex1, ex2, ex3, ex4);
     UUSS::OneComponentPicker::ZCNN::ProcessData process;
     UUSS::OneComponentPicker::ZCNN::Model picker;
+    EXPECT_EQ(picker.getSignalLength(), 400);
+    EXPECT_NEAR(picker.getSamplingPeriod(), 0.01, 1.e-14);
+    EXPECT_NEAR(picker.getSamplingPeriod(),
+                process.getTargetSamplingPeriod(), 1.e-14);
     EXPECT_NO_THROW(picker.loadWeightsFromHDF5(
         "../testing/models/test_zrcnnpick_p.h5"));
     auto p1 = picker.predict(ex1.size(), ex1.data());

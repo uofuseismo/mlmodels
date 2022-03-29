@@ -47,7 +47,12 @@ TEST(FMNet, Preprocess)
 
 TEST(FMNet, FMNetCPU)
 {
+    UUSS::FirstMotion::FMNet::ProcessData process;
     UUSS::FirstMotion::FMNet::Model<UUSS::Device::CPU> polarity;
+    EXPECT_EQ(polarity.getSignalLength(), 400);
+    EXPECT_NEAR(polarity.getSamplingPeriod(), 0.01, 1.e-14);
+    EXPECT_NEAR(polarity.getSamplingPeriod(),
+                process.getTargetSamplingPeriod(), 1.e-14); 
     double tol = 0.4;
     EXPECT_NO_THROW(polarity.setPolarityThreshold(tol));
     EXPECT_NEAR(polarity.getPolarityThreshold(), tol, 1.e-8);

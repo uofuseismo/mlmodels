@@ -6,6 +6,9 @@
 
 using namespace UUSS::FirstMotion::FMNet;
 
+#define SIGNAL_LENGTH 400
+#define SAMPLING_PERIOD 0.01
+
 namespace
 {
 /// @brief Computes the absolute max value of an array.
@@ -271,7 +274,7 @@ public:
     }
     FMNetwork mNetwork;
     double mPolarityThreshold = 1./3.;
-    int mSignalLength = 400;
+    //int mSignalLength = SIGNAL_LENGTH;
     bool mUseGPU = false;
     bool mOnGPU = false;
     bool mHaveCoefficients = false;
@@ -353,9 +356,16 @@ void Model<E>::loadWeightsFromPT(const std::string &fileName)
 
 /// Returns the input signal length
 template<UUSS::Device E>
-int Model<E>::getSignalLength() const noexcept
+int Model<E>::getSignalLength() noexcept
 {
-    return pImpl->mSignalLength;
+    return SIGNAL_LENGTH; //pImpl->mSignalLength;
+}
+
+/// Returns the sampling period
+template<UUSS::Device E>
+double Model<E>::getSamplingPeriod() noexcept
+{
+    return SAMPLING_PERIOD; //pImpl->mSamplingPeriod;
 }
 
 /// Are the model coefficients set?

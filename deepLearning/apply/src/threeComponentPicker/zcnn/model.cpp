@@ -1,9 +1,9 @@
 #include <string>
 #include <torch/torch.h>
-#include "uuss/oneComponentPicker/zcnn/model.hpp"
+#include "uuss/threeComponentPicker/zcnn/model.hpp"
 #include "private/loadHDF5Weights.hpp"
 
-using namespace UUSS::OneComponentPicker::ZCNN;
+using namespace UUSS::ThreeComponentPicker::ZCNN;
 
 #define SIGNAL_LENGTH 400
 #define SAMPLING_PERIOD 0.01
@@ -58,15 +58,75 @@ bool rescaleAndCopy(const int npts,
         return false;
     }
 }
-
+/// @brief Performs a min/max normalization and copies.
+/// @param[in] npts     The number of points
+/// @param[in] z        The vertical trace.  This has dimension [npts].
+/// @param[in] n        The north trace.  This has dimension [npts].
+/// @param[in] e        The east trae.  This has dimension [npts].
+/// @param[out] tensor  The rescaled data for the neural network.
+///                     This has dimension [3 x npts] and is stored
+///                     row major format.
+/// @retval True indicates that this is a live trace.
+/// @retval False indicates that this is a dead trace.
+template<class T>
+bool rescaleAndCopy(const int npts,
+                    const T *__restrict__ z,
+                    const T *__restrict__ n, 
+                    const T *__restrict__ e,
+                    T *__restrict__ tensor)
+{
+    constexpr T zero = 0; 
+    auto zMax = getMaxAbs(npts, z);
+    auto nMax = getMaxAbs(npts, n);
+    auto eMax = getMaxAbs(npts, e);
+    auto maxVal = std::max(zMax, std::max(nMax, eMax));
+    if (maxVal != 0)
+    {    
+        auto xnorm = static_cast<T> (1.0/maxVal);
+#ifdef USE_PSTL
+        std::transform(std::execution::unseq,
+                       n, n + npts, tensor,
+                       std::bind(std::multiplies<T>(),
+                       std::placeholders::_1, xnorm));
+        std::transform(std::execution::unseq,
+                       e, e + npts, tensor + npts,
+                       std::bind(std::multiplies<T>(),
+                       std::placeholders::_1, xnorm));
+        std::transform(std::execution::unseq,
+                       z, z + npts, tensor + 2*npts,
+                       std::bind(std::multiplies<T>(),
+                       std::placeholders::_1, xnorm));
+#else
+        std::transform(n, n + npts, tensor,
+                       std::bind(std::multiplies<T>(),
+                       std::placeholders::_1, xnorm));
+        std::transform(e, e + npts, tensor + npts,
+                       std::bind(std::multiplies<T>(),
+                       std::placeholders::_1, xnorm));
+        std::transform(z, z + npts, tensor + 2*npts,
+                       std::bind(std::multiplies<T>(),
+                       std::placeholders::_1, xnorm));
+#endif
+        return true;
+    }    
+    else
+    {
+#ifdef USE_PSTL
+        std::fill(std::execution::unseq, tensor, tensor + 3*npts, zero);
+#else
+        std::fill(tensor, tensor + 3*npts, zero);
+#endif
+        return false;
+    }
+}
 }
 
-struct ZCNNPNetwork : torch::nn::Module
+struct ZCNN3CNetwork : torch::nn::Module
 {
     // C'tor
-    ZCNNPNetwork() :
+    ZCNN3CNetwork() :
         // 1
-        conv1(torch::nn::Conv1dOptions({1, 32, 21})
+        conv1(torch::nn::Conv1dOptions({3, 32, 21})
            .stride(1).padding(10).bias(true).dilation(1)),
         batch1(torch::nn::BatchNormOptions(32)
             .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
@@ -200,7 +260,7 @@ struct ZCNNPNetwork : torch::nn::Module
 
 /// Structure with implementation
 template<UUSS::Device E>
-class Model<E>::ZCNNImpl
+class Model<E>::ZCNN3CImpl
 {
 public:
     void toGPU()
@@ -211,10 +271,8 @@ public:
             mOnGPU = true;
         }
     }
-    ZCNNPNetwork mNetwork;
-    //double mSamplingPeriod = 0.01;
+    ZCNN3CNetwork mNetwork;
     double mBias = 0;
-    //int mSignalLength = 400;
     bool mUseGPU = false;
     bool mOnGPU = false;
     bool mHaveCoefficients = false;
@@ -224,7 +282,7 @@ public:
 /// C'tor
 template<>
 Model<UUSS::Device::CPU>::Model() :
-    pImpl(std::make_unique<ZCNNImpl> ())
+    pImpl(std::make_unique<ZCNN3CImpl> ())
 {
     pImpl->mNetwork.eval();
     pImpl->mBias = pImpl->mNetwork.bias;
@@ -233,7 +291,7 @@ Model<UUSS::Device::CPU>::Model() :
 /// C'tor
 template<>
 Model<UUSS::Device::GPU>::Model () :
-    pImpl(std::make_unique<ZCNNImpl> ())
+    pImpl(std::make_unique<ZCNN3CImpl> ())
 {
     if (!torch::cuda::is_available())
     {
@@ -267,14 +325,14 @@ void Model<E>::loadWeightsFromHDF5(const std::string &fileName,
 template<UUSS::Device E>
 int Model<E>::getSignalLength() noexcept
 {
-    return SIGNAL_LENGTH; //pImpl->mSignalLength;
+    return SIGNAL_LENGTH;
 }
 
 /// Returns the sampling period
 template<UUSS::Device E>
 double Model<E>::getSamplingPeriod() noexcept
 {
-    return SAMPLING_PERIOD; //pImpl->mSamplingPeriod;
+    return SAMPLING_PERIOD;
 }
 
 /// Are the model coefficients set?
@@ -286,31 +344,40 @@ bool Model<E>::haveModelCoefficients() const noexcept
 
 /// Predicts a pick time
 template<UUSS::Device E>
-float Model<E>::predict(int nSamples, const float z[]) const
+float Model<E>::predict(int nSamples,
+                        const float vertical[],
+                        const float north[],
+                        const float east[]) const
 {
     std::array<float, 1> pickTime;
     constexpr int nSignals = 1;
     constexpr int batchSize = 1;
     auto pickTimePtr = pickTime.data();
-    predict(nSignals, nSamples, z, &pickTimePtr, batchSize);
+    predict(nSignals, nSamples, vertical, north, east, &pickTimePtr, batchSize);
     return pickTime[0];
 }
 
 template<UUSS::Device E>
-double Model<E>::predict(const int nSamples, const double z[]) const
+double Model<E>::predict(const int nSamples,
+                         const double vertical[],
+                         const double north[],
+                         const double east[]) const
 {
     std::array<double, 1> pickTime;
     constexpr int nSignals = 1;
     constexpr int batchSize = 1;
     auto pickTimePtr = pickTime.data();
-    predict(nSignals, nSamples, z, &pickTimePtr, batchSize);
+    predict(nSignals, nSamples, vertical, north, east, &pickTimePtr, batchSize);
     return pickTime[0];
 }
 
-/// Compute the pick times relative to the trace start
+/// Compute the pick time perturbations 
 template<UUSS::Device E>
 void Model<E>::predict(
-    const int nSignals, const int nSamplesInSignal, const double z[],
+    const int nSignals, const int nSamplesInSignal,
+    const double vertical[],
+    const double north[],
+    const double east[],
     double *pickTimesIn[], const int batchSize) const
 {
     // Preliminary checks
@@ -320,6 +387,12 @@ void Model<E>::predict(
     {
         throw std::invalid_argument("Batch size must be positive");
     }
+    if (vertical == nullptr)
+    {
+        throw std::invalid_argument("Vertical is NULL");
+    }
+    if (north == nullptr){throw std::invalid_argument("North is NULL");}
+    if (east == nullptr){throw std::invalid_argument("East is NULL");}
     if (nSamplesInSignal != signalLength)
     {
         throw std::invalid_argument("nSamplesInSignal = "
@@ -327,15 +400,22 @@ void Model<E>::predict(
                                   + " must equal "
                                   + std::to_string(signalLength));
     }
-    if (z == nullptr){throw std::invalid_argument("z is NULL");}
     auto pickTimes = *pickTimesIn;
     if (pickTimes == nullptr){throw std::invalid_argument("pickTimes is NULL");}
     // Copy signal to float vector
     std::vector<float> zWork(nSignals*signalLength, 0);
-    std::copy(z, z + nSignals*signalLength, zWork.data());
+    std::copy(vertical, vertical + nSignals*signalLength, zWork.data());
+    std::vector<float> nWork(nSignals*signalLength, 0);
+    std::copy(north, north + nSignals*signalLength, nWork.data());
+    std::vector<float> eWork(nSignals*signalLength, 0);
+    std::copy(east, east + nSignals*signalLength, eWork.data()); 
     std::vector<float> pickWork(nSignals, 0);
     auto pPtr = pickWork.data(); 
-    predict(nSignals, nSamplesInSignal, zWork.data(), &pPtr, batchSize);
+    predict(nSignals, nSamplesInSignal,
+            zWork.data(),
+            nWork.data(),
+            eWork.data(),
+            &pPtr, batchSize);
     // Copy result back
     std::copy(pPtr, pPtr + nSignals, pickTimes);
 }
@@ -343,7 +423,10 @@ void Model<E>::predict(
 /// Compute the pick times relative to the trace start
 template<>
 void Model<UUSS::Device::CPU>::predict(
-    const int nSignals, const int nSamplesInSignal, const float z[],
+    const int nSignals, const int nSamplesInSignal,
+    const float vertical[],
+    const float north[],
+    const float east[],
     float *pickTimesIn[], const int batchSize) const
 {
     if (!haveModelCoefficients())
@@ -363,7 +446,9 @@ void Model<UUSS::Device::CPU>::predict(
                                   + " must equal "
                                   + std::to_string(signalLength));
     }
-    if (z == nullptr){throw std::invalid_argument("z is NULL");}
+    if (vertical == nullptr){throw std::invalid_argument("vertical is NULL");}
+    if (north == nullptr){throw std::invalid_argument("north is NULL");}
+    if (east == nullptr){throw std::invalid_argument("east is NULL");}
     auto pickTimes = *pickTimesIn;
     if (pickTimes == nullptr){throw std::invalid_argument("pickTimes is NULL");}
     // Initialize result
@@ -371,7 +456,7 @@ void Model<UUSS::Device::CPU>::predict(
     std::fill(pickTimes, pickTimes + nSignals, defaultPick);
     // Allocate space
     int batchUse = std::min(nSignals, batchSize);
-    auto X = torch::zeros({batchUse, 1, signalLength},
+    auto X = torch::zeros({batchUse, 3, signalLength},
                           torch::TensorOptions().dtype(torch::kFloat32)
                           .requires_grad(false));
     std::vector<bool> lAlive(batchUse, true);
@@ -388,7 +473,11 @@ void Model<UUSS::Device::CPU>::predict(
             int iSrc = js*signalLength;
             int iDst = (js - js0)*signalLength;
             float *signalPtr = X.data_ptr<float> () + iDst;
-            lAlive[js-js0] = rescaleAndCopy(signalLength, z + iSrc, signalPtr);
+            lAlive[js-js0] = rescaleAndCopy(signalLength,
+                                            vertical + iSrc,
+                                            north + iSrc,
+                                            east + iSrc,
+                                            signalPtr);
         }
         // Predict
         auto p = pImpl->mNetwork.forward(X);
@@ -408,7 +497,10 @@ void Model<UUSS::Device::CPU>::predict(
 /// Compute the probability of up/down/unkonwn on a gpu
 template<>
 void Model<UUSS::Device::GPU>::predict(
-    const int nSignals, const int nSamplesInSignal, const float z[],
+    const int nSignals, const int nSamplesInSignal,
+    const float vertical[],
+    const float north[],
+    const float east[],
     float *pickTimesIn[], const int batchSize) const
 {
     if (!haveModelCoefficients())
@@ -428,13 +520,15 @@ void Model<UUSS::Device::GPU>::predict(
                                   + " must equal "
                                   + std::to_string(signalLength));
     }
-    if (z == nullptr){throw std::invalid_argument("z is NULL");}
+    if (vertical == nullptr){throw std::invalid_argument("vertical is NULL");}
+    if (north == nullptr){throw std::invalid_argument("north is NULL");}
+    if (east == nullptr){throw std::invalid_argument("east is NULL");}
     auto pickTimes = *pickTimesIn;
     if (pickTimes == nullptr){throw std::invalid_argument("pickTimes is NULL");}
     float defaultPick = static_cast<float> (getSamplingPeriod()/2*signalLength);
     std::fill(pickTimes, pickTimes + nSignals, defaultPick);
     int batchUse = std::min(nSignals, batchSize);
-    auto X = torch::zeros({batchUse, 1, signalLength},
+    auto X = torch::zeros({batchUse, 3, signalLength},
                           torch::TensorOptions().dtype(torch::kFloat32)
                           .requires_grad(false));
     std::vector<bool> lAlive(batchUse, true);
@@ -449,7 +543,11 @@ void Model<UUSS::Device::GPU>::predict(
             int iSrc = js*signalLength;
             int iDst = (js - js0)*signalLength;
             float *signalPtr = X.data_ptr<float> () + iDst;
-            lAlive[js-js0] = rescaleAndCopy(signalLength, z + iSrc, signalPtr);
+            lAlive[js-js0] = rescaleAndCopy(signalLength,
+                                            vertical + iSrc,
+                                            north + iSrc,
+                                            east + iSrc,
+                                            signalPtr);
         }
         auto signalGPU = X.to(torch::kCUDA);
         auto pHost = pImpl->mNetwork.forward(signalGPU).to(torch::kCPU);
@@ -465,9 +563,8 @@ void Model<UUSS::Device::GPU>::predict(
     }
 }
 
-
 ///--------------------------------------------------------------------------///
 ///                              Template Instantiation                      ///
 ///--------------------------------------------------------------------------///
-template class UUSS::OneComponentPicker::ZCNN::Model<UUSS::Device::GPU>;
-template class UUSS::OneComponentPicker::ZCNN::Model<UUSS::Device::CPU>;
+template class UUSS::ThreeComponentPicker::ZCNN::Model<UUSS::Device::GPU>;
+template class UUSS::ThreeComponentPicker::ZCNN::Model<UUSS::Device::CPU>;

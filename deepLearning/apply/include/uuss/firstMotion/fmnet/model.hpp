@@ -99,6 +99,7 @@ public:
     ///         \c getSignalLength() or z is NULL.
     /// @sa \c setPolarityThreshold()
     [[nodiscard]] int predict(int nSamples, const float z[]) const;
+    [[nodiscard]] int predict(int nSamples, const double z[]) const;
 
     /// @brief Computes the probability of a waveform's polarity as being
     ///        up, down, or unknown.

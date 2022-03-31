@@ -1,13 +1,15 @@
-#ifndef UUSSMLMODELS_ONECOMPONENTPICKER_ZCNN_MODEL_HPP
-#define UUSSMLMODELS_ONECOMPONENTPICKER_ZCNN_MODEL_HPP
+#ifndef UUSSMLMODELS_THREECOMPONENTPICKER_ZCNN_MODEL_HPP
+#define UUSSMLMODELS_THREECOMPONENTPICKER_ZCNN_MODEL_HPP
 #include <memory>
 #include "uuss/enums.hpp"
-namespace UUSS::OneComponentPicker::ZCNN
+namespace UUSS::ThreeComponentPicker::ZCNN
 {
 /// @brief This class is for applying the convolutional neural network
-///        picker to the vertical channel.  This was architecture
-///        was defined P Wave Arrival Picking and First-Motion Polarity
-///        Determination With Deep Learning (Ross et al., 2016).
+///        picker to a three-component signal.  This is an extension of
+///        the architecture defined by P Wave Arrival Picking and
+///        First-Motion Polarity Determination With Deep Learning
+///        (Ross et al., 2016).  It is mainly used for picking S waves
+///        at UUSS.
 /// @copyright Ben Baker (University of Utah) distributed under the MIT license.
 template<UUSS::Device E = UUSS::Device::CPU>
 class Model
@@ -15,6 +17,7 @@ class Model
 public:
     /// @name Constructors
     /// @{
+
     /// @brief Default constructor.
     Model();
     /// @brief Move constructor.
@@ -34,6 +37,7 @@ public:
 
     /// @name Destructors
     /// @{
+
     /// @brief Destructor.
     ~Model();
     /// @}
@@ -58,47 +62,58 @@ public:
     /// @result The assumed sampling p;eriod of the input signal in seconds.
     [[nodiscard]] static double getSamplingPeriod() noexcept;
 
-    /// @brief Computes the pick corrections to add to the original picks.
+    /// @brief Computes the pick correction to add to the original pick.
     /// @param[in] nSignals  The number of signals.  This must be positive.
     /// @param[in] nSamplesInSignal  The number of samples in each signal.
     ///                              This must match \c getSignalLength(). 
-    /// @param[in] z   The vertical channel signals from which to compute
-    ///                the respective proababilities.  This is a row major
-    ///                matrix with dimension [nSignals x nSamplesInSignal].
-    /// @param[out] pickTimes  The pick corrections, in seconds, to add
-    ///                        the original picks.
+    /// @param[in] vertical   The vertical channel signals from which to compute
+    ///                       the respective proababilities.  This is a row
+    ///                       major matrix with dimension
+    ///                       [nSignals x nSamplesInSignal].
+    /// @param[out] pickTimes The pick corrections to add to the pick.
     /// @param[in] batchSize   The number of signals for torch to process
     ///                        simultaneously.  This must be positive.
     /// @throws std::invalid_argument if nSignals is not positive,
     ///         nSamplesInSignal is not valid, any array is NULL.
     /// @throws std::runtime_error if the coefficients are not set.
     void predict(int nSignals, int nSamplesInSignal,
-                 const float z[],
+                 const float vertical[],
+                 const float north[],
+                 const float east[],
                  float *pickTimes[],
                  int batchSize = 32) const;
     /// @copydoc predict
     void predict(int nSignal, int nSamplesInSignal,
-                 const double z[],
+                 const double vertical[],
+                 const double north[],
+                 const double east[],
                  double *pickTimes[],
                  int batchSize = 32) const;
     /// @brief Computes the pick correction in seconds to add to the
     ///        original pick.
     /// @param[in] nSamples   The number of samples in the signal.  
     ///                       This must match \c getSignalLength().
-    /// @param[in] z  The vertical channel signal on which to make a P
-    ///               pick.
-    /// @result The pick correction in seconds to add to the original pick.
+    /// @param[in] vertical  The signal on the vertical channel.
+    /// @param[in] north     The signal on the north channel.
+    /// @param[in] east      The signal on the east channel.
+    /// @result The pick time in seconds relative from the trace start. 
     /// @throws std::invalid_argument if nSamples does not equal
     ///         \c getSignalLength() or z is NULL.
-    [[nodiscard]] float predict(int nSamples, const float z[]) const;
+    [[nodiscard]] float predict(int nSamples,
+                                const float vertical[],
+                                const float north[],
+                                const float east[]) const;
     /// @copydoc predict
-    [[nodiscard]] double predict(int nSamples, const double z[]) const;
+    [[nodiscard]] double predict(int nSamples,
+                                 const double vertical[],
+                                 const double north[],
+                                 const double east[]) const;
 
     Model(const Model &model) = delete;
     Model& operator=(const Model &model) = delete;
 private:
-    class ZCNNImpl;
-    std::unique_ptr<ZCNNImpl> pImpl;
+    class ZCNN3CImpl;
+    std::unique_ptr<ZCNN3CImpl> pImpl;
 };
 }
 #endif

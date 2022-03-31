@@ -6,7 +6,7 @@ enable_testing()
 #                    Define the compiler standard and requisites                         #
 ##########################################################################################
 include(CheckCXXCompilerFlag)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FindOpenMP)
 if (OPENMP_FOUND)
@@ -38,7 +38,7 @@ if (WRAP_PYTHON)
    message(STATUS "PYTHON_LIBRARIES = ${PYTHON_LIBRARIES}")
    message(STATUS "PYTHON_EXECUTABLE = ${PYTHON_EXECUTABLE}")
    message(STATUS "PYTHON_INCLUDE_DIRS = ${PYTHON_INCLUDE_DIRS}")
-   #string(APPEND CMAKE_CXX_FLAGS " -DPYBIND11_CPP17 ")
+   #string(APPEND CMAKE_CXX_FLAGS " -DPYBIND11_CPP20 ")
    find_package(pybind11 REQUIRED)
 endif()
 
@@ -104,14 +104,15 @@ set(LIB_SRC
     src/oneComponentPicker/zcnn/processData.cpp
     src/threeComponentPicker/zrunet/processData.cpp
     src/threeComponentPicker/zrunet/model.cpp
-    src/threeComponentPicker/zcnn/processData.cpp)
+    src/threeComponentPicker/zcnn/processData.cpp
+    src/threeComponentPicker/zcnn/model.cpp)
 
 set(BUILD_SHARED_LIBS YES)
 add_library(uussmlmodels ${LIB_SRC})
 target_link_libraries(uussmlmodels PRIVATE
                       ${RTSEIS_LIBRARY} ${HDF5_LIBRARIES} ${TORCH_LIBRARIES})
 set_target_properties(uussmlmodels PROPERTIES
-                      CXX_STANDARD 17
+                      CXX_STANDARD 20
                       CXX_STANDARD_REQUIRED YES
                       CXX_EXTENSIONS NO)
 target_include_directories(uussmlmodels PUBLIC ${PUBLIC_HEADER_FILES})
@@ -133,7 +134,7 @@ if (WRAP_PYTHON)
                          pybind11::module uussmlmodels)
    set_target_properties(pyuussmlmodels PROPERTIES
                          PREFIX ""
-                         CXX_STANDARD 17
+                         CXX_STANDARD 20
                          CXX_STANDARD_REQUIRED YES 
                          CXX_EXTENSIONS NO) 
    target_include_directories(pyuussmlmodels PRIVATE pybind11
@@ -153,7 +154,7 @@ target_link_libraries(unitTests PRIVATE uussmlmodels ${TORCH_LIBRARIES} ${GTEST_
 #                                  ${GTEST_BOTH_LIBRARIES})
 target_include_directories(unitTests PRIVATE ${GTEST_INCLUDE_DIRS})
 set_target_properties(unitTests PROPERTIES
-                      CXX_STANDARD 17
+                      CXX_STANDARD 20
                       CXX_STANDARD_REQUIRED YES
                       CXX_EXTENSIONS NO)
 add_test(NAME unitTests

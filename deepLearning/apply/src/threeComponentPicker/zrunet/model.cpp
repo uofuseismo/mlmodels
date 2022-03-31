@@ -1018,12 +1018,12 @@ void Model<UUSS::Device::CPU>::predictProbability(
                               .requires_grad(false));
         // Feature rescale
         int nUpdate = nSamplesInWindow*batchSize;
-        for (int iStart=0; iStart < nSamples; iStart = iStart + nUpdate)
+        for (int iStart = 0; iStart < nSamples; iStart = iStart + nUpdate)
         {
             // Copy the windowed signals
             int nWindows = 0;
             int nAdvance = nSamplesInWindow;
-            for (int batch=0; batch<batchSize; ++batch)
+            for (int batch = 0; batch < batchSize; ++batch)
             {
                 int i1 = iStart + batch*nAdvance;
                 int i2 = i1 + nSamplesInWindow;
@@ -1070,7 +1070,7 @@ void Model<UUSS::Device::CPU>::predictProbability(
                               .requires_grad(false));
         // This is a worst-case scenario loop that enclosed break statements
         // will force to terminate early.  while(true) loops are discomforting.
-        for (int kloop=0; kloop<nSamples; ++kloop)
+        for (int kloop = 0; kloop < nSamples; ++kloop)
         {
             int nWindows = 0;
             for (int batch=0; batch<batchSize; ++batch)

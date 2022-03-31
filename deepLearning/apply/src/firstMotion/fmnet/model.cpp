@@ -413,6 +413,14 @@ int Model<E>::predict(const int nSamples, const float z[]) const
     }
 }
 
+template<UUSS::Device E>
+int Model<E>::predict(const int nSamples, const double z[]) const
+{
+    std::vector<float> z4(nSamples);
+    std::copy(z, z + nSamples, z4.data());
+    return predict(z4.size(), z4.data());
+}
+
 /*
 /// Compute the probability of up/down/unknown on cpu
 template<>

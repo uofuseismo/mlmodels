@@ -182,7 +182,7 @@ TEST(ZCNN3C, Picker)
     UUSS::ThreeComponentPicker::ZCNN::ProcessData process;
     UUSS::ThreeComponentPicker::ZCNN::Model picker;
     EXPECT_EQ(picker.getSignalLength(), 600);
-    EXPECT_EQ(z1.size(), 600);
+    EXPECT_EQ(static_cast<int> (z1.size()), 600);
     EXPECT_NEAR(picker.getSamplingPeriod(), 0.01, 1.e-14);
     EXPECT_NEAR(picker.getSamplingPeriod(),
                 process.getTargetSamplingPeriod(), 1.e-14);

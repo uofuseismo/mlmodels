@@ -91,6 +91,14 @@ if (NOT ${CMAKE_SOURCE_DIR}/testing/models/test_zrunet_p.h5)
         http://home.chpc.utah.edu/~u6024448/uussmlmodels/test_zrcnnpick_p.h5
         ${CMAKE_SOURCE_DIR}/testing/models/test_zrcnnpick_p.h5
         INACTIVITY_TIMEOUT 5)
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/s_signals_zcnn3c_s.csv
+        ${CMAKE_SOURCE_DIR}/testing/data/s_signals_zcnn3c_s.csv
+        INACTIVITY_TIMEOUT 5)
+   file(DOWNLOAD
+        http://home.chpc.utah.edu/~u6024448/uussmlmodels/test_zrcnnpick3c_s.h5
+        ${CMAKE_SOURCE_DIR}/testing/models/test_zrcnnpick3c_s.h5
+        INACTIVITY_TIMEOUT 5)
 endif()
 
 

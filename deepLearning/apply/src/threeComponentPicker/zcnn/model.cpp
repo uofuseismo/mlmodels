@@ -5,7 +5,7 @@
 
 using namespace UUSS::ThreeComponentPicker::ZCNN;
 
-#define SIGNAL_LENGTH 400
+#define SIGNAL_LENGTH 600
 #define SAMPLING_PERIOD 0.01
 
 namespace
@@ -85,25 +85,25 @@ bool rescaleAndCopy(const int npts,
         auto xnorm = static_cast<T> (1.0/maxVal);
 #ifdef USE_PSTL
         std::transform(std::execution::unseq,
-                       n, n + npts, tensor,
+                       z, z + npts, tensor,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
         std::transform(std::execution::unseq,
-                       e, e + npts, tensor + npts,
+                       n, n + npts, tensor + npts,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
         std::transform(std::execution::unseq,
-                       z, z + npts, tensor + 2*npts,
+                       e, e + npts, tensor + 2*npts,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
 #else
-        std::transform(n, n + npts, tensor,
+        std::transform(z, z + npts, tensor,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
-        std::transform(e, e + npts, tensor + npts,
+        std::transform(n, n + npts, tensor + npts,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
-        std::transform(z, z + npts, tensor + 2*npts,
+        std::transform(e, e + npts, tensor + 2*npts,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
 #endif
@@ -141,7 +141,7 @@ struct ZCNN3CNetwork : torch::nn::Module
         batch3(torch::nn::BatchNormOptions(128)
             .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 4
-        fcn1(torch::nn::LinearOptions({6400, 512}).bias(true)),
+        fcn1(torch::nn::LinearOptions({9600, 512}).bias(true)),
         batch4(torch::nn::BatchNormOptions(512)
             .eps(1.e-5).momentum(0.1).affine(true).track_running_stats(true)),
         // 5
@@ -235,11 +235,11 @@ struct ZCNN3CNetwork : torch::nn::Module
         readWeightsAndBiasFromHDF5(loader, "fcn_3", fcn3, gpu, verbose);
         loader.closeGroup();
 
-        loader.openGroup("/model_bias");
-        std::vector<double> biasV;
-        std::vector<hsize_t> dims;
-        loader.readDataSet("bias", &dims, &biasV);
-        bias = biasV.at(0);
+        //loader.openGroup("/model_bias");
+        //std::vector<double> biasV;
+        //std::vector<hsize_t> dims;
+        //loader.readDataSet("bias", &dims, &biasV);
+        //bias = biasV.at(0);
     }
 //private:
     torch::nn::Conv1d conv1{nullptr};
@@ -253,8 +253,8 @@ struct ZCNN3CNetwork : torch::nn::Module
     torch::nn::Linear fcn2{nullptr};
     torch::nn::BatchNorm1d batch5{nullptr};
     torch::nn::Linear fcn3{nullptr};
-    const double minVal =-0.75;
-    const double maxVal = 0.75;
+    const double minVal =-0.85;
+    const double maxVal = 0.85;
     double bias = 0;
 };
 
@@ -461,8 +461,8 @@ void Model<UUSS::Device::CPU>::predict(
                           .requires_grad(false));
     std::vector<bool> lAlive(batchUse, true);
     // Loop on batches
-    float minPick = 0.;
-    float maxPick = getSamplingPeriod()*(signalLength - 1);
+    float minPick =-getSamplingPeriod()*(signalLength - 1)/2;
+    float maxPick =+getSamplingPeriod()*(signalLength - 1)/2;
     for (int is0 = 0; is0 < nSignals; is0 = is0 + batchUse)
     {
         // Extract signal, normalize, and copy
@@ -471,7 +471,7 @@ void Model<UUSS::Device::CPU>::predict(
         for (int js = js0; js < js1; ++js)
         {
             int iSrc = js*signalLength;
-            int iDst = (js - js0)*signalLength;
+            int iDst = 3*(js - js0)*signalLength;
             float *signalPtr = X.data_ptr<float> () + iDst;
             lAlive[js-js0] = rescaleAndCopy(signalLength,
                                             vertical + iSrc,
@@ -532,8 +532,8 @@ void Model<UUSS::Device::GPU>::predict(
                           torch::TensorOptions().dtype(torch::kFloat32)
                           .requires_grad(false));
     std::vector<bool> lAlive(batchUse, true);
-    float minPick = 0.;
-    float maxPick = getSamplingPeriod()*(signalLength - 1);
+    float minPick =-getSamplingPeriod()*(signalLength - 1)/2;
+    float maxPick =+getSamplingPeriod()*(signalLength - 1)/2;
     for (int is0 = 0; is0 < nSignals; is0 = is0 + batchUse)
     {
         int js0 = is0;
@@ -541,7 +541,7 @@ void Model<UUSS::Device::GPU>::predict(
         for (int js = js0; js < js1; ++js)
         {
             int iSrc = js*signalLength;
-            int iDst = (js - js0)*signalLength;
+            int iDst = 3*(js - js0)*signalLength;
             float *signalPtr = X.data_ptr<float> () + iDst;
             lAlive[js-js0] = rescaleAndCopy(signalLength,
                                             vertical + iSrc,

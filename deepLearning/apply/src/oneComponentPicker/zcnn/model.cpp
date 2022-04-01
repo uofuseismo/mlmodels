@@ -376,8 +376,10 @@ void Model<UUSS::Device::CPU>::predict(
                           .requires_grad(false));
     std::vector<bool> lAlive(batchUse, true);
     // Loop on batches
-    float minPick = 0.;
-    float maxPick = getSamplingPeriod()*(signalLength - 1);
+    //float minPick = 0.;
+    //float maxPick = getSamplingPeriod()*(signalLength - 1);
+    float minPick =-getSamplingPeriod()*(signalLength - 1)/2;
+    float maxPick =+getSamplingPeriod()*(signalLength - 1)/2;
     for (int is0 = 0; is0 < nSignals; is0 = is0 + batchUse)
     {
         // Extract signal, normalize, and copy
@@ -438,8 +440,10 @@ void Model<UUSS::Device::GPU>::predict(
                           torch::TensorOptions().dtype(torch::kFloat32)
                           .requires_grad(false));
     std::vector<bool> lAlive(batchUse, true);
-    float minPick = 0.;
-    float maxPick = getSamplingPeriod()*(signalLength - 1);
+    //float minPick = 0.;
+    //float maxPick = getSamplingPeriod()*(signalLength - 1);
+    float minPick =-getSamplingPeriod()*(signalLength - 1)/2;
+    float maxPick =+getSamplingPeriod()*(signalLength - 1)/2;
     for (int is0 = 0; is0 < nSignals; is0 = is0 + batchUse)
     {
         int js0 = is0;

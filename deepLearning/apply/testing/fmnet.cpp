@@ -42,7 +42,8 @@ void loadTextFile(const std::string &textFile,
 
 TEST(FMNet, Preprocess)
 {
-    //UUSS::FirstMotion::FMNet::ProcessData process; 
+    UUSS::FirstMotion::FMNet::ProcessData process; 
+    EXPECT_NEAR(process.getTargetSamplingPeriod(), 0.01, 1.e-14);
 }
 
 TEST(FMNet, FMNetCPU)

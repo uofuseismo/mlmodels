@@ -36,7 +36,7 @@ public:
     ///                     `accelerometers' will be identified with the
     ///                     second letter `N' and velocimeters are will be
     ///                     identified with the second letter `H'.
-    /// @param[in] gain     This is the simple response
+    /// @param[in] gain     This is the simple response.
     /// @param[in] npts     The number of samples in the time series.
     /// @param[in] samplingPeriod  The sampling period of the data in seconds.
     ///                            This must be positive.

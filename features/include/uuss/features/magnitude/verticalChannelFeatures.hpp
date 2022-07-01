@@ -3,6 +3,11 @@
 #include <memory>
 namespace UUSS::Features::Magnitude
 {
+class Hypocenter;
+class ChannelDetails;
+}
+namespace UUSS::Features::Magnitude
+{
 /// @class VerticalChannelFeatures "verticalChannelFeatures.hpp" "uuss/features/verticalChannelFeatures.hpp"
 /// @brief Extracts features for computing a magnitude from a single channel
 ///        station.

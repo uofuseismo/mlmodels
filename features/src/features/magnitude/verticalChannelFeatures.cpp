@@ -19,6 +19,7 @@
 #include <rtseis/filterDesign/iir.hpp>
 #include <rtseis/utilities/interpolation/weightedAverageSlopes.hpp>
 #include "uuss/features/magnitude/verticalChannelFeatures.hpp"
+#include "uuss/features/magnitude/hypocenter.hpp"
 #include "private/magnitudeUtilities.hpp"
 
 #define TARGET_SAMPLING_RATE 100    // 100 Hz
@@ -177,7 +178,7 @@ public:
             double *cumPtr = mCumulativeAmplitudeCWT.data() + indx;
             int iStart = 0;
             cumPtr[iStart] = aScale[iStart];
-            for (int i = iStart + 1; i < 150; ++i)//nSamples; ++i)
+            for (int i = iStart + 1; i < nSamples; ++i)
             {
                 cumPtr[i] = cumPtr[i-1] + (aScale[i] + aScale[i-1])*dt2;
             }
@@ -226,14 +227,71 @@ public:
         const auto [vMinNoise,  vMaxNoise]
             = std::minmax_element(mVelocitySignal.begin(),
                                   mVelocitySignal.begin() + iPick);
-        const auto [vMinSignal, vMaxSignal]
-            = std::minmax_element(mVelocitySignal.begin() + iPick,
-                                  mVelocitySignal.end());
-
+        // Get the nominal period and amplitude of arrival
+        std::cout << "duration,minNoise,maxNoise,dMinMaxNoise,minSignal,maxSignal,dMinMaxSignal,varianceNoise,varianceSignal,dominantPeriod,amplitudeAtDominantPeriod,dominantCumulativeEnergyPeriod,cumulativeEnergyAtDominantPeriod" << std::endl;
+        auto nScales  = mCWT.getNumberOfScales();
+        for (const auto &duration : mDurations)
+        {
+            auto iStart = iPick;
+            auto iEnd = static_cast<int>
+                        (std::round( (PRE_ARRIVAL_TIME + duration)
+                                     /TARGET_SAMPLING_PERIOD));
+            iEnd = std::min(iEnd, nSamples);
+            auto nSubSamples = iEnd - iStart;
+            // Get min/max signal
+            const auto [vMinSignal, vMaxSignal]
+                = std::minmax_element(mVelocitySignal.data() + iStart,
+                                      mVelocitySignal.data() + iEnd);
+            // Get variance in signal
+            auto varianceSignal = variance(nSubSamples,
+                                           mVelocitySignal.data() + iStart);
+            std::pair<double, double> dominantPeriodAmplitude{0, 0};
+            for (int j = 0; j < nScales; ++j)
+            {
+                for (int i = iStart; i < iEnd; ++i)
+                {
+                    auto indx = j*nSamples + i;
+                    if (mAmplitudeCWT[indx] > dominantPeriodAmplitude.second)
+                    {
+                        dominantPeriodAmplitude.first  = 1./mCenterFrequencies[j];
+                        dominantPeriodAmplitude.second = mAmplitudeCWT[indx];
+                    }
+                }
+            }
+            // Look at cumulative energy in bands
+            std::vector<std::pair<double, double>> cumulativeEnergy(nScales);
+            for (int j = 0; j < nScales; ++j)
+            {
+                 auto indx = j*nSamples + iEnd;   // Time of interest
+                 auto jndx = j*nSamples + iStart; // Subtract from cumulative
+                 auto dEnergy = mCumulativeAmplitudeCWT[indx]
+                              - mCumulativeAmplitudeCWT[jndx];
+                 cumulativeEnergy[j].first  = 1./mCenterFrequencies[j];
+                 cumulativeEnergy[j].second = dEnergy;
+            }
+            std::sort(cumulativeEnergy.begin(), cumulativeEnergy.end(), 
+                      [](const std::pair<double, double> &a,
+                         std::pair<double, double> &b)
+                      {
+                          return a.second > b.second;
+                      });
+            std::cout << duration << " "
+                      << *vMinNoise  << " " << *vMaxNoise << " " << *vMaxNoise - *vMinNoise << " "
+                      << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSignal << " " 
+                      << varianceNoise << " " << varianceSignal << " " 
+                      << dominantPeriodAmplitude.first << " " << dominantPeriodAmplitude.second << " "
+                      << cumulativeEnergy[0].first << " " << cumulativeEnergy[0].second << " "
+                      << cumulativeEnergy[1].first << " " << cumulativeEnergy[1].second << " "
+                      << cumulativeEnergy[2].first << " " << cumulativeEnergy[2].second << " "
+                      <<std::endl;
+ 
+        }
+/*
 std::cout << "work it:" << std::endl;
 std::cout << varianceNoise << " " << varianceSignal << std::endl;
 std::cout << *vMinNoise << " " << *vMaxNoise << " " << *vMaxNoise - *vMinNoise << std::endl;
 std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSignal << std::endl;
+*/
     }
     void createVelocityFilter()
     {
@@ -343,6 +401,7 @@ std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSign
     std::vector<double> mWork;
     std::vector<double> mAmplitudeCWT;
     std::vector<double> mCumulativeAmplitudeCWT;
+    std::array<double, 3> mDurations{1, 2, 3};
     std::string mUnits;
     RTSeis::FilterRepresentations::SOS mHighPass;
     RTSeis::FilterRepresentations::BA  mIntegrator;

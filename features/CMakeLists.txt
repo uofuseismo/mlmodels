@@ -45,7 +45,8 @@ target_include_directories(uussFeatures
 
 if (${WRAP_PYTHON})
    add_library(pyuussFeatures MODULE 
-               python/pyuussFeatures.cpp)
+               python/pyuussFeatures.cpp
+               python/magnitude/wrap.cpp)
    target_link_libraries(pyuussFeatures PRIVATE pybind11::module uussFeatures)
    target_include_directories(pyuussFeatures
                               PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/python/include>

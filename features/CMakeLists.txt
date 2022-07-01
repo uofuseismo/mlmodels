@@ -4,7 +4,9 @@ enable_testing()
 
 find_package(GTest REQUIRED)
 set(FindRTSeis_DIR ${CMAKE_SOURCE_DIR}/cmake)
+set(FindGeographicLib_DIR ${CMAKE_SOURCE_DIR}/cmake)
 find_package(FindRTSeis REQUIRED)
+find_package(FindGeographicLib REQUIRED)
 
 if (${WRAP_PYTHON})
    find_package(PythonInterp 3)
@@ -21,6 +23,7 @@ set(PRIVATE_HEADER_DIRECTORIES
     ${CMAKE_SOURCE_DIR}/include/private)
 
 set(SRC
+    src/features/magnitude/hypocenter.cpp
     src/features/magnitude/verticalChannelFeatures.cpp)
 
 set(BUILD_SHARED_LIBS YES)
@@ -29,9 +32,9 @@ set_target_properties(uussFeatures PROPERTIES
                       CXX_STANDARD 20
                       CXX_STANDARD_REQUIRED YES
                       CXX_EXTENSIONS NO)
-target_link_libraries(uussFeatures PRIVATE ${RTSEIS_LIBRARY})
+target_link_libraries(uussFeatures PRIVATE ${RTSEIS_LIBRARY} ${GEOGRAPHICLIB_LIBRARY})
 target_include_directories(uussFeatures
-                           PRIVATE ${RTSEIS_INCLUDE_DIR}
+                           PRIVATE ${RTSEIS_INCLUDE_DIR} ${GEOGRAPHICLIB_INCLUDE_DIR}
                            PUBLIC $<BUILD_INTERFACE:${PUBLIC_HEADER_DIRECTORIES}>
                            PUBLIC $<INSTALL_INTERFACE:${PUBLIC_HEADER_DIRECTORIES}>)
 

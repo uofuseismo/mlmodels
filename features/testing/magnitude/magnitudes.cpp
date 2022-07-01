@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include "uuss/features/magnitude/verticalChannelFeatures.hpp"
+#include "uuss/features/magnitude/hypocenter.hpp"
 #include <gtest/gtest.h>
 
 namespace
@@ -33,8 +34,44 @@ void readSeismograms(const std::string &fileName,
 
 using namespace UUSS::Features::Magnitude;
 
+TEST(FeaturesMagnitude, Hypocenter)
+{
+    const int64_t evid{12345};
+    const double eventLatitude{40.7608};    // SLC
+    const double eventLongitude{-111.8910}; // SLC
+    const double eventDepth{10};
+    Hypocenter hypo;
+    EXPECT_NO_THROW(hypo.setLatitude(eventLatitude));
+    hypo.setLongitude(eventLongitude);
+    hypo.setDepth(eventDepth);
+    hypo.setEventIdentifier(evid);
+     
+    Hypocenter hypoCopy(hypo);
+    EXPECT_NEAR(hypoCopy.getLatitude(),  eventLatitude,  1.e-10);
+    EXPECT_NEAR(hypoCopy.getLongitude(), eventLongitude, 1.e-10);
+    EXPECT_NEAR(hypoCopy.getDepth(),     eventDepth,     1.e-10);
+
+    hypoCopy.setLongitude(eventLongitude + 360);
+    EXPECT_NEAR(hypoCopy.getLongitude(), eventLongitude, 1.e-10);
+}
+
 TEST(FeaturesMagnitude, VerticalChannelFeatures)
 {
+    const std::string network{"UU"};
+    const std::string station{"SRU"};
+    const double stationLatitude{39.11083};
+    const double stationLongitude{-110.52383};
+    const int64_t evid{12345};
+    const double eventLatitude{40.7608};    // SLC
+    const double eventLongitude{-111.8910}; // SLC
+    const double eventDepth{10};
+
+    Hypocenter hypo;
+    hypo.setLatitude(eventLatitude);
+    hypo.setLongitude(eventLongitude);
+    hypo.setDepth(eventDepth);
+    hypo.setEventIdentifier(evid);
+
     std::vector<double> acceleration, velocity;
     double startTime{30.52};
     readSeismograms("data/sru_enz_hhz.txt", &acceleration, &velocity);

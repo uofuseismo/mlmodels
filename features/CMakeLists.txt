@@ -8,6 +8,10 @@ set(FindGeographicLib_DIR ${CMAKE_SOURCE_DIR}/cmake)
 find_package(FindRTSeis REQUIRED)
 find_package(FindGeographicLib REQUIRED)
 
+# Versioning information
+configure_file(${CMAKE_SOURCE_DIR}/include/private/version.hpp.in
+               ${CMAKE_SOURCE_DIR}/include/uuss/features/version.hpp)
+
 if (${WRAP_PYTHON})
    find_package(PythonInterp 3)
    find_package(PythonLibs 3 REQUIRED)
@@ -23,6 +27,7 @@ set(PRIVATE_HEADER_DIRECTORIES
     ${CMAKE_SOURCE_DIR}/include/private)
 
 set(SRC
+    src/version.cpp
     src/features/magnitude/hypocenter.cpp
     src/features/magnitude/verticalChannelFeatures.cpp)
 
@@ -37,6 +42,20 @@ target_include_directories(uussFeatures
                            PRIVATE ${RTSEIS_INCLUDE_DIR} ${GEOGRAPHICLIB_INCLUDE_DIR}
                            PUBLIC $<BUILD_INTERFACE:${PUBLIC_HEADER_DIRECTORIES}>
                            PUBLIC $<INSTALL_INTERFACE:${PUBLIC_HEADER_DIRECTORIES}>)
+
+if (${WRAP_PYTHON})
+   add_library(pyuussFeatures MODULE 
+               python/pyuussFeatures.cpp)
+   target_link_libraries(pyuussFeatures PRIVATE pybind11::module uussFeatures)
+   target_include_directories(pyuussFeatures
+                              PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/python/include>
+                                      $<BUILD_INTERFACE:${PUBLIC_HEADER_DIRECTORIES}>)
+   set_target_properties(pyuussFeatures PROPERTIES
+                         PREFIX ""
+                         CXX_STANDARD 20
+                         CXX_STANDARD_REQUIRED YES 
+                         CXX_EXTENSIONS NO)
+endif()
 
 #========================================================================================#
 #                                       Unit Tests                                       #
@@ -61,7 +80,7 @@ target_include_directories(magnitudes
 #========================================================================================#
 include(GNUInstallDirs)
 if (${WRAP_PYTHON})
-   install(TARGETS uussFeatures
+   install(TARGETS uussFeatures pyuussFeatures
            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
            LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
            ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}

@@ -3,7 +3,7 @@
 #include <memory>
 namespace UUSS::Features::Magnitude
 {
-/// @class Hypocenter "hypocenter.hpp" "uuss/features/hypocenter.hpp"
+/// @class Hypocenter "hypocenter.hpp" "uuss/features/magnitude/hypocenter.hpp"
 /// @brief Defines the event hypocenter.
 /// @copyright Ben Baker (University of Utah) distributed under the MIT license.
 class Hypocenter
@@ -20,7 +20,8 @@ public:
     Hypocenter(const Hypocenter &hypocenter);
     /// @brief Move constructor.
     /// @param[in,out] hypocenter  The hypocenter from which to initialize
-    ///                            this class.
+    ///                            this class.  On exit, hypocenter's behavior
+    ///                            is undefined.
     Hypocenter(Hypocenter &&hypocenter) noexcept;
     /// @}
 

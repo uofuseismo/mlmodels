@@ -4,7 +4,7 @@
 namespace UUSS::Features::Magnitude
 {
 class Hypocenter;
-class ChannelDetails;
+class Channel;
 }
 namespace UUSS::Features::Magnitude
 {
@@ -35,22 +35,15 @@ public:
     ///         where the processing will end.
     [[nodiscard]] static std::pair<double, double> getArrivalTimeProcessingWindow() noexcept;
 
-    /// @name Initialization
+    /// @name Step 1: Initialization
     /// @{
 
-    /// @brief Initializes the feature extraction tool.
-    /// @param[in] samplingRate    The sampling rate in Hz.
-    /// @param[in] simpleResponse  The simple response.  Division by this
-    ///                            number will result in the signal being in
-    ///                            the units specified by units.
-    /// @param[in] units           The units.  This is from the AQMS database. 
-    ///                            This can be DU/M/S for velocity or DU/M/S**2
-    ///                            for acceleration.
-    /// @throws std::invalid_argument if the sampling rate is not positive,
-    ///         the simple response is 0, or the units are no thandled.
-    void initialize(double samplingRate,
-                    double simpleResponse,
-                    const std::string &units);
+    /// @brief Initializes the feature extraction tool for this channel.
+    /// @param[in] channel  The channel information.
+    /// @throws std::invalid_argument if the channel.haveSamplingRate() or
+    ///         channel.haveSimpleResponse() is false.
+    /// @note Initialization is expensive.  Do this as infrequently as possible.
+    void initialize(const Channel &channel);
     /// @result True indicates the class is initialized.
     [[nodiscard]] bool isInitialized() const noexcept;
 
@@ -59,12 +52,24 @@ public:
     [[nodiscard]] double getSamplingRate() const;
     /// @throws std::runtime_error if \c isInitialized() is false.
     [[nodiscard]] std::string getSimpleResponseUnits() const;
-    /// @result The simple response.
+    /// @result The simple response value.  When the input signal is divided
+    ///         by this number then the result have units of m/s or m/s^2 as
+    ///         indicated by \c getSimpleResponseUnits().
     /// @throws std::runtime_error if \c isInitialized() is false.
-    [[nodiscard]] double getSimpleResponse() const;
+    [[nodiscard]] double getSimpleResponseValue() const;
     /// @}
 
+    /// @brief Sets the hypocenter to which this signal corresponds.
+    /// @param[in] hypocenter  The hypocenter information.
+    /// @throws std::runtime_error if \c isInitialized() is false.
+    /// @throws std::invalid_argument if the \c hypocenter.haveLatitude() or
+    ///         \c hypocenter.haveLongitude() is false.
+    void setHypocenter(const Hypocenter &hypocenter);
+
     /// @brief Processes the signal.
+    /// @param[in] signal   The signal to process.
+    /// @param[in] arrivalTimeRelativeToStart  The phase arrival time in seconds
+    ///                                        relative to the signal start.
     /// @throws std::runtime_error if \c isInitialized() is false.
     /// @throws std::invalid_argument if the signal is too small or the arrival
     ///         time relative to the start is less than the processing window

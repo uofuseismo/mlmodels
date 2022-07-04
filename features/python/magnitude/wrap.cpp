@@ -1,5 +1,9 @@
 #include <memory>
+#include <string>
+#include <vector>
 #include <uuss/features/magnitude/hypocenter.hpp>
+#include <uuss/features/magnitude/channel.hpp>
+#include <uuss/features/magnitude/verticalChannelFeatures.hpp>
 //#include "wrap.hpp"
 #include "initialize.hpp"
 
@@ -53,6 +57,86 @@ public:
     
 
     std::unique_ptr<UUSS::Features::Magnitude::Hypocenter> pImpl;
+};
+
+//----------------------------------------------------------------------------//
+
+class Channel
+{
+public:
+    /// C'tor
+    Channel() :
+        pImpl(std::make_unique<UUSS::Features::Magnitude::Channel> ()) 
+    {   
+    }   
+    Channel(const Channel &channel){*this = channel;}
+    Channel(Channel &&channel) noexcept{*this = std::move(channel);}
+    /// Destructor
+    ~Channel() = default;
+    /// Copy assignment
+    Channel& operator=(const Channel &channel)
+    {
+        if (&channel == this){return *this;}
+        pImpl = std::make_unique<UUSS::Features::Magnitude::Channel>
+                (*channel.pImpl);
+        return *this;
+    }   
+    /// Move assignment
+    Channel& operator=(Channel &&channel) noexcept
+    {
+        if (&channel == this){return *this;}
+        pImpl = std::move(channel.pImpl);
+        return *this;
+    }   
+    /// Latitude
+    void setLatitude(const double latitude){pImpl->setLatitude(latitude);}
+    double getLatitude() const{return pImpl->getLatitude();}
+    /// Longitude
+    void setLongitude(const double longitude){pImpl->setLongitude(longitude);}
+    double getLongitude() const{return pImpl->getLongitude();}
+    /// Sampling rate
+    void setSamplingRate(const double samplingRate)
+    {
+        pImpl->setSamplingRate(samplingRate);
+    }
+    double getSamplingRate() const{return pImpl->getSamplingRate();}
+    /// Simple resopnse
+    void setSimpleResponse(const double gain, const std::string &units)
+    {
+        pImpl->setSimpleResponse(gain, units);
+    } 
+    std::pair<double, std::string> getSimpleResponse() const
+    {
+        return std::pair(pImpl->getSimpleResponseValue(),
+                         pImpl->getSimpleResponseUnits());
+    }
+    void setAzimuth(const double azimuth){pImpl->setAzimuth(azimuth);}
+    double getAzimuth() const{return pImpl->getAzimuth();}
+    /// Network
+    void setNetworkCode(const std::string &network)
+    {
+        pImpl->setNetworkCode(network);
+    }
+    std::string getNetworkCode() const{return pImpl->getNetworkCode();}
+    void setStationCode(const std::string &station)
+    {
+        pImpl->setStationCode(station);
+    }
+    std::string getStationCode() const{return pImpl->getStationCode();}
+    void setChannelCode(const std::string &channel)
+    {
+        pImpl->setChannelCode(channel);
+    }
+    std::string getChannelCode() const{return pImpl->getChannelCode();}
+    void setLocationCode(const std::string &locationCode)
+    {
+        pImpl->setLocationCode(locationCode);
+    }
+    std::string getLocationCode() const{return pImpl->getLocationCode();}
+    void clear() noexcept{pImpl->clear();}
+        
+
+    std::unique_ptr<UUSS::Features::Magnitude::Channel> pImpl;
 };
 }
 
@@ -112,6 +196,116 @@ Properties
             hypo.setDepth(depth);
             hypo.setEventIdentifier(identifier);
             return hypo;
+        }
+    ));
+    //------------------------------------------------------------------------//
+    pybind11::class_<::Channel> c(m, "Channel"); 
+    c.def(pybind11::init<> ());
+    c.doc() = R"""(
+Defines a channel.
+
+Required Properties
+-------------------
+
+   sampling_rate : float
+              The channel's nominal sampling rate in Hz.
+   simple_response : [float, str]
+              The value of the simple response and the AQMS-based string defining
+              the simple response which can be DU/M/S and DU/M/S**2.
+              When the signal is divided by this value then
+              the result will be in the units of M/S or M/S**2.
+   latitude : float
+              The station's latitude in degrees.  This must be in the range [-90,90].
+   longitude : float
+              The station's longitude in degrees where positive increases east.
+
+Optional Properties
+-------------------
+   azimuth : float
+              The channel's azimuth measured positive east of north in degrees.
+              For example, this will be 0 for north and vertical channels
+              and will be 90 for east channels.  This must be in the range [0,360).
+   network_code : str
+              The network code - e.g., UU.
+   station_code : str
+              The station code - e.g., SRU.
+   channel_code : str
+              The channel code - e.g., HHZ for a high-sample rate broadband 
+              vertical channel that is likely sensitive to ground velocity or
+              ENZ for a high-sample rate strong-motion vertical channel that is
+              likely sensitive to ground acceleration.
+   location_code : str
+              The location code - e.g., 01.
+
+)""";
+    c.def_property("sampling_rate",
+                   &::Channel::getSamplingRate, &::Channel::setSamplingRate);
+    c.def_property("simple_response",
+                   &::Channel::getSimpleResponse, &::Channel::setSimpleResponse);
+    c.def_property("latitude",
+                   &::Channel::getLatitude, &::Channel::setLatitude);
+    c.def_property("longitude",
+                   &::Channel::getLongitude, &::Channel::setLongitude);
+    c.def_property("azimuth",
+                   &::Channel::getAzimuth, &::Channel::setAzimuth);
+    c.def_property("network_code",
+                   &::Channel::getNetworkCode, &::Channel::setNetworkCode);
+    c.def_property("station_code",
+                   &::Channel::getStationCode, &::Channel::setStationCode);
+    c.def_property("channel_code",
+                   &::Channel::getChannelCode, &::Channel::setChannelCode);
+    c.def_property("location_code",
+                   &::Channel::getLocationCode, &::Channel::setLocationCode);
+    c.def("clear", &::Channel::clear, "Resets the class.");
+    // Pickling rules
+    c.def(pybind11::pickle(
+        [](const ::Channel &channel)
+        {
+            auto samplingRate = channel.getSamplingRate();
+            auto [gain, units] = channel.getSimpleResponse();
+            auto latitude = channel.getLatitude();
+            auto longitude = channel.getLongitude();
+            double azimuth =-1000;
+            try
+            {
+                azimuth = channel.getAzimuth();
+            }
+            catch (...)
+            {
+            }
+            auto networkCode = channel.getNetworkCode();
+            auto stationCode = channel.getStationCode();
+            auto channelCode = channel.getChannelCode();
+            auto locationCode = channel.getLocationCode();
+            return pybind11::make_tuple(networkCode, stationCode, channelCode, locationCode,
+                                        units, gain, 
+                                        samplingRate,
+                                        latitude, longitude, azimuth);
+        },
+        [](pybind11::tuple t)
+        {
+            if (t.size() != 10){throw std::runtime_error("Invalid state");}
+            auto networkCode  = t[0].cast<std::string> ();
+            auto stationCode  = t[1].cast<std::string> ();
+            auto channelCode  = t[2].cast<std::string> ();
+            auto locationCode = t[3].cast<std::string> ();
+            auto units        = t[4].cast<std::string> ();
+            auto value        = t[5].cast<double> ();
+            auto samplingRate = t[6].cast<double> ();
+            auto latitude     = t[7].cast<double> ();
+            auto longitude    = t[8].cast<double> ();
+            auto azimuth      = t[9].cast<double> ();
+            ::Channel channel;
+            if (!networkCode.empty()){channel.setNetworkCode(networkCode);}
+            if (!stationCode.empty()){channel.setStationCode(stationCode);}
+            if (!channelCode.empty()){channel.setChannelCode(channelCode);}
+            if (!locationCode.empty()){channel.setLocationCode(locationCode);}
+            channel.setSamplingRate(samplingRate);
+            channel.setSimpleResponse(value, units); 
+            channel.setLatitude(latitude);
+            channel.setLongitude(longitude);
+            if (azimuth >= 0 && azimuth < 360){channel.setAzimuth(azimuth);}
+            return channel;
         }
     ));
  

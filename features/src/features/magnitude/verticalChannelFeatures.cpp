@@ -19,8 +19,10 @@
 #include <rtseis/filterDesign/iir.hpp>
 #include <rtseis/utilities/interpolation/weightedAverageSlopes.hpp>
 #include "uuss/features/magnitude/verticalChannelFeatures.hpp"
+#include "uuss/features/magnitude/channel.hpp"
 #include "uuss/features/magnitude/hypocenter.hpp"
 #include "private/magnitudeUtilities.hpp"
+#include "private/distanceAzimuth.hpp"
 
 #define TARGET_SAMPLING_RATE 100    // 100 Hz
 #define TARGET_SAMPLING_PERIOD 0.01 // 1/100
@@ -34,6 +36,23 @@ using namespace UUSS::Features::Magnitude;
 
 namespace
 {
+void distanceAzimuth(const Hypocenter &hypocenter,
+                     const Channel &channel,
+                     double *distance, double *backAzimuth)
+{
+    auto sourceLatitude    = hypocenter.getLatitude();
+    auto sourceLongitude   = hypocenter.getLongitude(); 
+    auto receiverLatitude  = channel.getLatitude();
+    auto receiverLongitude = channel.getLongitude(); 
+    double greatCircleDistance, azimuth;
+    computeDistanceAzimuthWGS84(sourceLatitude, sourceLongitude,
+                                receiverLatitude, receiverLongitude,
+                                &greatCircleDistance,
+                                distance,
+                                &azimuth,
+                                backAzimuth);
+}
+
 template<typename U>
 std::vector<double> resample(const int n,
                              const U *__restrict__ y,
@@ -416,9 +435,13 @@ std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSign
     RTSeis::FilterImplementations::Taper<double> mHanning;
     RTSeis::Transforms::Wavelets::Morlet mMorlet;
     RTSeis::Transforms::ContinuousWavelet<double> mCWT;
+    Hypocenter mHypocenter;
+    Channel mChannel;
     double mRCFilterQ{0.994};
     double mSamplingRate{100};
     double mSimpleResponse{1}; // Proportional to micrometers
+    double mSourceReceiverDistance{-1000};
+    double mSourceReceiverBackAzimuth{-1000};
     const double mTargetSamplingRate{TARGET_SAMPLING_RATE};
     const double mTargetSamplingPeriod{TARGET_SAMPLING_PERIOD};
     const double mTargetSignalDuration{TARGET_SIGNAL_DURATION};
@@ -525,7 +548,48 @@ std::vector<double> VerticalChannelFeatures::getVelocitySignal() const
     return pImpl->mVelocitySignal;
 }
 
-/// Sampling rate
+/// Initialize
+void VerticalChannelFeatures::initialize(const Channel &channel)
+{
+    if (!channel.haveSamplingRate())
+    {
+        throw std::invalid_argument("Sampling rate not set");
+    }
+    if (!channel.haveSimpleResponse())
+    {
+        throw std::invalid_argument("Simple response not set");
+    }
+    auto samplingRate = channel.getSamplingRate();
+    auto simpleResponse = channel.getSimpleResponseValue();
+    auto units = channel.getSimpleResponseUnits();
+    std::transform(units.begin(), units.end(), units.begin(), ::toupper);
+    bool isAcceleration{false};
+    if (units == "DU/M/S**2")
+    {
+        isAcceleration = true;
+    }
+    else if (units == "DU/M/S")
+    {
+        isAcceleration = false;
+    }
+    else
+    {
+        throw std::runtime_error("units = " + units + " not handled");
+    }
+    clear();
+    pImpl->mUnits = units;
+    // Make response proportional to micrometers.  Response units are 
+    // 1/meter so to go to 1/millimeter we do 1/(meter*1e6) which effectively
+    // divides the input by 1e6.
+    pImpl->mChannel = channel;
+    pImpl->mSimpleResponse = simpleResponse/1e6; // proportional to micrometers
+    pImpl->mAcceleration = isAcceleration;
+    pImpl->mSamplingRate = samplingRate;
+    pImpl->update();
+    pImpl->mInitialized = true;
+}
+
+/*
 void VerticalChannelFeatures::initialize(const double samplingRate,
                                          const double simpleResponse,
                                          const std::string &unitsIn)
@@ -564,6 +628,7 @@ void VerticalChannelFeatures::initialize(const double samplingRate,
     pImpl->update();
     pImpl->mInitialized = true;
 }
+*/
 
 bool VerticalChannelFeatures::isInitialized() const noexcept
 {
@@ -576,7 +641,7 @@ double VerticalChannelFeatures::getSamplingRate() const
     return pImpl->mSamplingRate;
 }
 
-double VerticalChannelFeatures::getSimpleResponse() const
+double VerticalChannelFeatures::getSimpleResponseValue() const
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
     return pImpl->mSimpleResponse*1e6; // micrometers to meters
@@ -613,6 +678,27 @@ std::pair<double, double>
 VerticalChannelFeatures::getArrivalTimeProcessingWindow() noexcept
 {
     return std::pair<double, double> {-PRE_ARRIVAL_TIME, POST_ARRIVAL_TIME};
+}
+
+/// Hypocenter
+void VerticalChannelFeatures::setHypocenter(const Hypocenter &hypocenter)
+{
+    if (!hypocenter.haveLatitude())
+    {
+        throw std::invalid_argument("Hypocenter latitude not specified");
+    }
+    if (!hypocenter.haveLongitude())
+    {
+        throw std::invalid_argument("Hypocenter longitude not specified");
+    }
+    if (!isInitialized()){throw std::runtime_error("Class not initialized");}
+    if (pImpl->mChannel.haveLatitude() &&  pImpl->mChannel.haveLongitude())
+    {
+        distanceAzimuth(hypocenter, pImpl->mChannel,
+                        &pImpl->mSourceReceiverDistance,
+                        &pImpl->mSourceReceiverBackAzimuth);
+    }
+    pImpl->mHypocenter = hypocenter;
 }
 
 ///--------------------------------------------------------------------------///

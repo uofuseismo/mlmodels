@@ -21,6 +21,7 @@
 #include "uuss/features/magnitude/verticalChannelFeatures.hpp"
 #include "uuss/features/magnitude/channel.hpp"
 #include "uuss/features/magnitude/hypocenter.hpp"
+#include "uuss/features/magnitude/temporalFeatures.hpp"
 #include "private/magnitudeUtilities.hpp"
 #include "private/distanceAzimuth.hpp"
 
@@ -182,8 +183,9 @@ public:
         auto nScales  = mCWT.getNumberOfScales(); 
         auto nSamples = mCWT.getNumberOfSamples();
 #ifndef NDEBUG
-        assert(mAmplitudeCWT.size() == nScales*nSamples);
-        assert(mCumulativeAmplitudeCWT.size() == nScales*nSamples);
+        assert(static_cast<int> (mAmplitudeCWT.size()) == nScales*nSamples);
+        assert(static_cast<int> (mCumulativeAmplitudeCWT.size()) ==
+               nScales*nSamples);
 #endif
         auto aPtr = mAmplitudeCWT.data();
         mCWT.getAmplitudeTransform(nSamples, nScales, &aPtr);
@@ -237,15 +239,20 @@ public:
         auto iPick
             = static_cast<int >(std::round((PRE_ARRIVAL_TIME - P_PICK_ERROR)
                                            /TARGET_SAMPLING_PERIOD));
-        // Get the signal variance before after the pick.  The variance is
-        // the signal power - the DC power.
+        // Get the temporal features of the noise. 
+        // (1) The variance is the signal power minus the DC power.
+        TemporalFeatures temporalNoiseFeatures;
         auto varianceNoise  = variance(iPick, mVelocitySignal.data());
-        auto varianceSignal = variance(nSamples - iPick,
-                                       mVelocitySignal.data() + iPick);
         // Get difference of min/max amplitude 
         const auto [vMinNoise,  vMaxNoise]
             = std::minmax_element(mVelocitySignal.begin(),
                                   mVelocitySignal.begin() + iPick);
+        temporalNoiseFeatures.setVariance(varianceNoise);
+        temporalNoiseFeatures.setMinimumAndMaximumValue(
+            std::pair(*vMinNoise, *vMaxNoise));
+
+//        auto varianceSignal = variance(nSamples - iPick,
+//                                       mVelocitySignal.data() + iPick);
         // Get the nominal period and amplitude of arrival
         std::cout << "duration,minNoise,maxNoise,dMinMaxNoise,minSignal,maxSignal,dMinMaxSignal,varianceNoise,varianceSignal,dominantPeriod,amplitudeAtDominantPeriod,dominantCumulativeEnergyPeriod,cumulativeEnergyAtDominantPeriod" << std::endl;
         auto nScales  = mCWT.getNumberOfScales();
@@ -257,13 +264,19 @@ public:
                                      /TARGET_SAMPLING_PERIOD));
             iEnd = std::min(iEnd, nSamples);
             auto nSubSamples = iEnd - iStart;
+
+            // Get variance in signal
+            auto varianceSignal = variance(nSubSamples,
+                                           mVelocitySignal.data() + iStart);
+            TemporalFeatures temporalSignalFeatures;
+            temporalSignalFeatures.setVariance(varianceSignal);
             // Get min/max signal
             const auto [vMinSignal, vMaxSignal]
                 = std::minmax_element(mVelocitySignal.data() + iStart,
                                       mVelocitySignal.data() + iEnd);
-            // Get variance in signal
-            auto varianceSignal = variance(nSubSamples,
-                                           mVelocitySignal.data() + iStart);
+            temporalSignalFeatures.setMinimumAndMaximumValue(
+                std::pair(*vMinSignal, *vMaxSignal));
+
             std::pair<double, double> dominantPeriodAmplitude{0, 0};
             for (int j = 0; j < nScales; ++j)
             {

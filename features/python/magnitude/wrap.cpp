@@ -4,6 +4,7 @@
 #include <uuss/features/magnitude/hypocenter.hpp>
 #include <uuss/features/magnitude/channel.hpp>
 #include <uuss/features/magnitude/verticalChannelFeatures.hpp>
+#include <uuss/features/magnitude/temporalFeatures.hpp>
 //#include "wrap.hpp"
 #include "initialize.hpp"
 
@@ -138,6 +139,37 @@ public:
 
     std::unique_ptr<UUSS::Features::Magnitude::Channel> pImpl;
 };
+
+//----------------------------------------------------------------------------//
+class VerticalChannelFeatures
+{
+public:
+    VerticalChannelFeatures() :
+        pImpl(std::make_unique<UUSS::Features::Magnitude::VerticalChannelFeatures> ())
+    {
+    }
+    ~VerticalChannelFeatures() = default;
+
+    void initialize(const ::Channel &channel)
+    {
+        pImpl->initialize(*channel.pImpl);
+    }
+    bool isInitialized() const noexcept
+    {
+        return pImpl->isInitialized();
+    } 
+    void setHypocenter(const Hypocenter &hypo)
+    {
+        pImpl->setHypocenter(*hypo.pImpl);
+    }
+
+    std::unique_ptr<UUSS::Features::Magnitude::VerticalChannelFeatures> pImpl;
+    VerticalChannelFeatures(const VerticalChannelFeatures &) = delete;
+    VerticalChannelFeatures(VerticalChannelFeatures &&) noexcept = delete;
+    VerticalChannelFeatures& operator=(const VerticalChannelFeatures &) = delete;
+    VerticalChannelFeatures& operator=(VerticalChannelFeatures &&) noexcept = delete;
+};
+
 }
 
 ///---------------------------------------------------------------------------//
@@ -309,4 +341,12 @@ Optional Properties
         }
     ));
  
+
+    pybind11::class_<::VerticalChannelFeatures> vc(m, "VerticalChannelFeatures"); 
+    vc.def(pybind11::init<> ());
+    vc.doc() = R"""(
+Extracts the features from a vertical channel.
+)""";
+    vc.def("initialize", &::VerticalChannelFeatures::initialize,
+           "Initializes the feature extractor based on the channel information.");
 }

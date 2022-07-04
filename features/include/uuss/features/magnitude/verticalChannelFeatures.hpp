@@ -5,12 +5,17 @@ namespace UUSS::Features::Magnitude
 {
 class Hypocenter;
 class Channel;
+class TemporalFeatures;
+class SpectralFeatures;
 }
 namespace UUSS::Features::Magnitude
 {
-/// @class VerticalChannelFeatures "verticalChannelFeatures.hpp" "uuss/features/verticalChannelFeatures.hpp"
+/*
+*/
+/// @class VerticalChannelFeatures "verticalChannelFeatures.hpp" "uuss/features/magnitude/verticalChannelFeatures.hpp"
 /// @brief Extracts features for computing a magnitude from a single channel
 ///        station.
+/// @copyright Ben Baker (University of Utah) distributed under the MIT license.
 class VerticalChannelFeatures
 {
 public:

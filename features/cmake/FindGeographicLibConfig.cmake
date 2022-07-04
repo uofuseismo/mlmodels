@@ -15,7 +15,7 @@ find_path(GEOGRAPHICLIB_INCLUDE_DIR
                 /usr/local/include
                 /usr/include)
 find_library(GEOGRAPHICLIB_LIBRARY
-             NAMES Geographic
+             NAMES Geographic GeographicLib
              PATHS $ENV{GEOGRAPHICLIB_ROOT}/lib
                    $ENV{GEOGRAPHICLIB_ROOT}/lib64
                    /usr/local/lib

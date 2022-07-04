@@ -30,6 +30,7 @@ set(SRC
     src/version.cpp
     src/features/magnitude/channel.cpp
     src/features/magnitude/hypocenter.cpp
+    src/features/magnitude/temporalFeatures.cpp
     src/features/magnitude/verticalChannelFeatures.cpp)
 
 set(BUILD_SHARED_LIBS YES)
@@ -74,7 +75,7 @@ target_link_libraries(magnitudes
                       PRIVATE uussFeatures ${GTEST_BOTH_LIBRARIES})
 target_include_directories(magnitudes
                            PRIVATE ${PUBLIC_HEADER_DIRECTORIES}
-                                   ${PRIVATE_HEADER_DIRECTORIES} ${GTEST_INCLUDE_DIRS})
+                                   ${PRIVATE_HEADER_DIRECTORIES} ${GTEST_INCLUDE_DIRS} pthread)
 
 
 #========================================================================================#

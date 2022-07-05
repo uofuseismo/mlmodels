@@ -21,7 +21,7 @@ public:
     /// @breif Move assignment.
     TemporalFeatures& operator=(TemporalFeatures &&features) noexcept;
 
-    /// @brief Sets the variance in teh signal.
+    /// @brief Sets the variance in the signal.
     /// @param[in] variance  The signal variance in (micrometers/second)^2.
     /// @throws std::invalid_argument if the variance is negative.
     /// @note This likely has units of (micrometers/second)^2.
@@ -42,6 +42,7 @@ public:
     /// @result True indicates the minimum and maximum value was set.
     [[nodiscard]] bool haveMinimumAndMaximumValue() const noexcept;
 
+    /// @brief Resets the class.
     void clear() noexcept;
     /// @brief Destructor.
     ~TemporalFeatures();

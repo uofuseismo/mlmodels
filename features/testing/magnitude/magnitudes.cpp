@@ -3,8 +3,11 @@
 #include <vector>
 #include <string>
 #include "uuss/features/magnitude/verticalChannelFeatures.hpp"
+#include "uuss/features/magnitude/channelFeatures.hpp"
 #include "uuss/features/magnitude/hypocenter.hpp"
 #include "uuss/features/magnitude/channel.hpp"
+#include "uuss/features/magnitude/temporalFeatures.hpp"
+#include "uuss/features/magnitude/spectralFeatures.hpp"
 #include <gtest/gtest.h>
 
 namespace

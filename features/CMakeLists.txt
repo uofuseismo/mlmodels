@@ -29,7 +29,9 @@ set(PRIVATE_HEADER_DIRECTORIES
 set(SRC
     src/version.cpp
     src/features/magnitude/channel.cpp
+    src/features/magnitude/channelFeatures.cpp
     src/features/magnitude/hypocenter.cpp
+    src/features/magnitude/spectralFeatures.cpp
     src/features/magnitude/temporalFeatures.cpp
     src/features/magnitude/verticalChannelFeatures.cpp)
 

@@ -5,6 +5,8 @@
 #include <uuss/features/magnitude/channel.hpp>
 #include <uuss/features/magnitude/verticalChannelFeatures.hpp>
 #include <uuss/features/magnitude/temporalFeatures.hpp>
+#include <pybind11/numpy.h>
+#include <pybind11/stl.h>
 //#include "wrap.hpp"
 #include "initialize.hpp"
 
@@ -141,6 +143,7 @@ public:
 };
 
 //----------------------------------------------------------------------------//
+
 class VerticalChannelFeatures
 {
 public:
@@ -162,7 +165,14 @@ public:
     {
         pImpl->setHypocenter(*hypo.pImpl);
     }
-
+    void process(pybind11::array_t<double, pybind11::array::c_style |
+                                           pybind11::array::forcecast> &array,
+                 const double arrivalTime)
+    {
+        std::vector<double> x(array.size());
+        std::copy(array.data(), array.data() + array.size(), x.begin());
+        pImpl->process(x, arrivalTime);
+    }
     std::unique_ptr<UUSS::Features::Magnitude::VerticalChannelFeatures> pImpl;
     VerticalChannelFeatures(const VerticalChannelFeatures &) = delete;
     VerticalChannelFeatures(VerticalChannelFeatures &&) noexcept = delete;
@@ -349,4 +359,6 @@ Extracts the features from a vertical channel.
 )""";
     vc.def("initialize", &::VerticalChannelFeatures::initialize,
            "Initializes the feature extractor based on the channel information.");
+    vc.def("process", &::VerticalChannelFeatures::process,
+           "Processes the waveform.  Additionally, the arrival time relative to the window start must be specified.");
 }

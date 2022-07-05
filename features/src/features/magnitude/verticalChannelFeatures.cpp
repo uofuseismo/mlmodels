@@ -9,15 +9,33 @@
 #include <cassert>
 #endif
 #include "uuss/features/magnitude/verticalChannelFeatures.hpp"
+#include "uuss/features/magnitude/temporalFeatures.hpp"
+#include "uuss/features/magnitude/spectralFeatures.hpp"
 #include "uuss/features/magnitude/channelFeatures.hpp"
 #include "uuss/features/magnitude/channel.hpp"
 #include "uuss/features/magnitude/hypocenter.hpp"
+
+#define TARGET_SAMPLING_RATE 100    // 100 Hz
+#define TARGET_SAMPLING_PERIOD 0.01 // 1/100
+#define TARGET_SIGNAL_LENGTH 500    // 1s before to 4s after
+#define PRE_ARRIVAL_TIME 1          // 1s before P arrival
+#define POST_ARRIVAL_TIME 4         // 4s after P arrival
+#define P_PICK_ERROR 0.05           // Alysha's P pickers are usually within 5 samples
 
 using namespace UUSS::Features::Magnitude;
 
 class VerticalChannelFeatures::FeaturesImpl
 {
 public:
+    FeaturesImpl() :
+        mChannelFeatures(mFrequencies, mDurations,
+                         -PRE_ARRIVAL_TIME,
+                         POST_ARRIVAL_TIME,
+                         P_PICK_ERROR)
+    {
+    }
+    const std::vector<double> mFrequencies{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
+    const std::vector<double> mDurations{2.5}; // Saturate at about M5
     ChannelFeatures mChannelFeatures;
 };
 
@@ -107,20 +125,20 @@ double VerticalChannelFeatures::getTargetSamplingPeriod() noexcept
     return ChannelFeatures::getTargetSamplingPeriod();
 }
 
-double VerticalChannelFeatures::getTargetSignalDuration() noexcept
+double VerticalChannelFeatures::getTargetSignalDuration() const noexcept
 {
-    return ChannelFeatures::getTargetSignalDuration();
+    return pImpl->mChannelFeatures.getTargetSignalDuration();
 }
 
-int VerticalChannelFeatures::getTargetSignalLength() noexcept
+int VerticalChannelFeatures::getTargetSignalLength() const noexcept
 {
-    return ChannelFeatures::getTargetSignalLength();
+    return pImpl->mChannelFeatures.getTargetSignalLength();
 }
 
 std::pair<double, double>
-VerticalChannelFeatures::getArrivalTimeProcessingWindow() noexcept
+VerticalChannelFeatures::getArrivalTimeProcessingWindow() const noexcept
 {
-    return ChannelFeatures::getArrivalTimeProcessingWindow();
+    return pImpl->mChannelFeatures.getArrivalTimeProcessingWindow();
 }
 
 /// Hypocenter
@@ -136,6 +154,36 @@ void VerticalChannelFeatures::setHypocenter(const Hypocenter &hypocenter)
     }
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
     pImpl->mChannelFeatures.setHypocenter(hypocenter);
+}
+
+TemporalFeatures VerticalChannelFeatures::getTemporalNoiseFeatures() const
+{
+    return pImpl->mChannelFeatures.getTemporalNoiseFeatures();
+}
+
+TemporalFeatures VerticalChannelFeatures::getTemporalSignalFeatures() const
+{
+    return pImpl->mChannelFeatures.getTemporalSignalFeatures();
+}
+
+SpectralFeatures VerticalChannelFeatures::getSpectralNoiseFeatures() const
+{
+    return pImpl->mChannelFeatures.getSpectralNoiseFeatures();
+}
+
+SpectralFeatures VerticalChannelFeatures::getSpectralSignalFeatures() const
+{
+    return pImpl->mChannelFeatures.getSpectralSignalFeatures();
+}
+
+double VerticalChannelFeatures::getSourceDepth() const
+{
+    return pImpl->mChannelFeatures.getSourceDepth();
+}
+
+double VerticalChannelFeatures::getSourceReceiverDistance() const
+{
+    return pImpl->mChannelFeatures.getSourceReceiverDistance();
 }
 
 ///--------------------------------------------------------------------------///

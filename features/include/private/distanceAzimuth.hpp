@@ -48,6 +48,7 @@ void computeDistanceAzimuthWGS84(const double sourceLatitude,
         = geodesic.Inverse(sourceLatitude, sourceLongitude,
                            receiverLatitude, receiverLongitude,
                            *distance, *azimuth, *backAzimuth);
+    *distance = *distance*1.e-3; // To km
     // Translate azimuth from [-180,180] to [0,360].
     if (*azimuth < 0){*azimuth = *azimuth + 360;}
     // Translate azimuth from [-180,180] to [0,360] then convert to a

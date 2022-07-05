@@ -28,11 +28,13 @@
 
 #define TARGET_SAMPLING_RATE 100    // 100 Hz
 #define TARGET_SAMPLING_PERIOD 0.01 // 1/100
+/*
 #define TARGET_SIGNAL_LENGTH 500    // 1s before to 4s after
 #define PRE_ARRIVAL_TIME 1          // 1s before P arrival
 #define POST_ARRIVAL_TIME 4         // 4s after P arrival
 #define P_PICK_ERROR 0.05           // Alysha's P pickers are usually within 5 samples
 #define TARGET_SIGNAL_DURATION (TARGET_SIGNAL_LENGTH - 1)*TARGET_SAMPLING_PERIOD
+*/
 
 using namespace UUSS::Features::Magnitude;
 
@@ -55,29 +57,51 @@ void distanceAzimuth(const Hypocenter &hypocenter,
                                 backAzimuth);
 }
 
-std::pair<double, double> getDominantPeriodAndAmplitude(
+std::pair<double, double> getDominantFrequencyAndAmplitude(
     const int nScales, const int nSamples,
     const int iStart, const int iEnd,
     const double *__restrict__ centerFrequencies,
     const double *__restrict__ amplitudeCWT)
 {
-    std::pair<double, double> dominantPeriodAmplitude{0, 0};
+    std::pair<double, double> dominantFrequencyAmplitude{0, 0};
     for (int j = 0; j < nScales; ++j)
     {
         for (int i = iStart; i < iEnd; ++i)
         {
             auto indx = j*nSamples + i;
             auto amplitude = amplitudeCWT[indx];
-            if (amplitude > dominantPeriodAmplitude.second)
+            if (amplitude > dominantFrequencyAmplitude.second)
             {
-                dominantPeriodAmplitude.first  = 1./centerFrequencies[j];
-                dominantPeriodAmplitude.second = amplitude;
+                dominantFrequencyAmplitude.first  = centerFrequencies[j];
+                dominantFrequencyAmplitude.second = amplitude;
             }
         }
     }
-    return dominantPeriodAmplitude;
+    return dominantFrequencyAmplitude;
 }
 
+std::vector<std::pair<double, double>> getAverageFrequencyAndAmplitude(
+    const int nScales, const int nSamples,
+    const int iStart, const int iEnd,
+    const double *__restrict__ centerFrequencies,
+    const double *__restrict__ amplitudeCWT)
+{
+    std::vector<std::pair<double, double>> averageFrequencyAmplitude(nScales);
+    for (int j = 0; j < nScales; ++j)
+    {
+        double averageAmplitude = 0;
+        for (int i = iStart; i < iEnd; ++i)
+        {
+            auto indx = j*nSamples + i;
+            averageAmplitude = averageAmplitude + amplitudeCWT[indx];
+        }
+        averageFrequencyAmplitude[j] = std::pair(centerFrequencies[j],
+                                                 averageAmplitude/nScales);
+    }
+    return averageFrequencyAmplitude;
+}
+
+/*
 std::vector<std::pair<double, double>> getDominantCumulativeAmplitude(
     const int nScales, const int nSamples,
     const int iStart, const int iEnd,
@@ -102,6 +126,7 @@ std::vector<std::pair<double, double>> getDominantCumulativeAmplitude(
               });
    return cumulativeAmplitude;
 }
+*/
 
 template<typename U>
 std::vector<double> resample(const int n,
@@ -147,8 +172,51 @@ std::vector<double> resample(const int n,
 class ChannelFeatures::FeaturesImpl
 {
 public:
-    FeaturesImpl()
+    FeaturesImpl(const std::vector<double> &frequencies,
+                 const std::vector<double> &durations,
+                 const double preArrivalTime =-1,
+                 const double postArrivalTime = 4,
+                 const double pickError = 0.05) :
+        mCenterFrequencies(frequencies),
+        mDurations(durations),
+        mPreArrivalTime(preArrivalTime),
+        mPostArrivalTime(postArrivalTime),
+        mPickError(pickError)
     {
+        if (preArrivalTime > 0)
+        {
+            throw std::invalid_argument("Pre arrival time must negative");
+        }
+        if (postArrivalTime < 0)
+        {
+            throw std::invalid_argument("Post arrival time must be positive");
+        }
+        if (pickError < 0)
+        {
+            throw std::invalid_argument("Pick error must be non-negative");
+        }
+        mTargetSignalLength
+            = static_cast<int> (std::round((postArrivalTime - preArrivalTime)
+                                           /TARGET_SAMPLING_PERIOD)) + 1;
+        if (mCenterFrequencies.empty())
+        {
+            throw std::invalid_argument("Frequencies is empty");
+        }
+        if (mDurations.empty())
+        {
+            throw std::invalid_argument("Durations is empty");
+        }
+        for (const auto &c : mCenterFrequencies)
+        {
+            if (c <= 0)
+            {
+                throw std::invalid_argument("Invalid center frequency");
+            }
+        }
+        for (const auto &d : mDurations)
+        {
+            if (d <= 0){throw std::invalid_argument("Invalid duration");}
+        }
         mDemean.initialize(
             RTSeis::FilterImplementations::DetrendType::CONSTANT);
         const double pct = 5;
@@ -252,8 +320,8 @@ public:
                 cumPtr[i] = cumPtr[i-1] + (aScale[i-1] + aScale[i])*dt2;
             }
         }
-        /*
         // Dump the scalogram for debugging
+/*
         std::string fname{"ampVel.txt"};
         if (mAcceleration){fname = "ampAcc.txt";}
         std::ofstream ofl;
@@ -270,7 +338,7 @@ public:
             ofl << std::endl;
         }
         ofl.close();
-        */
+*/
     }
     // Simple function to do pre-processing then extract features
     void process()
@@ -283,35 +351,42 @@ public:
     void extractFeatures()
     {
 #ifndef NDEBUG
-        assert(mVelocitySignal.size() == TARGET_SIGNAL_LENGTH);
+        assert(mVelocitySignal.size() == mTargetSignalLength);
 #endif
         auto nScales  = mCWT.getNumberOfScales();
-        auto nSamples = TARGET_SIGNAL_LENGTH;
+        auto nSamples = mTargetSignalLength;
         auto iPick
-            = static_cast<int >(std::round((PRE_ARRIVAL_TIME - P_PICK_ERROR)
-                                           /TARGET_SAMPLING_PERIOD));
+            = static_cast<int >(std::round((-mPreArrivalTime - mPickError)
+                                           /mTargetSamplingPeriod));
         // Get the temporal features of the noise. 
         // (1) The variance is the signal power minus the DC power.
-        TemporalFeatures temporalNoiseFeatures;
         auto varianceNoise  = variance(iPick, mVelocitySignal.data());
         // Get difference of min/max amplitude 
         const auto [vMinNoise,  vMaxNoise]
             = std::minmax_element(mVelocitySignal.begin(),
                                   mVelocitySignal.begin() + iPick);
-        temporalNoiseFeatures.setVariance(varianceNoise);
-        temporalNoiseFeatures.setMinimumAndMaximumValue(
+        mTemporalNoiseFeatures.setVariance(varianceNoise);
+        mTemporalNoiseFeatures.setMinimumAndMaximumValue(
             std::pair(*vMinNoise, *vMaxNoise));
 
         // Get the spectral features of the noise.
         SpectralFeatures spectralNoiseFeatures;
-        auto dominantPeriodAmplitude
-            = getDominantPeriodAndAmplitude(nScales, nSamples,
-                                            0, iPick,
-                                            mCenterFrequencies.data(),
-                                            mAmplitudeCWT.data());
-        spectralNoiseFeatures.setDominantPeriodAndAmplitude(
-            dominantPeriodAmplitude);
-        // Look at cumulative amplitude in bands
+        auto dominantFrequencyAmplitude
+            = getDominantFrequencyAndAmplitude(nScales, nSamples,
+                                               0, iPick,
+                                               mCenterFrequencies.data(),
+                                               mAmplitudeCWT.data());
+        mSpectralNoiseFeatures.setDominantFrequencyAndAmplitude(
+            dominantFrequencyAmplitude);
+
+        auto averageFrequencyAmplitude
+            = getAverageFrequencyAndAmplitude(nScales, nSamples,
+                                              0, iPick,
+                                              mCenterFrequencies.data(),
+                                              mAmplitudeCWT.data());
+        mSpectralNoiseFeatures.setAverageFrequenciesAndAmplitudes(
+            averageFrequencyAmplitude);
+/*
         auto cumulativeAmplitude
            = getDominantCumulativeAmplitude(nScales, nSamples,
                                             0, iPick,
@@ -320,42 +395,56 @@ public:
 
         spectralNoiseFeatures.setDominantPeriodAndCumulativeAmplitude(
             cumulativeAmplitude[0]);
+*/
         // Get the spectral features in windows after arrival
 /*
         std::cout << "duration,minNoise,maxNoise,dMinMaxNoise,minSignal,maxSignal,dMinMaxSignal,varianceNoise,varianceSignal,dominantPeriod,amplitudeAtDominantPeriod,dominantCumulativeAmplitudePeriod,cumulativeAmplitdeAtDominantPeriod" << std::endl;
 */
         for (const auto &duration : mDurations)
         {
-            TemporalFeatures temporalSignalFeatures;
-            SpectralFeatures spectralSignalFeatures;
             // Define the start/end time window indicies
             auto iStart = iPick;
             auto iEnd = static_cast<int>
-                        (std::round( (PRE_ARRIVAL_TIME + duration)
-                                     /TARGET_SAMPLING_PERIOD));
+                        (std::round( (-mPreArrivalTime + duration)
+                                     /mTargetSamplingPeriod));
             iEnd = std::min(iEnd, nSamples);
             auto nSubSamples = iEnd - iStart;
 
             // Get variance in signal
             auto varianceSignal = variance(nSubSamples,
                                            mVelocitySignal.data() + iStart);
-            temporalSignalFeatures.setVariance(varianceSignal);
+            mTemporalSignalFeatures.setVariance(varianceSignal);
             // Get min/max signal
             const auto [vMinSignal, vMaxSignal]
                 = std::minmax_element(mVelocitySignal.data() + iStart,
                                       mVelocitySignal.data() + iEnd);
-            temporalSignalFeatures.setMinimumAndMaximumValue(
+            mTemporalSignalFeatures.setMinimumAndMaximumValue(
                 std::pair(*vMinSignal, *vMaxSignal));
 
             // Extract dominant period
-            dominantPeriodAmplitude
-                = getDominantPeriodAndAmplitude(nScales, nSamples,
-                                                iStart, iEnd,
-                                                mCenterFrequencies.data(),
-                                                mAmplitudeCWT.data());
-            spectralSignalFeatures.setDominantPeriodAndAmplitude(
-                dominantPeriodAmplitude); 
-            // Look at cumulative amplitude in bands
+            dominantFrequencyAmplitude
+                = getDominantFrequencyAndAmplitude(nScales, nSamples,
+                                                   iStart, iEnd,
+                                                   mCenterFrequencies.data(),
+                                                   mAmplitudeCWT.data());
+            mSpectralSignalFeatures.setDominantFrequencyAndAmplitude(
+                dominantFrequencyAmplitude); 
+
+            averageFrequencyAmplitude
+                = getAverageFrequencyAndAmplitude(nScales, nSamples,
+                                                  iStart, iEnd,
+                                                  mCenterFrequencies.data(),
+                                                  mAmplitudeCWT.data());
+            mSpectralSignalFeatures.setAverageFrequenciesAndAmplitudes(
+                 averageFrequencyAmplitude);
+/*
+std::cout << std::endl;
+for (const auto &a : averagePeriodAmplitude)
+{
+ std::cout << 1./a.first << " " << a.second << std::endl;
+}
+*/
+/*
             cumulativeAmplitude
                = getDominantCumulativeAmplitude(nScales, nSamples,
                                                 iStart, iEnd,
@@ -363,6 +452,7 @@ public:
                                                 mCumulativeAmplitudeCWT.data());
             spectralSignalFeatures.setDominantPeriodAndCumulativeAmplitude(
                 cumulativeAmplitude[0]);
+*/
 /*
             std::cout << duration << " "
                       << *vMinNoise  << " " << *vMaxNoise << " " << *vMaxNoise - *vMinNoise << " "
@@ -467,21 +557,21 @@ std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSign
     } 
 //private:
     // Center frequencies in CWT
-    const std::vector<double> mCenterFrequencies{1, 1.25, 1.5, 1.75,
-                                                 2, 2.25, 2.5, 2.75,
-                                                 3, 3.25, 3.5, 3.75,
-                                                 4, 4.25, 4.5, 4.75,
-                                                 5, 5.25, 5.5, 5.75,
-                                                 6, 6.25, 6.5, 6.75,
-                                                 7, 7.25, 7.5, 7.75,
-                                                 8, 8.25, 8.5, 8.75,
-                                                 9, 9.25, 9.5, 9.75,
-                                                 10, 10.5,
-                                                 11, 11.5,
-                                                 12, 12.5,
-                                                 13, 13.5,
-                                                 14, 14.5,
-                                                 15, 16, 17, 18};
+    std::vector<double> mCenterFrequencies{1, //1.25, 1.5, 1.75,
+                                           2, //2.25, 2.5, 2.75,
+                                           3, //3.25, 3.5, 3.75,
+                                           4, //4.25, 4.5, 4.75,
+                                           5, //5.25, 5.5, 5.75,
+                                           6, //6.25, 6.5, 6.75,
+                                           7, //7.25, 7.5, 7.75,
+                                           8, //8.25, 8.5, 8.75,
+                                           9, //9.25, 9.5, 9.75,
+                                           10, //10.5,
+                                           11, //11.5,
+                                           12, //12.5,
+                                           13, //13.5,
+                                           14, //14.5,
+                                           15, 16, 17, 18};
     // Initially signal is copied to mSignal but mSignal ends up as workspace
     std::vector<double> mSignal;
     // Holds signals with units of velocity
@@ -490,7 +580,7 @@ std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSign
     std::vector<double> mWork;
     std::vector<double> mAmplitudeCWT;
     std::vector<double> mCumulativeAmplitudeCWT;
-    std::array<double, 3> mDurations{1, 2, 3};
+    std::vector<double> mDurations{1, 2, 3};
     std::string mUnits;
     RTSeis::FilterRepresentations::SOS mHighPass;
     RTSeis::FilterRepresentations::BA  mIntegrator;
@@ -507,30 +597,49 @@ std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSign
     RTSeis::Transforms::ContinuousWavelet<double> mCWT;
     Hypocenter mHypocenter;
     Channel mChannel;
+    TemporalFeatures mTemporalSignalFeatures;
+    TemporalFeatures mTemporalNoiseFeatures;
+    SpectralFeatures mSpectralSignalFeatures;
+    SpectralFeatures mSpectralNoiseFeatures;
     double mRCFilterQ{0.994};
     double mSamplingRate{100};
     double mSimpleResponse{1}; // Proportional to micrometers
     double mSourceReceiverDistance{-1000};
     double mSourceReceiverBackAzimuth{-1000};
+    double mPreArrivalTime{-1};
+    double mPostArrivalTime{4};
+    double mPickError{0.05};
     const double mTargetSamplingRate{TARGET_SAMPLING_RATE};
     const double mTargetSamplingPeriod{TARGET_SAMPLING_PERIOD};
-    const double mTargetSignalDuration{TARGET_SIGNAL_DURATION};
-    const int mTargetSignalLength{TARGET_SIGNAL_LENGTH};
+    //double mTargetSignalDuration{5}; //TARGET_SIGNAL_DURATION};
+    int mTargetSignalLength{500};//TARGET_SIGNAL_LENGTH};
     bool mAcceleration{false};
     bool mHaveFeatures{false};
     bool mInitialized{false};
 };
 
 /// C'tor
-ChannelFeatures::ChannelFeatures() :
-    pImpl(std::make_unique<FeaturesImpl> ())
+ChannelFeatures::ChannelFeatures(const std::vector<double> &frequencies,
+                                 const std::vector<double> &durations,
+                                 const double preArrivalTime,
+                                 const double postArrivalTime,
+                                 const double pickError) :
+    pImpl(std::make_unique<FeaturesImpl> (frequencies, durations,
+                                          preArrivalTime,
+                                          postArrivalTime,
+                                          pickError))
 {
 }
 
 /// Reset class
 void ChannelFeatures::clear() noexcept
 {
-    pImpl = std::make_unique<FeaturesImpl> ();
+    auto centerFrequencies = pImpl->mCenterFrequencies;
+    auto durations = pImpl->mDurations;
+    auto [pre, post] = getArrivalTimeProcessingWindow();
+    auto pickError = pImpl->mPickError;
+    pImpl = std::make_unique<FeaturesImpl> (centerFrequencies, durations,
+                                            pre, post, pickError);
 }
 
 /// Destructor
@@ -592,7 +701,7 @@ void ChannelFeatures::process(
         throw std::invalid_argument("Signal is too small");
     }
 #ifndef NDEBUG
-    assert(i2 - i1 == TARGET_SIGNAL_LENGTH);
+    assert(i2 - i1 == getTargetSignalLength());
 #endif
     if (static_cast<int> (pImpl->mSignal.size()) != i2 - i1)
     {
@@ -600,6 +709,17 @@ void ChannelFeatures::process(
     }
     std::copy(signalToCut.data() + i1, signalToCut.data() + i2,
               pImpl->mSignal.begin());
+    // Check for dead signal
+    bool lDead = true;
+    for (int i = 1; i < pImpl->mSignal.size(); ++i)
+    {
+        if (pImpl->mSignal[i] != pImpl->mSignal[i-1])
+        {
+            lDead = false;
+            break;
+        }
+    }
+    if (lDead){throw std::invalid_argument("Signal is dead");}
     // Process the data
     pImpl->mHaveFeatures = false;
     pImpl->process();
@@ -693,20 +813,21 @@ double ChannelFeatures::getTargetSamplingPeriod() noexcept
     return TARGET_SAMPLING_PERIOD;
 }
 
-double ChannelFeatures::getTargetSignalDuration() noexcept
+double ChannelFeatures::getTargetSignalDuration() const noexcept
 {
-    return TARGET_SIGNAL_DURATION;
+    return (getTargetSignalLength() - 1)*getTargetSamplingPeriod();
 }
 
-int ChannelFeatures::getTargetSignalLength() noexcept
+int ChannelFeatures::getTargetSignalLength() const noexcept
 {
-    return TARGET_SIGNAL_LENGTH;
+    return pImpl->mTargetSignalLength;
 }
 
 std::pair<double, double>
-ChannelFeatures::getArrivalTimeProcessingWindow() noexcept
+ChannelFeatures::getArrivalTimeProcessingWindow() const noexcept
 {
-    return std::pair<double, double> {-PRE_ARRIVAL_TIME, POST_ARRIVAL_TIME};
+    return std::pair<double, double> {pImpl->mPreArrivalTime,
+                                      pImpl->mPostArrivalTime};
 }
 
 /// Hypocenter
@@ -721,13 +842,55 @@ void ChannelFeatures::setHypocenter(const Hypocenter &hypocenter)
         throw std::invalid_argument("Hypocenter longitude not specified");
     }
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
-    if (pImpl->mChannel.haveLatitude() &&  pImpl->mChannel.haveLongitude())
+    if (pImpl->mChannel.haveLatitude() && pImpl->mChannel.haveLongitude())
     {
         distanceAzimuth(hypocenter, pImpl->mChannel,
                         &pImpl->mSourceReceiverDistance,
                         &pImpl->mSourceReceiverBackAzimuth);
     }
     pImpl->mHypocenter = hypocenter;
+}
+
+bool ChannelFeatures::haveHypocenter() const noexcept
+{
+    return pImpl->mHypocenter.haveLatitude();
+}
+
+
+TemporalFeatures ChannelFeatures::getTemporalNoiseFeatures() const
+{
+    if (!haveFeatures()){throw std::runtime_error("Features not computed");}
+    return pImpl->mTemporalNoiseFeatures;
+}
+
+TemporalFeatures ChannelFeatures::getTemporalSignalFeatures() const
+{
+    if (!haveFeatures()){throw std::runtime_error("Features not computed");}
+    return pImpl->mTemporalSignalFeatures;
+}
+
+SpectralFeatures ChannelFeatures::getSpectralNoiseFeatures() const
+{
+    if (!haveFeatures()){throw std::runtime_error("Features not computed");}
+    return pImpl->mSpectralNoiseFeatures;
+}
+
+SpectralFeatures ChannelFeatures::getSpectralSignalFeatures() const
+{
+    if (!haveFeatures()){throw std::runtime_error("Features not computed");}
+    return pImpl->mSpectralSignalFeatures;
+}
+
+double ChannelFeatures::getSourceDepth() const
+{
+    if (!haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
+    return pImpl->mHypocenter.getDepth();
+}
+
+double ChannelFeatures::getSourceReceiverDistance() const
+{
+    if (haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
+    return pImpl->mSourceReceiverDistance;
 }
 
 ///--------------------------------------------------------------------------///

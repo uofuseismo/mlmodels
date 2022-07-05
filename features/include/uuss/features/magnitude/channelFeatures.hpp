@@ -19,7 +19,11 @@ class ChannelFeatures
 {
 public:
     /// @brief Constructor.
-    ChannelFeatures();
+    ChannelFeatures(const std::vector<double> &frequencies,
+                    const std::vector<double> &durations,
+                    const double preArrivalTime =-1,
+                    const double postArrivalTime = 4,
+                    const double pPickError = 0.05);
 
     /// @result The sampling rate of the signal from which the features
     ///         will be extracted in Hz.
@@ -29,16 +33,16 @@ public:
     [[nodiscard]] static double getTargetSamplingPeriod() noexcept;
     /// @result The duration of the signal from which the features will
     ///         be extracted in seconds.
-    [[nodiscard]] static double getTargetSignalDuration() noexcept;
+    [[nodiscard]] double getTargetSignalDuration() const noexcept;
     /// @result The length of the signal from which the features will
     ///         be extracted in seconds.
-    [[nodiscard]] static int getTargetSignalLength() noexcept;
+    [[nodiscard]] int getTargetSignalLength() const noexcept;
     /// @result The number of seconds before and after the arrival where the 
     ///         processing will be performed.  For example,
     ///         arrivalTime + result.first will indicate where the processing
     ///         window begins while arrivalTime + result.second will indicate
     ///         where the processing will end.
-    [[nodiscard]] static std::pair<double, double> getArrivalTimeProcessingWindow() noexcept;
+    [[nodiscard]] std::pair<double, double> getArrivalTimeProcessingWindow() const noexcept;
 
     /// @name Step 1: Initialization
     /// @{
@@ -75,9 +79,6 @@ public:
     void setHypocenter(const Hypocenter &hypocenter);
     /// @result True indicates the hypocenter was set.
     [[nodiscard]] bool haveHypocenter() const noexcept;
-    /// @result The source-receiver distance in kilometers.
-    /// @throws std::runtime_error if \c haveHypocenter() or 
-    [[nodiscard]] double getSourceReceiverDistance() const;
 
     /// @brief Processes the signal.
     /// @param[in] signal   The signal to process.
@@ -95,6 +96,16 @@ public:
     /// @result True indicates the signal was set and the features
     ///         were extracted.
     [[nodiscard]] bool haveFeatures() const noexcept;
+    [[nodiscard]] TemporalFeatures getTemporalNoiseFeatures() const;
+    [[nodiscard]] TemporalFeatures getTemporalSignalFeatures() const;
+    [[nodiscard]] SpectralFeatures getSpectralNoiseFeatures() const;
+    [[nodiscard]] SpectralFeatures getSpectralSignalFeatures() const;
+    /// @result The source depth in kilometers.
+    /// @throws std::runtime_error if \c haveHypocenter() is false. 
+    [[nodiscard]] double getSourceDepth() const;
+    /// @result The source-receiver distance in kilometers.
+    /// @throws std::runtime_error if \c haveHypocenter() is false. 
+    [[nodiscard]] double getSourceReceiverDistance() const;
 
     /// @result The velocity signal from which to extract features.
     /// @throws std::runtime_error if \c haveSignal() is false.
@@ -105,6 +116,7 @@ public:
     ~ChannelFeatures();
 
 
+    ChannelFeatures() = delete;
     ChannelFeatures(const ChannelFeatures &) = delete;
     ChannelFeatures(ChannelFeatures &&) noexcept = delete;
     ChannelFeatures& operator=(const ChannelFeatures &) = delete;

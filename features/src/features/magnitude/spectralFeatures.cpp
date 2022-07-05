@@ -5,10 +5,9 @@ using namespace UUSS::Features::Magnitude;
 class SpectralFeatures::SpectralFeaturesImpl
 {
 public:
-    std::pair<double, double> mDominantPeriodAndCumulativeAmplitude{0, 0};
-    std::pair<double, double> mDominantPeriodAndAmplitude{0, 0};
-    bool mHaveDominantPeriodAndCumulativeAmplitude{false};
-    bool mHaveDominantPeriodAndAmplitude{false};
+    std::vector<std::pair<double, double>> mAverageFrequencyAmplitude;
+    std::pair<double, double> mDominantFrequencyAndAmplitude{0, 0};
+    bool mHaveDominantFrequencyAndAmplitude{false};
 };
 
 /// C'tor
@@ -47,27 +46,64 @@ SpectralFeatures::operator=(SpectralFeatures &&features) noexcept
 }
 
 /// The dominant period/amplitude
-void SpectralFeatures::setDominantPeriodAndAmplitude(
-    const std::pair<double, double> &periodAmplitude)
+void SpectralFeatures::setDominantFrequencyAndAmplitude(
+    const std::pair<double, double> &frequencyAmplitude)
 {
-    if (periodAmplitude.first <= 0)
+    if (frequencyAmplitude.first <= 0)
     {
-        throw std::invalid_argument("Period must be positive");
+        throw std::invalid_argument("Frequency must be positive");
     }
-    if (periodAmplitude.second <= 0)
+    if (frequencyAmplitude.second <= 0)
     {
         throw std::invalid_argument("Amplitude cannot be negative");
     }
-    pImpl->mDominantPeriodAndAmplitude = periodAmplitude;
-    pImpl->mHaveDominantPeriodAndAmplitude = true;
+    pImpl->mDominantFrequencyAndAmplitude = frequencyAmplitude;
+    pImpl->mHaveDominantFrequencyAndAmplitude = true;
 }
 
-bool SpectralFeatures::haveDominantPeriodAndAmplitude() const noexcept
+bool SpectralFeatures::haveDominantFrequencyAndAmplitude() const noexcept
 {
-    return pImpl->mHaveDominantPeriodAndAmplitude;
+    return pImpl->mHaveDominantFrequencyAndAmplitude;
 }
 
-/// The dominant period/cumulative amplitude
+void SpectralFeatures::setAverageFrequenciesAndAmplitudes(
+    const std::vector<std::pair<double, double>> &frequencyAmplitude)
+{
+    if (frequencyAmplitude.empty())
+    {
+        throw std::invalid_argument("Frequency amplitude empty");
+    }
+    for (const auto &fa : frequencyAmplitude)
+    {
+        if (fa.first <= 0)
+        {
+            throw std::invalid_argument("Frequency must be positive");
+        }
+        if (fa.second < 0)
+        {
+           throw std::invalid_argument("Amplitude must be non-negative");
+        }
+    }
+    pImpl->mAverageFrequencyAmplitude = frequencyAmplitude;
+}
+
+std::vector<std::pair<double, double>>
+SpectralFeatures::getAverageFrequenciesAndAmplitudes() const
+{
+    if (!haveAverageFrequenciesAndAmplitudes())
+    {
+        throw std::runtime_error("Average frequency/amplitude not set");
+    }
+    return pImpl->mAverageFrequencyAmplitude;
+}
+
+bool SpectralFeatures::haveAverageFrequenciesAndAmplitudes() const noexcept
+{
+    return !pImpl->mAverageFrequencyAmplitude.empty();
+}
+
+/*
+/// The dominant frequency/cumulative amplitude
 void SpectralFeatures::setDominantPeriodAndCumulativeAmplitude(
     const std::pair<double, double> &periodAmplitude)
 {
@@ -87,6 +123,7 @@ bool SpectralFeatures::haveDominantPeriodAndCumulativeAmplitude() const noexcept
 {
     return pImpl->mHaveDominantPeriodAndCumulativeAmplitude;
 }
+*/
 
 /// Clear
 void SpectralFeatures::clear() noexcept

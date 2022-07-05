@@ -29,16 +29,16 @@ public:
     [[nodiscard]] static double getTargetSamplingPeriod() noexcept;
     /// @result The duration of the signal from which the features will
     ///         be extracted in seconds.
-    [[nodiscard]] static double getTargetSignalDuration() noexcept;
+    [[nodiscard]] double getTargetSignalDuration() const noexcept;
     /// @result The length of the signal from which the features will
     ///         be extracted in seconds.
-    [[nodiscard]] static int getTargetSignalLength() noexcept;
+    [[nodiscard]] int getTargetSignalLength() const noexcept;
     /// @result The number of seconds before and after the arrival where the 
     ///         processing will be performed.  For example,
     ///         arrivalTime + result.first will indicate where the processing
     ///         window begins while arrivalTime + result.second will indicate
     ///         where the processing will end.
-    [[nodiscard]] static std::pair<double, double> getArrivalTimeProcessingWindow() noexcept;
+    [[nodiscard]] std::pair<double, double> getArrivalTimeProcessingWindow() const noexcept;
 
     /// @name Step 1: Initialization
     /// @{
@@ -85,6 +85,12 @@ public:
     template<typename U> void process(int n, const U signal[],
                                       double arrivalTimeRelativeToStart);
     [[nodiscard]] bool haveSignal() const noexcept;
+    [[nodiscard]] TemporalFeatures getTemporalNoiseFeatures() const;
+    [[nodiscard]] TemporalFeatures getTemporalSignalFeatures() const;
+    [[nodiscard]] SpectralFeatures getSpectralNoiseFeatures() const;
+    [[nodiscard]] SpectralFeatures getSpectralSignalFeatures() const;
+    [[nodiscard]] double getSourceDepth() const;
+    [[nodiscard]] double getSourceReceiverDistance() const;
 
     /// @result The velocity signal from which to extract features.
     /// @throws std::runtime_error if \c haveSignal() is false.

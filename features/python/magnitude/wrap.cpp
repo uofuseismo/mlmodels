@@ -5,6 +5,7 @@
 #include <uuss/features/magnitude/channel.hpp>
 #include <uuss/features/magnitude/verticalChannelFeatures.hpp>
 #include <uuss/features/magnitude/temporalFeatures.hpp>
+#include <uuss/features/magnitude/spectralFeatures.hpp>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 //#include "wrap.hpp"
@@ -143,6 +144,113 @@ public:
 };
 
 //----------------------------------------------------------------------------//
+class SpectralFeatures
+{
+public:
+    SpectralFeatures() :
+        pImpl(std::make_unique<UUSS::Features::Magnitude::SpectralFeatures> ()) 
+    {   
+    }   
+    SpectralFeatures(const SpectralFeatures &features)
+    {
+        *this = features;
+    }   
+    SpectralFeatures(const UUSS::Features::Magnitude::SpectralFeatures &features)
+    {
+        *this = features;
+    }   
+    SpectralFeatures(SpectralFeatures &&features) noexcept
+    {
+        *this = std::move(features);
+    }   
+    SpectralFeatures& operator=(const UUSS::Features::Magnitude::SpectralFeatures &features)
+    {   
+        pImpl = std::make_unique<UUSS::Features::Magnitude::SpectralFeatures> (features);
+        return *this;
+    }
+    SpectralFeatures& operator=(const SpectralFeatures &features)
+    {
+        if (&features == this){return *this;}
+        pImpl = std::make_unique<UUSS::Features::Magnitude::SpectralFeatures>
+                (*features.pImpl);
+        return *this;
+    }
+    SpectralFeatures& operator=(SpectralFeatures &&features) noexcept
+    {   
+        if (&features == this){return *this;}
+        pImpl = std::move(features.pImpl);
+        return *this;
+    }
+    ~SpectralFeatures() = default;
+
+    std::unique_ptr<UUSS::Features::Magnitude::SpectralFeatures> pImpl;
+};
+
+//----------------------------------------------------------------------------//
+
+class TemporalFeatures
+{
+public:
+    TemporalFeatures() :
+        pImpl(std::make_unique<UUSS::Features::Magnitude::TemporalFeatures> ())
+    {
+    }
+    TemporalFeatures(const TemporalFeatures &features)
+    {
+        *this = features;
+    }
+    TemporalFeatures(const UUSS::Features::Magnitude::TemporalFeatures &features)
+    {
+        *this = features;
+    }
+    TemporalFeatures(TemporalFeatures &&features) noexcept
+    {
+        *this = std::move(features);
+    }
+    TemporalFeatures& operator=(const UUSS::Features::Magnitude::TemporalFeatures &features)
+    {
+        pImpl = std::make_unique<UUSS::Features::Magnitude::TemporalFeatures> (features);
+        return *this;
+    }
+    TemporalFeatures& operator=(const TemporalFeatures &features)
+    {
+        if (&features == this){return *this;}
+        pImpl = std::make_unique<UUSS::Features::Magnitude::TemporalFeatures>
+                (*features.pImpl);
+        return *this;
+    }
+    TemporalFeatures& operator=(TemporalFeatures &&features) noexcept
+    {
+        if (&features == this){return *this;}
+        pImpl = std::move(features.pImpl);
+        return *this;
+    }
+    ~TemporalFeatures() = default;
+    void setVariance(const double variance)
+    {
+        if (variance < 0)
+        {
+            throw std::invalid_argument("Variance must be positive");
+        }
+        pImpl->setVariance(variance);
+    }
+    double getVariance() const
+    {
+        return pImpl->getVariance();
+    }
+    void setMinimumAndMaximumValue(const std::pair<double, double> &minMax)
+    {
+        pImpl->setMinimumAndMaximumValue(minMax);
+    }
+    std::pair<double, double> getMinimumAndMaximumValue() const
+    {
+        return pImpl->getMinimumAndMaximumValue();
+    }
+    void clear() noexcept{pImpl->clear();}
+    std::unique_ptr<UUSS::Features::Magnitude::TemporalFeatures> pImpl;
+};
+
+//----------------------------------------------------------------------------//
 
 class VerticalChannelFeatures
 {
@@ -173,6 +281,31 @@ public:
         std::copy(array.data(), array.data() + array.size(), x.begin());
         pImpl->process(x, arrivalTime);
     }
+    double getSourceReceiverDistance() const
+    {
+        return pImpl->getSourceReceiverDistance();
+    }
+    TemporalFeatures getTemporalNoiseFeatures() const
+    {
+        auto features = pImpl->getTemporalNoiseFeatures();
+        return TemporalFeatures(features);
+    }
+    TemporalFeatures getTemporalSignalFeatures() const
+    {
+        auto features = pImpl->getTemporalSignalFeatures();
+        return TemporalFeatures(features);
+    }
+    SpectralFeatures getSpectralNoiseFeatures() const
+    {   
+        auto features = pImpl->getSpectralNoiseFeatures();
+        return SpectralFeatures(features);
+    }   
+    SpectralFeatures getSpectralSignalFeatures() const
+    {   
+        auto features = pImpl->getSpectralSignalFeatures();
+        return SpectralFeatures(features);
+    }
+    void clear() noexcept{pImpl->clear();}
     std::unique_ptr<UUSS::Features::Magnitude::VerticalChannelFeatures> pImpl;
     VerticalChannelFeatures(const VerticalChannelFeatures &) = delete;
     VerticalChannelFeatures(VerticalChannelFeatures &&) noexcept = delete;
@@ -351,14 +484,55 @@ Optional Properties
         }
     ));
  
+    pybind11::class_<::TemporalFeatures> tf(m, "TemporalFeatures");
+    tf.def(pybind11::init<> ());
+    tf.doc() = R"""(
+The time-based features.
+
+Properties
+----------
+     minimum_and_maximum_value : List[float, float]
+        The minimum and maximum amplitude.  This is units of micrometers/second.
+     variance : float
+        The variance.  This is the signal power minus the DC power.  This is
+        in units of (micrometers/second)^2
+)""";
+    tf.def_property("variance",
+                    &::TemporalFeatures::getVariance, &::TemporalFeatures::setVariance);
+    tf.def_property("minimum_and_maximum_value",
+                    &::TemporalFeatures::getMinimumAndMaximumValue,
+                    &::TemporalFeatures::setMinimumAndMaximumValue);
+    tf.def("clear", &::TemporalFeatures::clear, "Resets the class.");
 
     pybind11::class_<::VerticalChannelFeatures> vc(m, "VerticalChannelFeatures"); 
     vc.def(pybind11::init<> ());
     vc.doc() = R"""(
 Extracts the features from a vertical channel.
+
+Read-only Properties
+--------------------
+   spectral_noise_features : SpectralFeatures
+       The spectral features of the noise.
+   spectral_signal_features : SpectralFeatures
+       The spectral features of the signal.
+   temporal_signal_features : TemporalFeatures
+       The temporal features of the noise.
+   temporal_signal_features : TemporalFeatures
+       the temporal features of the signal. 
 )""";
     vc.def("initialize", &::VerticalChannelFeatures::initialize,
            "Initializes the feature extractor based on the channel information.");
     vc.def("process", &::VerticalChannelFeatures::process,
            "Processes the waveform.  Additionally, the arrival time relative to the window start must be specified.");
+    vc.def_property_readonly("spectral_noise_features",
+                             &::VerticalChannelFeatures::getSpectralNoiseFeatures);
+    vc.def_property_readonly("spectral_signal_features",
+                             &::VerticalChannelFeatures::getSpectralSignalFeatures);
+    vc.def_property_readonly("temporal_noise_features",
+                             &::VerticalChannelFeatures::getTemporalNoiseFeatures);
+    vc.def_property_readonly("temporal_signal_features",
+                             &::VerticalChannelFeatures::getTemporalSignalFeatures);
+
+
+
 }

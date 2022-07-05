@@ -598,7 +598,10 @@ Properties
 Read-only Properties
 --------------------
    velocity_signal : np.array
-       The processed velocity signal.
+       The processed velocity signal.  This should be in units of
+       micrometers/second.
+   source_receiver_distance : float
+       The source-receiver distance in km. 
    spectral_noise_features : SpectralFeatures
        The spectral features of the noise.
    spectral_signal_features : SpectralFeatures
@@ -617,6 +620,8 @@ Read-only Properties
            "Processes the waveform.  Additionally, the arrival time relative to the window start must be specified.");
     vc.def_property_readonly("velocity_signal",
                              &::VerticalChannelFeatures::getVelocitySignal);
+    vc.def_property_readonly("source_receiver_distance",
+                             &::VerticalChannelFeatures::getSourceReceiverDistance);
     vc.def_property_readonly("spectral_noise_features",
                              &::VerticalChannelFeatures::getSpectralNoiseFeatures);
     vc.def_property_readonly("spectral_signal_features",

@@ -208,7 +208,10 @@ public:
         return *this;
     }
     ~SpectralFeatures() = default;
-
+    std::pair<double, double> getDominantFrequencyAndAmplitude() const
+    {
+        return pImpl->getDominantFrequencyAndAmplitude();
+    }
     std::unique_ptr<UUSS::Features::Magnitude::SpectralFeatures> pImpl;
 };
 
@@ -584,6 +587,20 @@ Properties
                     &::TemporalFeatures::getMinimumAndMaximumValue,
                     &::TemporalFeatures::setMinimumAndMaximumValue);
     tf.def("clear", &::TemporalFeatures::clear, "Resets the class.");
+
+    pybind11::class_<::SpectralFeatures> sf(m, "SpectralFeatures");
+    sf.def(pybind11::init<> ());
+    sf.doc() = R"""(
+The spectral-based features.
+
+Read-Only Properties
+--------------------
+   dominant_frequency_and_amplitude : List[float, float]
+       The dominant frequency in Hz and the corresponding largest amplitude.
+)""";
+    sf.def_property_readonly("dominant_frequency_and_amplitude",
+                             &::SpectralFeatures::getDominantFrequencyAndAmplitude);
+   
 
     pybind11::class_<::VerticalChannelFeatures> vc(m, "VerticalChannelFeatures"); 
     vc.def(pybind11::init<> ());

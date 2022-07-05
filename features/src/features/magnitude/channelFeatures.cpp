@@ -851,6 +851,12 @@ void ChannelFeatures::setHypocenter(const Hypocenter &hypocenter)
     pImpl->mHypocenter = hypocenter;
 }
 
+Hypocenter ChannelFeatures::getHypocenter() const
+{
+    if (!haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
+    return pImpl->mHypocenter;
+}
+
 bool ChannelFeatures::haveHypocenter() const noexcept
 {
     return pImpl->mHypocenter.haveLatitude();

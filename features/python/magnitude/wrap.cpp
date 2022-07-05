@@ -38,6 +38,10 @@ public:
     {
     }
     Hypocenter(const Hypocenter &hypo){*this = hypo;}
+    Hypocenter(const UUSS::Features::Magnitude::Hypocenter &hypo)
+    {
+        *this = hypo;
+    }
     Hypocenter(Hypocenter &&hypo) noexcept{*this = std::move(hypo);}
     /// Destructor
     ~Hypocenter() = default;
@@ -47,6 +51,11 @@ public:
         if (&hypo == this){return *this;}
         pImpl = std::make_unique<UUSS::Features::Magnitude::Hypocenter>
                 (*hypo.pImpl);
+        return *this;
+    }
+    Hypocenter& operator=(const UUSS::Features::Magnitude::Hypocenter &hypo)
+    {
+        pImpl = std::make_unique<UUSS::Features::Magnitude::Hypocenter> (hypo);
         return *this;
     }
     /// Move assignment
@@ -289,6 +298,11 @@ public:
     void setHypocenter(const Hypocenter &hypo)
     {
         pImpl->setHypocenter(*hypo.pImpl);
+    }
+    Hypocenter getHypocenter() const
+    {
+        Hypocenter hypo(pImpl->getHypocenter());
+        return hypo;
     }
     void process(pybind11::array_t<double, pybind11::array::c_style |
                                            pybind11::array::forcecast> &array,

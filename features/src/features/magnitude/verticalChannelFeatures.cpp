@@ -156,6 +156,16 @@ void VerticalChannelFeatures::setHypocenter(const Hypocenter &hypocenter)
     pImpl->mChannelFeatures.setHypocenter(hypocenter);
 }
 
+Hypocenter VerticalChannelFeatures::getHypocenter() const
+{
+    return pImpl->mChannelFeatures.getHypocenter();
+}
+
+bool VerticalChannelFeatures::haveHypocenter() const noexcept
+{
+    return pImpl->mChannelFeatures.haveHypocenter();
+}
+
 TemporalFeatures VerticalChannelFeatures::getTemporalNoiseFeatures() const
 {
     return pImpl->mChannelFeatures.getTemporalNoiseFeatures();

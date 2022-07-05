@@ -77,6 +77,9 @@ public:
     /// @throws std::invalid_argument if the \c hypocenter.haveLatitude() or
     ///         \c hypocenter.haveLongitude() is false.
     void setHypocenter(const Hypocenter &hypocenter);
+    /// @result The hypocenter.
+    /// @throws std::runtime_error if \c haveHypocenter() is false.
+    [[nodiscard]] Hypocenter getHypocenter() const;
     /// @result True indicates the hypocenter was set.
     [[nodiscard]] bool haveHypocenter() const noexcept;
 

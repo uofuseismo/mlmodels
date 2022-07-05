@@ -212,6 +212,18 @@ public:
     {
         return pImpl->getDominantFrequencyAndAmplitude();
     }
+    std::pair<std::vector<double>, std::vector<double>> getAverageFrequenciesAndAmplitudes() const
+    {
+        auto avg = pImpl->getAverageFrequenciesAndAmplitudes();
+        std::vector<double> freqs(avg.size());
+        std::vector<double> amps(avg.size());
+        for (int i = 0; i < static_cast<int> (amps.size()); ++i)
+        {
+            freqs[i] = avg[i].first;
+            amps[i]  = avg[i].second;
+        }
+        return std::pair(freqs, amps);
+    }
     std::unique_ptr<UUSS::Features::Magnitude::SpectralFeatures> pImpl;
 };
 
@@ -597,9 +609,13 @@ Read-Only Properties
 --------------------
    dominant_frequency_and_amplitude : List[float, float]
        The dominant frequency in Hz and the corresponding largest amplitude.
+   average_amplitudes : List[array, array]
+       The average amplitude in the computation window at the given frequencies.
 )""";
     sf.def_property_readonly("dominant_frequency_and_amplitude",
                              &::SpectralFeatures::getDominantFrequencyAndAmplitude);
+    sf.def_property_readonly("average_frequencies_and_amplitudes",
+                             &::SpectralFeatures::getAverageFrequenciesAndAmplitudes);
    
 
     pybind11::class_<::VerticalChannelFeatures> vc(m, "VerticalChannelFeatures"); 

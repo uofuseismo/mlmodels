@@ -580,6 +580,11 @@ Properties
     vc.doc() = R"""(
 Extracts the features from a vertical channel.
 
+Properties
+----------
+    hypocenter : Hypocenter
+       The hypocentral information.
+
 Read-only Properties
 --------------------
    spectral_noise_features : SpectralFeatures
@@ -593,6 +598,9 @@ Read-only Properties
 )""";
     vc.def("initialize", &::VerticalChannelFeatures::initialize,
            "Initializes the feature extractor based on the channel information.");
+    vc.def_property("hypocenter",
+                    &::VerticalChannelFeatures::getHypocenter,
+                    &::VerticalChannelFeatures::setHypocenter);
     vc.def("process", &::VerticalChannelFeatures::process,
            "Processes the waveform.  Additionally, the arrival time relative to the window start must be specified.");
     vc.def_property_readonly("spectral_noise_features",

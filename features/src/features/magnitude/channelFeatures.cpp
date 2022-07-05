@@ -351,7 +351,7 @@ public:
     void extractFeatures()
     {
 #ifndef NDEBUG
-        assert(mVelocitySignal.size() == mTargetSignalLength);
+        assert(static_cast<int>(mVelocitySignal.size()) == mTargetSignalLength);
 #endif
         auto nScales  = mCWT.getNumberOfScales();
         auto nSamples = mTargetSignalLength;
@@ -711,7 +711,7 @@ void ChannelFeatures::process(
               pImpl->mSignal.begin());
     // Check for dead signal
     bool lDead = true;
-    for (int i = 1; i < pImpl->mSignal.size(); ++i)
+    for (int i = 1; i < static_cast<int> (pImpl->mSignal.size()); ++i)
     {
         if (pImpl->mSignal[i] != pImpl->mSignal[i-1])
         {

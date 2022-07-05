@@ -15,6 +15,20 @@ using namespace PFeatures::Magnitude;
 
 namespace
 {
+struct SimpleResponse
+{
+    void setValue(const double value)
+    {
+        if (value == 0){throw std::invalid_argument("Value is 0");}
+        mValue = value;
+    }
+    double getValue() const{return mValue;}
+    void setUnits(const std::string &units){mUnits = units;}
+    std::string getUnits() const{return mUnits;}
+    std::string mUnits;
+    double mValue{0};
+};
+    
 class Hypocenter
 {
 public:
@@ -105,14 +119,17 @@ public:
     }
     double getSamplingRate() const{return pImpl->getSamplingRate();}
     /// Simple resopnse
-    void setSimpleResponse(const double gain, const std::string &units)
+    void setSimpleResponse(const SimpleResponse &response)
     {
-        pImpl->setSimpleResponse(gain, units);
+        pImpl->setSimpleResponse(response.getValue(),
+                                 response.getUnits());
     } 
-    std::pair<double, std::string> getSimpleResponse() const
+    SimpleResponse getSimpleResponse() const
     {
-        return std::pair(pImpl->getSimpleResponseValue(),
-                         pImpl->getSimpleResponseUnits());
+        SimpleResponse response;
+        response.setValue(pImpl->getSimpleResponseValue());
+        response.setUnits(pImpl->getSimpleResponseUnits());
+        return response;
     }
     void setAzimuth(const double azimuth){pImpl->setAzimuth(azimuth);}
     double getAzimuth() const{return pImpl->getAzimuth();}
@@ -374,6 +391,43 @@ Properties
         }
     ));
     //------------------------------------------------------------------------//
+    pybind11::class_<::SimpleResponse> sr(m, "SimpleResponse");
+    sr.def(pybind11::init<> ());
+    sr.doc() = R"""(
+Defines a simple response.
+
+Properties
+----------
+   units : str
+       The units which can be DU/M/S or DU/M/S**2
+   value : float
+       The value which after dividing the signal by will result in units of M/S or M/S**2.
+)""";
+    sr.def_property("value",
+                    &::SimpleResponse::getValue, &::SimpleResponse::setValue);
+    sr.def_property("units",
+                    &::SimpleResponse::getUnits, &::SimpleResponse::setUnits);
+    // Pickling rules
+    sr.def(pybind11::pickle(
+        [](const ::SimpleResponse &response)
+        {
+            auto units = response.getUnits();
+            auto value = response.getValue();
+            return pybind11::make_tuple(units, value);
+        },
+        [](pybind11::tuple t)
+        {
+            if (t.size() != 2){throw std::runtime_error("Invalid state");}
+            auto units = t[0].cast<std::string> (); 
+            auto value = t[1].cast<double> (); 
+            ::SimpleResponse response;
+            response.setUnits(units);
+            response.setValue(value);
+            return response;
+        }
+    )); 
+
+
     pybind11::class_<::Channel> c(m, "Channel"); 
     c.def(pybind11::init<> ());
     c.doc() = R"""(
@@ -384,7 +438,7 @@ Required Properties
 
    sampling_rate : float
               The channel's nominal sampling rate in Hz.
-   simple_response : [float, str]
+   simple_response : SimpleResponse
               The value of the simple response and the AQMS-based string defining
               the simple response which can be DU/M/S and DU/M/S**2.
               When the signal is divided by this value then
@@ -476,7 +530,10 @@ Optional Properties
             if (!channelCode.empty()){channel.setChannelCode(channelCode);}
             if (!locationCode.empty()){channel.setLocationCode(locationCode);}
             channel.setSamplingRate(samplingRate);
-            channel.setSimpleResponse(value, units); 
+            SimpleResponse response;
+            response.setValue(value);
+            response.setUnits(units); 
+            channel.setSimpleResponse(response);
             channel.setLatitude(latitude);
             channel.setLongitude(longitude);
             if (azimuth >= 0 && azimuth < 360){channel.setAzimuth(azimuth);}

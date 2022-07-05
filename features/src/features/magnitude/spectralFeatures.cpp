@@ -61,6 +61,16 @@ void SpectralFeatures::setDominantFrequencyAndAmplitude(
     pImpl->mHaveDominantFrequencyAndAmplitude = true;
 }
 
+std::pair<double, double>
+    SpectralFeatures::getDominantFrequencyAndAmplitude() const
+{
+    if (!haveDominantFrequencyAndAmplitude())
+    {
+        throw std::runtime_error("Dominant frequency/amplitude not set");
+    }
+    return pImpl->mDominantFrequencyAndAmplitude;
+}
+
 bool SpectralFeatures::haveDominantFrequencyAndAmplitude() const noexcept
 {
     return pImpl->mHaveDominantFrequencyAndAmplitude;

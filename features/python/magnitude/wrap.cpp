@@ -336,6 +336,16 @@ public:
         auto features = pImpl->getSpectralSignalFeatures();
         return SpectralFeatures(features);
     }
+    pybind11::array_t<double> getVelocitySignal() const
+    {
+        auto signal = pImpl->getVelocitySignal();
+        auto y = pybind11::array_t<double, pybind11::array::c_style>
+                 (signal.size()); 
+        pybind11::buffer_info yBuffer = y.request();
+        auto yPtr = static_cast<double *> (yBuffer.ptr);
+        std::copy(signal.begin(), signal.end(), yPtr);
+        return y;
+    }
     void clear() noexcept{pImpl->clear();}
     std::unique_ptr<UUSS::Features::Magnitude::VerticalChannelFeatures> pImpl;
     VerticalChannelFeatures(const VerticalChannelFeatures &) = delete;
@@ -587,6 +597,8 @@ Properties
 
 Read-only Properties
 --------------------
+   velocity_signal : np.array
+       The processed velocity signal.
    spectral_noise_features : SpectralFeatures
        The spectral features of the noise.
    spectral_signal_features : SpectralFeatures
@@ -603,6 +615,8 @@ Read-only Properties
                     &::VerticalChannelFeatures::setHypocenter);
     vc.def("process", &::VerticalChannelFeatures::process,
            "Processes the waveform.  Additionally, the arrival time relative to the window start must be specified.");
+    vc.def_property_readonly("velocity_signal",
+                             &::VerticalChannelFeatures::getVelocitySignal);
     vc.def_property_readonly("spectral_noise_features",
                              &::VerticalChannelFeatures::getSpectralNoiseFeatures);
     vc.def_property_readonly("spectral_signal_features",

@@ -895,7 +895,7 @@ double ChannelFeatures::getSourceDepth() const
 
 double ChannelFeatures::getSourceReceiverDistance() const
 {
-    if (haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
+    if (!haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
     return pImpl->mSourceReceiverDistance;
 }
 

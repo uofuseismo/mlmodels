@@ -299,8 +299,10 @@ public:
                                        });
          if (*pgvMax > mMaxPeakGroundVelocity)
          {
-             throw std::invalid_argument(
-                "PGV exceeds 500 cm/s - check response.");
+             throw std::invalid_argument("Max PGV = "
+                      + std::to_string(*pgvMax*1.e-4) + " cm/s exceeds "
+                      + std::to_string(mMaxPeakGroundVelocity*1.e-4)
+                      + " cm/s - check response.");
          }
     }
     // Compute the scalogram
@@ -624,9 +626,9 @@ std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSign
     const double mTargetSamplingRate{TARGET_SAMPLING_RATE};
     const double mTargetSamplingPeriod{TARGET_SAMPLING_PERIOD};
     // The max PGV in the 8.8 Maule event was about. 100 cm/s.
-    // This is 500 cm/s which is effectively impossible for UT and
+    // This is 200 cm/s which is effectively impossible for UT and
     // Yellowstone and likely indicates a gain problem.
-    const double mMaxPeakGroundVelocity{500*10000};
+    const double mMaxPeakGroundVelocity{200*10000};
     //double mTargetSignalDuration{5}; //TARGET_SIGNAL_DURATION};
     int mTargetSignalLength{500};//TARGET_SIGNAL_LENGTH};
     bool mAcceleration{false};

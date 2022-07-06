@@ -290,6 +290,18 @@ public:
         }
         // High-pass filter
         mIIRVelocityFilter.apply(nSamples, mWork.data(), &yWorkPtr);
+        // Check the gain is reasonable
+        auto pgvMax = std::max_element(mVelocitySignal.begin(),
+                                       mVelocitySignal.end(),
+                                       [](const double a, const double b)
+                                       {
+                                           return std::abs(a) < std::abs(b);
+                                       });
+         if (*pgvMax > mMaxPeakGroundVelocity)
+         {
+             throw std::invalid_argument(
+                "PGV exceeds 500 cm/s - check response.");
+         }
     }
     // Compute the scalogram
     void computeVelocityScalogram()
@@ -611,6 +623,10 @@ std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSign
     double mPickError{0.05};
     const double mTargetSamplingRate{TARGET_SAMPLING_RATE};
     const double mTargetSamplingPeriod{TARGET_SAMPLING_PERIOD};
+    // The max PGV in the 8.8 Maule event was about. 100 cm/s.
+    // This is 500 cm/s which is effectively impossible for UT and
+    // Yellowstone and likely indicates a gain problem.
+    const double mMaxPeakGroundVelocity{500*10000};
     //double mTargetSignalDuration{5}; //TARGET_SIGNAL_DURATION};
     int mTargetSignalLength{500};//TARGET_SIGNAL_LENGTH};
     bool mAcceleration{false};
@@ -722,7 +738,7 @@ void ChannelFeatures::process(
     if (lDead){throw std::invalid_argument("Signal is dead");}
     // Process the data
     pImpl->mHaveFeatures = false;
-    pImpl->process();
+    pImpl->process(); // Throws
     pImpl->mHaveFeatures = true; 
 }
 

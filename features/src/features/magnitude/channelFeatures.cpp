@@ -291,16 +291,15 @@ public:
         // High-pass filter
         mIIRVelocityFilter.apply(nSamples, mWork.data(), &yWorkPtr);
         // Check the gain is reasonable
-        auto pgvMax = std::max_element(mVelocitySignal.begin(),
-                                       mVelocitySignal.end(),
-                                       [](const double a, const double b)
-                                       {
-                                           return std::abs(a) < std::abs(b);
-                                       });
-         if (*pgvMax > mMaxPeakGroundVelocity)
+        double pgvMax = 0;
+        for (const auto &v : mVelocitySignal)
+        {
+             pgvMax = std::max(std::abs(v), pgvMax);
+        }
+         if (pgvMax > mMaxPeakGroundVelocity)
          {
              throw std::invalid_argument("Max PGV = "
-                      + std::to_string(*pgvMax*1.e-4) + " cm/s exceeds "
+                      + std::to_string(pgvMax*1.e-4) + " cm/s exceeds "
                       + std::to_string(mMaxPeakGroundVelocity*1.e-4)
                       + " cm/s - check response.");
          }
@@ -625,10 +624,10 @@ std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSign
     double mPickError{0.05};
     const double mTargetSamplingRate{TARGET_SAMPLING_RATE};
     const double mTargetSamplingPeriod{TARGET_SAMPLING_PERIOD};
-    // The max PGV in the 8.8 Maule event was about. 100 cm/s.
+    // The max PGV in the 8.8 Maule event was about. 200 cm/s.
     // This is 200 cm/s which is effectively impossible for UT and
     // Yellowstone and likely indicates a gain problem.
-    const double mMaxPeakGroundVelocity{200*10000};
+    const double mMaxPeakGroundVelocity{2e6};
     //double mTargetSignalDuration{5}; //TARGET_SIGNAL_DURATION};
     int mTargetSignalLength{500};//TARGET_SIGNAL_LENGTH};
     bool mAcceleration{false};
@@ -787,7 +786,7 @@ void ChannelFeatures::initialize(const Channel &channel)
     clear();
     pImpl->mUnits = units;
     // Make response proportional to micrometers.  Response units are 
-    // 1/meter so to go to 1/millimeter we do 1/(meter*1e6) which effectively
+    // 1/meter so to go to 1/micrometer we do 1/(meter*1e6) which effectively
     // divides the input by 1e6.
     pImpl->mChannel = channel;
     pImpl->mSimpleResponse = simpleResponse/1e6; // proportional to micrometers

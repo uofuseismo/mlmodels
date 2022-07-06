@@ -89,13 +89,23 @@ public:
                                       double arrivalTimeRelativeToStart);
     template<typename U> void process(int n, const U signal[],
                                       double arrivalTimeRelativeToStart);
+    /// @result True indicates the input signal was processed and the
+    ///         velocity signal and features are available.
     [[nodiscard]] bool haveSignal() const noexcept;
+    /// @result The temporal features computed on the pre-arrival noise.
     [[nodiscard]] TemporalFeatures getTemporalNoiseFeatures() const;
+    /// @result The temporal features computed on the signal.
     [[nodiscard]] TemporalFeatures getTemporalSignalFeatures() const;
+    /// @result The spectral features computed on the pre-arrival noise.
     [[nodiscard]] SpectralFeatures getSpectralNoiseFeatures() const;
+    /// @result The spectral features computed on the signal.
     [[nodiscard]] SpectralFeatures getSpectralSignalFeatures() const;
+    /// @result The source depth. 
     [[nodiscard]] double getSourceDepth() const;
+    /// @result The source-receiver distance in kilometers.
     [[nodiscard]] double getSourceReceiverDistance() const;
+    /// @result The back-azimuth in degrees measured positive east of north.
+    /// @throws std::runtime_error if \c haveHypocenter() is false.
     [[nodiscard]] double getBackAzimuth() const;
 
     /// @result The velocity signal from which to extract features.

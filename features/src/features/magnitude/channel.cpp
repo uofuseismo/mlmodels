@@ -139,7 +139,7 @@ void Channel::setSimpleResponse(const double simpleResponse,
     std::transform(unitsIn.begin(), unitsIn.end(), units.begin(), ::toupper);
     if (units != "DU/M/S**2" && units != "DU/M/S")
     {
-        throw std::runtime_error("units = " + unitsIn + " not handled");
+        throw std::invalid_argument("units = " + unitsIn + " not handled");
     }
     pImpl->mUnits = unitsIn;
     pImpl->mSimpleResponseValue = simpleResponse;

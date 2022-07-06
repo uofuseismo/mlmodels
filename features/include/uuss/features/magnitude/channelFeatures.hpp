@@ -109,6 +109,11 @@ public:
     /// @result The source-receiver distance in kilometers.
     /// @throws std::runtime_error if \c haveHypocenter() is false. 
     [[nodiscard]] double getSourceReceiverDistance() const;
+    /// @result The azimuth from the receiver to the source in degrees 
+    ///         measured positive east of north.
+    /// @throws std::runtime_error if \c haveHypocenter() is false. 
+    [[nodiscard]] double getBackAzimuth() const;
+
 
     /// @result The velocity signal from which to extract features.
     /// @throws std::runtime_error if \c haveSignal() is false.

@@ -96,6 +96,7 @@ public:
     [[nodiscard]] SpectralFeatures getSpectralSignalFeatures() const;
     [[nodiscard]] double getSourceDepth() const;
     [[nodiscard]] double getSourceReceiverDistance() const;
+    [[nodiscard]] double getBackAzimuth() const;
 
     /// @result The velocity signal from which to extract features.
     /// @throws std::runtime_error if \c haveSignal() is false.

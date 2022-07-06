@@ -196,6 +196,11 @@ double VerticalChannelFeatures::getSourceReceiverDistance() const
     return pImpl->mChannelFeatures.getSourceReceiverDistance();
 }
 
+double VerticalChannelFeatures::getBackAzimuth() const
+{
+    return pImpl->mChannelFeatures.getBackAzimuth();
+}
+
 ///--------------------------------------------------------------------------///
 ///                              Template Instantiation                      ///
 ///--------------------------------------------------------------------------///

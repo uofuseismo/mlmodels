@@ -916,6 +916,12 @@ double ChannelFeatures::getSourceReceiverDistance() const
     return pImpl->mSourceReceiverDistance;
 }
 
+double ChannelFeatures::getBackAzimuth() const
+{
+    if (!haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
+    return pImpl->mSourceReceiverBackAzimuth;
+}
+
 ///--------------------------------------------------------------------------///
 ///                              Template Instantiation                      ///
 ///--------------------------------------------------------------------------///

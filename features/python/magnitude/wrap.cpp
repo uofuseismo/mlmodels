@@ -331,6 +331,10 @@ public:
     {
         return pImpl->getSourceReceiverDistance();
     }
+    double getBackAzimuth() const
+    {
+        return pImpl->getBackAzimuth();
+    }
     TemporalFeatures getTemporalNoiseFeatures() const
     {
         auto features = pImpl->getTemporalNoiseFeatures();
@@ -635,6 +639,8 @@ Read-only Properties
        micrometers/second.
    source_receiver_distance : float
        The source-receiver distance in km. 
+   back_azimuth : float
+       The receiver-to-source azimuth in degrees measured positive east of north.
    spectral_noise_features : SpectralFeatures
        The spectral features of the noise.
    spectral_signal_features : SpectralFeatures
@@ -655,6 +661,8 @@ Read-only Properties
                              &::VerticalChannelFeatures::getVelocitySignal);
     vc.def_property_readonly("source_receiver_distance",
                              &::VerticalChannelFeatures::getSourceReceiverDistance);
+    vc.def_property_readonly("back_azimuth",
+                             &::VerticalChannelFeatures::getBackAzimuth);
     vc.def_property_readonly("spectral_noise_features",
                              &::VerticalChannelFeatures::getSpectralNoiseFeatures);
     vc.def_property_readonly("spectral_signal_features",

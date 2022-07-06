@@ -33,6 +33,7 @@ set(SRC
     src/features/magnitude/hypocenter.cpp
     src/features/magnitude/spectralFeatures.cpp
     src/features/magnitude/temporalFeatures.cpp
+    src/features/magnitude/threeChannelFeatures.cpp
     src/features/magnitude/verticalChannelFeatures.cpp)
 
 set(BUILD_SHARED_LIBS YES)

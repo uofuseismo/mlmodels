@@ -1,5 +1,5 @@
-#ifndef UUSS_FEATURES_MAGNITUDE_VERTICALCHANNELFEATURES_HPP
-#define UUSS_FEATURES_MAGNITUDE_VERTICALCHANNELFEATURES_HPP
+#ifndef UUSS_FEATURES_MAGNITUDE_THREECHANNELFEATURES_HPP
+#define UUSS_FEATURES_MAGNITUDE_THREECHANNELFEATURES_HPP
 #include <memory>
 namespace UUSS::Features::Magnitude
 {
@@ -10,14 +10,14 @@ class SpectralFeatures;
 }
 namespace UUSS::Features::Magnitude
 {
-/// @class VerticalChannelFeatures "verticalChannelFeatures.hpp" "uuss/features/magnitude/verticalChannelFeatures.hpp"
-/// @brief Extracts features for computing a magnitude from a single channel
-///        station.
+/// @class ThreeChannelFeatures "threeChannelFeatures.hpp" "uuss/features/magnitude/threeChannelFeatures.hpp"
+/// @brief Extracts features for computing a magnitude from a three channel
+///        station.  This is for extracting information on the S wave.
 /// @copyright Ben Baker (University of Utah) distributed under the MIT license.
-class VerticalChannelFeatures
+class ThreeChannelFeatures
 {
 public:
-    VerticalChannelFeatures();
+    ThreeChannelFeatures();
 
     /// @result The sampling rate of the signal from which the features
     ///         will be extracted in Hz.
@@ -112,7 +112,7 @@ public:
 
 
     void clear() noexcept; 
-    ~VerticalChannelFeatures();
+    ~ThreeChannelFeatures();
 
 private:
     class FeaturesImpl;

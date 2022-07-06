@@ -4,6 +4,7 @@
 #include <uuss/features/magnitude/hypocenter.hpp>
 #include <uuss/features/magnitude/channel.hpp>
 #include <uuss/features/magnitude/verticalChannelFeatures.hpp>
+#include <uuss/features/magnitude/threeChannelFeatures.hpp>
 #include <uuss/features/magnitude/temporalFeatures.hpp>
 #include <uuss/features/magnitude/spectralFeatures.hpp>
 #include <pybind11/numpy.h>

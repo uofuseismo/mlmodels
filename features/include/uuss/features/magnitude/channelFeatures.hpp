@@ -92,10 +92,10 @@ public:
     ///         time relative to the start is less than the processing window
     ///         start time.
     /// @sa \c getArrivalTimeProcessingWindow(), \c getTargetSignalDuration()
-    template<typename U> void process(const std::vector<U> &signal,
-                                      double arrivalTimeRelativeToStart);
-    template<typename U> void process(int n, const U signal[],
-                                      double arrivalTimeRelativeToStart);
+    void process(const std::vector<double> &signal,
+                 double arrivalTimeRelativeToStart);
+    void process(int n, const double signal[],
+                 double arrivalTimeRelativeToStart);
     /// @result True indicates the signal was set and the features
     ///         were extracted.
     [[nodiscard]] bool haveFeatures() const noexcept;

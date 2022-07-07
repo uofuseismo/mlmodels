@@ -1,4 +1,5 @@
 #include <memory>
+#include <sstream>
 #include <string>
 #include <vector>
 #include <uuss/features/magnitude/hypocenter.hpp>
@@ -604,6 +605,13 @@ Properties
                     &::TemporalFeatures::getMinimumAndMaximumValue,
                     &::TemporalFeatures::setMinimumAndMaximumValue);
     tf.def("clear", &::TemporalFeatures::clear, "Resets the class.");
+    tf.def("__repr__",
+           [](const ::TemporalFeatures &f)
+           {
+               std::stringstream s;
+               s << *f.pImpl;
+               return s.str();
+           });
 
     pybind11::class_<::SpectralFeatures> sf(m, "SpectralFeatures");
     sf.def(pybind11::init<> ());

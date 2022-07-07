@@ -1,4 +1,13 @@
+#if __has_include(<nlohmann/json.hpp>)
+ #include <nlohmann/json.hpp>
+ #define USE_LOHMANN 1
+#else
+ #include <sstream>
+ #include <iomanip>
+ #define USE_LOHMANN 0
+#endif
 #include "uuss/features/magnitude/temporalFeatures.hpp"
+
 
 using namespace UUSS::Features::Magnitude;
 
@@ -96,3 +105,63 @@ bool TemporalFeatures::haveMinimumAndMaximumValue() const noexcept
 {
     return pImpl->mHaveMinMax;
 }
+
+/// Print
+std::ostream&
+UUSS::Features::Magnitude::operator<<(std::ostream &os,
+                                      const TemporalFeatures &features)
+{
+#ifdef USE_LOHMANN
+    nlohmann::json jFeatures;
+    if (features.haveVariance())
+    {
+        jFeatures["variance"] = features.getVariance();
+    }
+    else
+    {
+        jFeatures["variance"] = nullptr;
+    }
+    if (features.haveMinimumAndMaximumValue())
+    {
+        auto [min, max] = features.getMinimumAndMaximumValue();
+        jFeatures["minimum_value"] = min;
+        jFeatures["maximum_value"] = max;
+    } 
+    else
+    {
+        jFeatures["minimum_value"] = nullptr;
+        jFeatures["maximum_value"] = nullptr;
+    }
+    nlohmann::json j;
+    j["temporal_features"] = jFeatures;
+    return os << j.dump(4);
+#else
+    std::stringstream result;
+    result << std::setprecision(16);
+    result << "{" << std::endl;
+    result << "    \"temporal_features\": {" << std::endl;
+    if (features.haveMinimumAndMaximumValue())
+    {
+        auto [min, max] = features.getMinimumAndMaximumValue();
+        result << "        \"maximum_value\": " << max << "," << std::endl;
+        result << "        \"minimum_value\": " << min << "," << std::endl;
+    }
+    else
+    {
+        result << "        \"maximum_value\": null," << std::endl;
+        result << "        \"minimum_value\": null," << std::endl;
+    }
+    if (features.haveVariance())
+    {
+        result << "        \"variance\": " << features.getVariance() << std::endl;
+    }
+    else
+    {
+        result << "        \"variance\": null" << std::endl; 
+    }
+    result << "    }" << std::endl;
+    result << "}" << std::endl;
+    return os << result.str();
+#endif
+}
+

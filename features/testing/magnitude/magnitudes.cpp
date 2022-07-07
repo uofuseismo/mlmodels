@@ -158,6 +158,7 @@ TEST(FeaturesMagnitude, VerticalChannelFeatures)
     EXPECT_NEAR(features.getTargetSamplingPeriod(), 1./100, 1.e-14);
 
     EXPECT_NO_THROW(features.process(velocity, startTime));
+std::cout << features.getTemporalNoiseFeatures() << std::endl;
     auto velocitySignal = features.getVelocitySignal();
     //------------------------------------------------------------------------// 
     EXPECT_NO_THROW(features.initialize(accelerationChannel));
@@ -169,12 +170,16 @@ TEST(FeaturesMagnitude, VerticalChannelFeatures)
     EXPECT_NO_THROW(features.process(acceleration, startTime));
     auto velocitySignal2 = features.getVelocitySignal();
 
+
+    std::cout << features.getTemporalNoiseFeatures() << std::endl;
+/*
     auto ofl = std::ofstream("vel.txt");
     for (int i = 0; i < velocitySignal.size(); ++i)
     {
         ofl << i*0.01 << " " << velocitySignal[i] << " " << velocitySignal2[i] << std::endl;
     }
     ofl.close();
+*/
 }
 
 }

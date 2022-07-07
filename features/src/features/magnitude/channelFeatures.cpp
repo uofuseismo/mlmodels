@@ -21,8 +21,9 @@
 #include "uuss/features/magnitude/channelFeatures.hpp"
 #include "uuss/features/magnitude/channel.hpp"
 #include "uuss/features/magnitude/hypocenter.hpp"
-#include "uuss/features/magnitude/temporalFeatures.hpp"
+#include "uuss/features/magnitude/preprocess.hpp"
 #include "uuss/features/magnitude/spectralFeatures.hpp"
+#include "uuss/features/magnitude/temporalFeatures.hpp"
 #include "private/magnitudeUtilities.hpp"
 #include "private/distanceAzimuth.hpp"
 
@@ -218,7 +219,7 @@ public:
             if (d <= 0){throw std::invalid_argument("Invalid duration");}
         }
         mDemean.initialize(
-            RTSeis::FilterImplementations::DetrendType::CONSTANT);
+            RTSeis::FilterImplementations::DetrendType::Constant);
         const double pct = 5;
         mHanning.initialize(pct,
                         RTSeis::FilterImplementations::TaperWindowType::Hann);
@@ -244,6 +245,15 @@ public:
     }
     void processAcceleration()
     {
+/*
+        ::processAcceleration(mSignal,
+                              &mVelocitySignal,
+                              &mWork,
+                              mAcceleration,
+                              mHanning,
+                              mIIRHighPass,
+                              mIIRIntegrator);
+*/
         if (!mAcceleration){return;} // Nothing to do
         int nSamples = mSignal.size();
         mWork = mSignal;
@@ -296,13 +306,13 @@ public:
         {
              pgvMax = std::max(std::abs(v), pgvMax);
         }
-         if (pgvMax > mMaxPeakGroundVelocity)
-         {
-             throw std::invalid_argument("Max PGV = "
-                      + std::to_string(pgvMax*1.e-4) + " cm/s exceeds "
-                      + std::to_string(mMaxPeakGroundVelocity*1.e-4)
-                      + " cm/s - check response.");
-         }
+        if (pgvMax > mMaxPeakGroundVelocity)
+        {
+            throw std::invalid_argument("Max PGV = "
+                     + std::to_string(pgvMax*1.e-4) + " cm/s exceeds "
+                     + std::to_string(mMaxPeakGroundVelocity*1.e-4)
+                     + " cm/s - check response.");
+        }
     }
     // Compute the scalogram
     void computeVelocityScalogram()
@@ -476,7 +486,7 @@ for (const auto &a : averagePeriodAmplitude)
                       << cumulativeAmplitude[1].first << " " //<< cumulativeAmplitude[1].second << " "
                       << cumulativeAmplitude[2].first << " " //<< cumulativeAmplitude[2].second << " "
                       <<std::endl;
-*/ 
+*/
         }
 /*
 std::cout << "work it:" << std::endl;
@@ -595,6 +605,7 @@ std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSign
     std::vector<double> mCumulativeAmplitudeCWT;
     std::vector<double> mDurations{1, 2, 3};
     std::string mUnits;
+    Preprocess mPreprocess;
     RTSeis::FilterRepresentations::SOS mHighPass;
     RTSeis::FilterRepresentations::BA  mIntegrator;
     RTSeis::FilterRepresentations::SOS mVelocityFilter;
@@ -663,20 +674,38 @@ void ChannelFeatures::clear() noexcept
 ChannelFeatures::~ChannelFeatures() = default;
 
 /// Set the signal
-template<typename U>
-void ChannelFeatures::process(const std::vector<U> &signal,
-                                      const double arrivalTimeRelativeToStart)
+void ChannelFeatures::process(const std::vector<double> &signal,
+                              const double arrivalTimeRelativeToStart)
 {
     if (signal.empty()){throw std::runtime_error("Signal is empty");}
     process(signal.size(), signal.data(), arrivalTimeRelativeToStart);
 }
 
-template<typename U>
 void ChannelFeatures::process(
-    const int n, const U *__restrict__ signal,
+    const int n, const double *__restrict__ signal,
     const double arrivalTimeRelativeToStart)
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
+    // Preprocess signal
+    pImpl->mPreprocess.process(n, signal, arrivalTimeRelativeToStart);
+    // Check max PGV makes sense
+    auto pgvMax = pImpl->mPreprocess.getAbsoluteMaximumPeakGroundVelocity();
+    if (pgvMax > pImpl->mMaxPeakGroundVelocity)
+    {
+        throw std::invalid_argument("Max PGV = "
+                 + std::to_string(pgvMax*1.e-4) + " cm/s exceeds "
+                 + std::to_string(pImpl->mMaxPeakGroundVelocity*1.e-4)
+                 + " cm/s - check response.");
+    }
+    // Get signal and extract features
+    pImpl->mPreprocess.getVelocitySignal(&pImpl->mVelocitySignal);
+    // Extract features
+    pImpl->computeVelocityScalogram();
+    pImpl->extractFeatures();
+    pImpl->mHaveFeatures = true;
+    return;
+ 
+/*
     if (arrivalTimeRelativeToStart < 0)
     {
         throw std::invalid_argument("arrival time must be positive");
@@ -741,6 +770,8 @@ void ChannelFeatures::process(
     pImpl->mHaveFeatures = false;
     pImpl->process(); // Throws
     pImpl->mHaveFeatures = true; 
+std::cout << "hey: " << pImpl->mVelocitySignal[5] << " " << pImpl->mVelocitySignal[7] << std::endl;
+*/
 }
 
 /// Have features?
@@ -794,6 +825,13 @@ void ChannelFeatures::initialize(const Channel &channel)
     pImpl->mSamplingRate = samplingRate;
     pImpl->update();
     pImpl->mInitialized = true;
+
+    // Initialize preprocessor
+    pImpl->mPreprocess.initialize(channel.getSamplingRate(),
+                                  channel.getSimpleResponseValue(),
+                                  channel.getSimpleResponseUnits(),
+                                  std::pair(pImpl->mPreArrivalTime,
+                                            pImpl->mPostArrivalTime));
 }
 
 bool ChannelFeatures::isInitialized() const noexcept
@@ -925,7 +963,9 @@ double ChannelFeatures::getBackAzimuth() const
 ///--------------------------------------------------------------------------///
 ///                              Template Instantiation                      ///
 ///--------------------------------------------------------------------------///
+/*
 template void UUSS::Features::Magnitude::ChannelFeatures::process(
     const std::vector<double> &, double); 
 template void UUSS::Features::Magnitude::ChannelFeatures::process(
     const std::vector<float> &, double);
+*/

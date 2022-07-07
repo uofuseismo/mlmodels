@@ -74,22 +74,28 @@ public:
     /// @result True indicates the hypocenter was set.
     [[nodiscard]] bool haveHypocenter() const noexcept;
 
-    /// @brief Processes the signal.
-    /// @param[in] signal   The signal to process.
+    /// @brief Processes the signal.  
+    /// @param[in] zSignal   The vertical signal to process.
+    /// @param[in] nSignal   The north (or 1 channel) signal to process.
+    /// @param[in] eSignal   The east (or 2 channel) signal to process.
     /// @param[in] arrivalTimeRelativeToStart  The phase arrival time in seconds
-    ///                                        relative to the signal start.
-    /// @throws std::runtime_error if \c isInitialized() is false.
+    ///                                        relative to the starts of all the
+    ///                                        signal.
+    /// @throws std::runtime_error if \c isInitialized() is false or 
+    ///         \c haveHypocenter() is false.
     /// @throws std::invalid_argument if the signal is too small or the arrival
     ///         time relative to the start is less than the processing window
-    ///         start time.
+    ///         start time.  Additionally, this will throw if not all the
+    ///         signals are of the same length.
     /// @sa \c getArrivalTimeProcessingWindow(), \c getTargetSignalDuration()
-    template<typename U> void process(const std::vector<U> &signal,
-                                      double arrivalTimeRelativeToStart);
-    template<typename U> void process(int n, const U signal[],
-                                      double arrivalTimeRelativeToStart);
+    template<typename U>
+    void process(const std::vector<U> &zSignal,
+                 const std::vector<U> &nSignal,
+                 const std::vector<U> &eSignal,
+                 double arrivalTimeRelativeToStart);
     /// @result True indicates the input signal was processed and the
     ///         velocity signal and features are available.
-    [[nodiscard]] bool haveSignal() const noexcept;
+    [[nodiscard]] bool haveSignals() const noexcept;
     /// @result The temporal features computed on the pre-arrival noise.
     [[nodiscard]] TemporalFeatures getTemporalNoiseFeatures() const;
     /// @result The temporal features computed on the signal.
@@ -108,7 +114,9 @@ public:
 
     /// @result The velocity signal from which to extract features.
     /// @throws std::runtime_error if \c haveSignal() is false.
-    [[nodiscard]] std::vector<double> getVelocitySignal() const;
+    [[nodiscard]] std::vector<double> getVerticalVelocitySignal() const;
+    [[nodiscard]] std::vector<double> getRadialVelocitySignal() const;
+    [[nodiscard]] std::vector<double> getTransverseVelocitySignal() const;
 
 
     void clear() noexcept; 

@@ -55,17 +55,15 @@ void VerticalChannelFeatures::clear() noexcept
 VerticalChannelFeatures::~VerticalChannelFeatures() = default;
 
 /// Set the signal
-template<typename U>
-void VerticalChannelFeatures::process(const std::vector<U> &signal,
+void VerticalChannelFeatures::process(const std::vector<double> &signal,
                                       const double arrivalTimeRelativeToStart)
 {
     if (signal.empty()){throw std::runtime_error("Signal is empty");}
     process(signal.size(), signal.data(), arrivalTimeRelativeToStart);
 }
 
-template<typename U>
 void VerticalChannelFeatures::process(
-    const int n, const U *__restrict__ signal,
+    const int n, const double *__restrict__ signal,
     const double arrivalTimeRelativeToStart)
 {
     pImpl->mChannelFeatures.process(n, signal, arrivalTimeRelativeToStart);
@@ -204,7 +202,9 @@ double VerticalChannelFeatures::getBackAzimuth() const
 ///--------------------------------------------------------------------------///
 ///                              Template Instantiation                      ///
 ///--------------------------------------------------------------------------///
+/*
 template void UUSS::Features::Magnitude::VerticalChannelFeatures::process(
     const std::vector<double> &, double); 
 template void UUSS::Features::Magnitude::VerticalChannelFeatures::process(
     const std::vector<float> &, double);
+*/

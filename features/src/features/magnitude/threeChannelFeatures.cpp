@@ -24,3 +24,78 @@
 
 using namespace UUSS::Features::Magnitude;
 
+class ThreeChannelFeatures::FeaturesImpl
+{
+public:
+    FeaturesImpl() :
+        mChannelFeatures(mFrequencies, mDurations,
+                        -PRE_ARRIVAL_TIME,
+                         POST_ARRIVAL_TIME,
+                         S_PICK_ERROR)
+    {
+    }
+    const std::vector<double> mFrequencies{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
+    const std::vector<double> mDurations{4}; // No idea on saturation - probably bigger than M5 
+    std::vector<double> mVerticalVelocity;
+    std::vector<double> mRadialVelocity;
+    std::vector<double> mTransverseVelociy;
+    ChannelFeatures mChannelFeatures;
+    double mBackAzimuth{0};
+};
+
+/// C'tor
+ThreeChannelFeatures::ThreeChannelFeatures() :
+    pImpl(std::make_unique<FeaturesImpl> ())
+{
+}
+
+/// Destructor
+ThreeChannelFeatures::~ThreeChannelFeatures() = default;
+
+/// Initialized?
+bool ThreeChannelFeatures::isInitialized() const noexcept
+{
+    return pImpl->mChannelFeatures.isInitialized();
+}
+
+/// Hypocenter 
+void ThreeChannelFeatures::setHypocenter(const Hypocenter &hypo)
+{
+    pImpl->mChannelFeatures.setHypocenter(hypo);
+}
+
+double ThreeChannelFeatures::getBackAzimuth() const
+{
+    return pImpl->mChannelFeatures.getBackAzimuth();
+}
+
+double ThreeChannelFeatures::getSourceReceiverDistance() const
+{
+    return pImpl->mChannelFeatures.getBackAzimuth();
+}
+
+bool ThreeChannelFeatures::haveHypocenter() const noexcept
+{
+    return pImpl->mChannelFeatures.haveHypocenter();
+}
+
+/// Target information
+double ThreeChannelFeatures::getTargetSamplingRate() noexcept
+{
+    return ChannelFeatures::getTargetSamplingRate();
+}
+
+double ThreeChannelFeatures::getTargetSamplingPeriod() noexcept
+{
+    return ChannelFeatures::getTargetSamplingPeriod();
+}
+
+double ThreeChannelFeatures::getTargetSignalDuration() const noexcept
+{
+    return pImpl->mChannelFeatures.getTargetSignalDuration();
+}
+
+int ThreeChannelFeatures::getTargetSignalLength() const noexcept
+{
+    return pImpl->mChannelFeatures.getTargetSignalLength();
+}

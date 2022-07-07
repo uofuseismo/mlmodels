@@ -31,6 +31,7 @@ set(SRC
     src/features/magnitude/channel.cpp
     src/features/magnitude/channelFeatures.cpp
     src/features/magnitude/hypocenter.cpp
+    src/features/magnitude/preprocess.cpp
     src/features/magnitude/spectralFeatures.cpp
     src/features/magnitude/temporalFeatures.cpp
     src/features/magnitude/threeChannelFeatures.cpp

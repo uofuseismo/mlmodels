@@ -1,6 +1,7 @@
 #ifndef UUSS_FEATURES_MAGNITUDE_TEMPORALFEATURES_HPP
 #define UUSS_FEATURES_MAGNITUDE_TEMPORALFEATURES_HPP
 #include <memory>
+#include <ostream>
 namespace UUSS::Features::Magnitude
 {
 /// @class TemporalFeatures "temporalFeatures.hpp" "uuss/features/magnitude/temporalFeatures.hpp"
@@ -50,5 +51,6 @@ private:
     class TemporalFeaturesImpl;
     std::unique_ptr<TemporalFeaturesImpl> pImpl;
 };
+std::ostream& operator<<(std::ostream &os, const TemporalFeatures &features);
 }
 #endif

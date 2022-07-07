@@ -1,10 +1,10 @@
 #if __has_include(<nlohmann/json.hpp>)
  #include <nlohmann/json.hpp>
- #define USE_LOHMANN 1
+ #define USE_LOHMANN
 #else
  #include <sstream>
  #include <iomanip>
- #define USE_LOHMANN 0
+ #undef USE_LOHMANN
 #endif
 #include "uuss/features/magnitude/temporalFeatures.hpp"
 

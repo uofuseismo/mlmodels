@@ -99,77 +99,27 @@ public:
         std::vector<double> scales(mCenterFrequencies.size());
         for (int i = 0; i < static_cast<int> (scales.size()); ++i)
         {
-            scales[i] = (omega0*mSamplingRate)/(2*M_PI*mCenterFrequencies[i]);
+            scales[i] = (omega0*Preprocess::getTargetSamplingRate())
+                       /(2*M_PI*mCenterFrequencies[i]);
         }
         mCWT.initialize(nSamples,
                         scales.size(), scales.data(),
                         mMorlet,
-                        mTargetSamplingRate);
+                        Preprocess::getTargetSamplingRate());
         mAmplitudeCWT.resize(scales.size()*nSamples, 0);
-        //mCumulativeAmplitudeCWT.resize(mAmplitudeCWT.size(), 0);
-    }
-    // Compute the scalogram
-    void computeVelocityScalogram()
-    {
-        // Calculate the scalogram
-        mCWT.transform(mVelocitySignal.size(), mVelocitySignal.data());
-        auto nScales  = mCWT.getNumberOfScales(); 
-        auto nSamples = mCWT.getNumberOfSamples();
-#ifndef NDEBUG
-        assert(static_cast<int> (mAmplitudeCWT.size()) == nScales*nSamples);
-        //assert(static_cast<int> (mCumulativeAmplitudeCWT.size()) ==
-        //       nScales*nSamples);
-#endif
-        auto aPtr = mAmplitudeCWT.data();
-        mCWT.getAmplitudeTransform(nSamples, nScales, &aPtr);
-        // Accmulate in frequency bins as a function of time
-/*
-        const double dt2 = 1./(2*mSamplingRate);
-        std::fill(mCumulativeAmplitudeCWT.begin(),
-                  mCumulativeAmplitudeCWT.end(), 0);
-        for (int j = 0; j < nScales; ++j)
-        {
-            int indx = j*nSamples;
-            const double *aScale = mAmplitudeCWT.data() + indx;
-            double *cumPtr = mCumulativeAmplitudeCWT.data() + indx;
-            cumPtr[0] = (aScale[0] + 0)*dt2;
-            for (int i = 1; i < nSamples; ++i)
-            {
-                cumPtr[i] = cumPtr[i-1] + (aScale[i-1] + aScale[i])*dt2;
-            }
-        }
-*/
-        // Dump the scalogram for debugging
-/*
-        std::string fname{"ampVel.txt"};
-        if (mAcceleration){fname = "ampAcc.txt";}
-        std::ofstream ofl;
-        ofl.open(fname);
-        for (int i = 0; i < nSamples; ++i)
-        {
-            for (int j = 0; j < nScales; ++j)
-            {
-                ofl << i/mSamplingRate << " " 
-                    << mCenterFrequencies[j] << " "
-                    << aPtr[j*nSamples + i] << " "
-                    << mCumulativeAmplitudeCWT[j*nSamples + i] << std::endl;
-            }
-            ofl << std::endl;
-        }
-        ofl.close();
-*/
     }
     // Gets the features
     void extractFeatures()
     {
+        auto targetDT = Preprocess::getTargetSamplingPeriod(); 
 #ifndef NDEBUG
-        assert(static_cast<int>(mVelocitySignal.size()) == mTargetSignalLength);
+        assert(static_cast<int>(mVelocitySignal.size()) ==
+               mCWT.getNumberOfSamples());
 #endif
         auto nScales  = mCWT.getNumberOfScales();
-        auto nSamples = mTargetSignalLength;
-        auto iPick
-            = static_cast<int >(std::round((-mPreArrivalTime - mPickError)
-                                           /mTargetSamplingPeriod));
+        auto nSamples = static_cast<int> (mVelocitySignal.size());
+        auto iPick = static_cast<int>
+                     (std::round((-mPreArrivalTime - mPickError)/targetDT));
         // Get the temporal features of the noise. 
         // (1) The variance is the signal power minus the DC power.
         auto varianceNoise  = variance(iPick, mVelocitySignal.data());
@@ -198,27 +148,13 @@ public:
                                               mAmplitudeCWT.data());
         mSpectralNoiseFeatures.setAverageFrequenciesAndAmplitudes(
             averageFrequencyAmplitude);
-/*
-        auto cumulativeAmplitude
-           = getDominantCumulativeAmplitude(nScales, nSamples,
-                                            0, iPick,
-                                            mCenterFrequencies.data(),
-                                            mCumulativeAmplitudeCWT.data());
-
-        spectralNoiseFeatures.setDominantPeriodAndCumulativeAmplitude(
-            cumulativeAmplitude[0]);
-*/
         // Get the spectral features in windows after arrival
-/*
-        std::cout << "duration,minNoise,maxNoise,dMinMaxNoise,minSignal,maxSignal,dMinMaxSignal,varianceNoise,varianceSignal,dominantPeriod,amplitudeAtDominantPeriod,dominantCumulativeAmplitudePeriod,cumulativeAmplitdeAtDominantPeriod" << std::endl;
-*/
         for (const auto &duration : mDurations)
         {
             // Define the start/end time window indicies
             auto iStart = iPick;
             auto iEnd = static_cast<int>
-                        (std::round( (-mPreArrivalTime + duration)
-                                     /mTargetSamplingPeriod));
+                        (std::round( (-mPreArrivalTime + duration)/targetDT));
             iEnd = std::min(iEnd, nSamples);
             auto nSubSamples = iEnd - iStart;
 
@@ -249,33 +185,7 @@ public:
                                                   mAmplitudeCWT.data());
             mSpectralSignalFeatures.setAverageFrequenciesAndAmplitudes(
                  averageFrequencyAmplitude);
-/*
-            cumulativeAmplitude
-               = getDominantCumulativeAmplitude(nScales, nSamples,
-                                                iStart, iEnd,
-                                                mCenterFrequencies.data(),
-                                                mCumulativeAmplitudeCWT.data());
-            spectralSignalFeatures.setDominantPeriodAndCumulativeAmplitude(
-                cumulativeAmplitude[0]);
-*/
-/*
-            std::cout << duration << " "
-                      << *vMinNoise  << " " << *vMaxNoise << " " << *vMaxNoise - *vMinNoise << " "
-                      << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSignal << " " 
-                      << varianceNoise << " " << varianceSignal << " " 
-                      << dominantPeriodAmplitude.first << " " << dominantPeriodAmplitude.second << " "
-                      << cumulativeAmplitude[0].first << " " //<< cumulativeAmplitude[0].second << " "
-                      << cumulativeAmplitude[1].first << " " //<< cumulativeAmplitude[1].second << " "
-                      << cumulativeAmplitude[2].first << " " //<< cumulativeAmplitude[2].second << " "
-                      <<std::endl;
-*/
         }
-/*
-std::cout << "work it:" << std::endl;
-std::cout << varianceNoise << " " << varianceSignal << std::endl;
-std::cout << *vMinNoise << " " << *vMaxNoise << " " << *vMaxNoise - *vMinNoise << std::endl;
-std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSignal << std::endl;
-*/
     }
 //private:
     // Center frequencies in CWT
@@ -298,9 +208,7 @@ std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSign
     std::vector<double> mVelocitySignal;
     // Workspace
     std::vector<double> mAmplitudeCWT;
-    //std::vector<double> mCumulativeAmplitudeCWT; // TODO delete
-    std::vector<double> mDurations{1, 2, 3};
-    std::string mUnits;
+    std::vector<double> mDurations{2.5};
     Preprocess mPreprocess;
     RTSeis::Transforms::Wavelets::Morlet mMorlet;
     RTSeis::Transforms::ContinuousWavelet<double> mCWT;
@@ -310,22 +218,15 @@ std::cout << *vMinSignal << " " << *vMaxSignal << " " << *vMaxSignal - *vMinSign
     TemporalFeatures mTemporalNoiseFeatures;
     SpectralFeatures mSpectralSignalFeatures;
     SpectralFeatures mSpectralNoiseFeatures;
-    double mRCFilterQ{0.994};
-    double mSamplingRate{100};
-    double mSimpleResponse{1}; // Proportional to micrometers
     double mSourceReceiverDistance{-1000};
     double mSourceReceiverBackAzimuth{-1000};
     double mPreArrivalTime{PRE_ARRIVAL_TIME};
     double mPostArrivalTime{POST_ARRIVAL_TIME};
     double mPickError{0.05};
-    const double mTargetSamplingRate{TARGET_SAMPLING_RATE};
-    const double mTargetSamplingPeriod{TARGET_SAMPLING_PERIOD};
     // The max PGV in the 8.8 Maule event was about. 200 cm/s.
     // This is 200 cm/s which is effectively impossible for UT and
     // Yellowstone and likely indicates a gain problem.
     const double mMaxPeakGroundVelocity{2e6};
-    //double mTargetSignalDuration{5}; //TARGET_SIGNAL_DURATION};
-    int mTargetSignalLength{500};//TARGET_SIGNAL_LENGTH};
     bool mHaveFeatures{false};
     bool mInitialized{false};
 };
@@ -417,8 +318,6 @@ void ChannelFeatures::initialize(const Channel &channel)
     {
         throw std::invalid_argument("Simple response not set");
     }
-    auto samplingRate = channel.getSamplingRate();
-    auto simpleResponse = channel.getSimpleResponseValue();
     auto units = channel.getSimpleResponseUnits();
     std::transform(units.begin(), units.end(), units.begin(), ::toupper);
     if (units != "DU/M/S**2" && units != "DU/M/S")
@@ -426,13 +325,10 @@ void ChannelFeatures::initialize(const Channel &channel)
         throw std::runtime_error("units = " + units + " not handled");
     }
     clear();
-    pImpl->mUnits = units;
     // Make response proportional to micrometers.  Response units are 
     // 1/meter so to go to 1/micrometer we do 1/(meter*1e6) which effectively
     // divides the input by 1e6.
     pImpl->mChannel = channel;
-    pImpl->mSimpleResponse = simpleResponse/1e6; // proportional to micrometers
-    pImpl->mSamplingRate = samplingRate;
     pImpl->mInitialized = true;
 
     // Initialize preprocessor
@@ -441,8 +337,8 @@ void ChannelFeatures::initialize(const Channel &channel)
                                   channel.getSimpleResponseUnits(),
                                   std::pair(pImpl->mPreArrivalTime,
                                             pImpl->mPostArrivalTime));
-    pImpl->mTargetSignalLength = pImpl->mPreprocess.getTargetSignalLength();
-    pImpl->mVelocitySignal.resize(pImpl->mTargetSignalLength, 0);
+    auto targetSignalLength = pImpl->mPreprocess.getTargetSignalLength();
+    pImpl->mVelocitySignal.resize(targetSignalLength, 0);
     // Initialize the CWT (need to initialize preprocessor before this)
     pImpl->initializeCWT();
 }
@@ -455,19 +351,19 @@ bool ChannelFeatures::isInitialized() const noexcept
 double ChannelFeatures::getSamplingRate() const
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
-    return pImpl->mSamplingRate;
+    return pImpl->mPreprocess.getSamplingRate();
 }
 
 double ChannelFeatures::getSimpleResponseValue() const
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
-    return pImpl->mSimpleResponse*1e6; // micrometers to meters
+    return pImpl->mChannel.getSimpleResponseValue();
 }
 
 std::string ChannelFeatures::getSimpleResponseUnits() const
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
-    return pImpl->mUnits;
+    return pImpl->mChannel.getSimpleResponseUnits();
 }
 
 /// Target information

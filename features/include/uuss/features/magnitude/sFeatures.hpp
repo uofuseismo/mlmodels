@@ -1,5 +1,5 @@
-#ifndef UUSS_FEATURES_MAGNITUDE_CHANNELFEATURES_HPP
-#define UUSS_FEATURES_MAGNITUDE_CHANNELFEATURES_HPP
+#ifndef UUSS_FEATURES_MAGNITUDE_SFEATURES_HPP
+#define UUSS_FEATURES_MAGNITUDE_SFEATURES_HPP
 #include <memory>
 namespace UUSS::Features::Magnitude
 {
@@ -10,20 +10,13 @@ class SpectralFeatures;
 }
 namespace UUSS::Features::Magnitude
 {
-/*
-*/
-/// @class ChannelFeatures "channelFeatures.hpp" "uuss/features/magnitude/channelFeatures.hpp"
-/// @brief Extracts features for computing a magnitude from a single channel.
+/// @class SFeatures "sFeatures.hpp" "uuss/features/magnitude/sFeatures.hpp"
+/// @brief Extracts features for computing a magnitude from the S arrival.
 /// @copyright Ben Baker (University of Utah) distributed under the MIT license.
-class ChannelFeatures
+class SFeatures
 {
 public:
-    /// @brief Constructor.
-    ChannelFeatures(const std::vector<double> &frequencies,
-                    const std::vector<double> &durations,
-                    const double preArrivalTime =-1,
-                    const double postArrivalTime = 4,
-                    const double pPickError = 0.05);
+    SFeatures();
 
     /// @result The sampling rate of the signal from which the features
     ///         will be extracted in Hz.
@@ -42,7 +35,7 @@ public:
     ///         arrivalTime + result.first will indicate where the processing
     ///         window begins while arrivalTime + result.second will indicate
     ///         where the processing will end.
-    [[nodiscard]] std::pair<double, double> getArrivalTimeProcessingWindow() const;
+    [[nodiscard]] std::pair<double, double> getArrivalTimeProcessingWindow() const noexcept;
 
     /// @name Step 1: Initialization
     /// @{
@@ -52,12 +45,11 @@ public:
     /// @throws std::invalid_argument if the channel.haveSamplingRate() or
     ///         channel.haveSimpleResponse() is false.
     /// @note Initialization is expensive.  Do this as infrequently as possible.
-    void initialize(const Channel &channel);
+    void initialize(const Channel &verticalChannel,
+                    const Channel &northChannel,
+                    const Channel &eastChannel);
     /// @result True indicates the class is initialized.
     [[nodiscard]] bool isInitialized() const noexcept;
-    /// @result A reference to the channel information.
-    /// @throws std::runtime_error if the class is not initialized.
-    [[nodiscard]] Channel& getChannelReference() const;
 
     /// @result The sampling rate in Hz.
     /// @throws std::runtime_error if \c isInitialized() is false.
@@ -83,52 +75,54 @@ public:
     /// @result True indicates the hypocenter was set.
     [[nodiscard]] bool haveHypocenter() const noexcept;
 
-    /// @brief Processes the signal.
-    /// @param[in] signal   The signal to process.
+    /// @brief Processes the signal.  
+    /// @param[in] nSignal   The north (or 1 channel) signal to process.
+    /// @param[in] eSignal   The east (or 2 channel) signal to process.
     /// @param[in] arrivalTimeRelativeToStart  The phase arrival time in seconds
-    ///                                        relative to the signal start.
-    /// @throws std::runtime_error if \c isInitialized() is false.
+    ///                                        relative to the starts of all the
+    ///                                        signal.
+    /// @throws std::runtime_error if \c isInitialized() is false or 
+    ///         \c haveHypocenter() is false.
     /// @throws std::invalid_argument if the signal is too small or the arrival
     ///         time relative to the start is less than the processing window
-    ///         start time.
+    ///         start time.  Additionally, this will throw if not all the
+    ///         signals are of the same length.
     /// @sa \c getArrivalTimeProcessingWindow(), \c getTargetSignalDuration()
-    void process(const std::vector<double> &signal,
+    void process(const std::vector<double> &nSignal,
+                 const std::vector<double> &eSignal,
                  double arrivalTimeRelativeToStart);
-    void process(int n, const double signal[],
+    void process(int nSamples,
+                 const double *nSignal, const double *eSignal,
                  double arrivalTimeRelativeToStart);
-    /// @result True indicates the signal was set and the features
-    ///         were extracted.
-    [[nodiscard]] bool haveFeatures() const noexcept;
+    /// @result True indicates the input signal was processed and the
+    ///         velocity signal and features are available.
+    [[nodiscard]] bool haveSignals() const noexcept;
+    /// @result The temporal features computed on the pre-arrival noise.
     [[nodiscard]] TemporalFeatures getTemporalNoiseFeatures() const;
+    /// @result The temporal features computed on the signal.
     [[nodiscard]] TemporalFeatures getTemporalSignalFeatures() const;
+    /// @result The spectral features computed on the pre-arrival noise.
     [[nodiscard]] SpectralFeatures getSpectralNoiseFeatures() const;
+    /// @result The spectral features computed on the signal.
     [[nodiscard]] SpectralFeatures getSpectralSignalFeatures() const;
-    /// @result The source depth in kilometers.
-    /// @throws std::runtime_error if \c haveHypocenter() is false. 
+    /// @result The source depth. 
     [[nodiscard]] double getSourceDepth() const;
     /// @result The source-receiver distance in kilometers.
-    /// @throws std::runtime_error if \c haveHypocenter() is false. 
     [[nodiscard]] double getSourceReceiverDistance() const;
-    /// @result The azimuth from the receiver to the source in degrees 
-    ///         measured positive east of north.
-    /// @throws std::runtime_error if \c haveHypocenter() is false. 
+    /// @result The back-azimuth in degrees measured positive east of north.
+    /// @throws std::runtime_error if \c haveHypocenter() is false.
     [[nodiscard]] double getBackAzimuth() const;
-
 
     /// @result The velocity signal from which to extract features.
     /// @throws std::runtime_error if \c haveSignal() is false.
-    [[nodiscard]] std::vector<double> getVelocitySignal() const;
+    [[nodiscard]] std::vector<double> getVerticalVelocitySignal() const;
+    [[nodiscard]] std::vector<double> getRadialVelocitySignal() const;
+    [[nodiscard]] std::vector<double> getTransverseVelocitySignal() const;
 
 
     void clear() noexcept; 
-    ~ChannelFeatures();
+    ~SFeatures();
 
-
-    ChannelFeatures() = delete;
-    ChannelFeatures(const ChannelFeatures &) = delete;
-    ChannelFeatures(ChannelFeatures &&) noexcept = delete;
-    ChannelFeatures& operator=(const ChannelFeatures &) = delete;
-    ChannelFeatures& operator=(ChannelFeatures &&) noexcept = delete;
 private:
     class FeaturesImpl;
     std::unique_ptr<FeaturesImpl> pImpl;

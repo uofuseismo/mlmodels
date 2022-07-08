@@ -10,5 +10,5 @@ PYBIND11_MODULE(pyuussFeatures, m)
     // Magnitude
     pybind11::module magnitudeModule = m.def_submodule("Magnitude");
     magnitudeModule.attr("__doc__") = "Tools for extracting features from which station magnitudes are computed.";
-    PFeatures::Magnitude::initialize(magnitudeModule);
+    PyFeatures::Magnitude::initialize(magnitudeModule);
 }

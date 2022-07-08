@@ -1,5 +1,5 @@
-#ifndef UUSS_FEATURES_MAGNITUDE_THREECHANNELFEATURES_HPP
-#define UUSS_FEATURES_MAGNITUDE_THREECHANNELFEATURES_HPP
+#ifndef UUSS_FEATURES_MAGNITUDE_PFEATURES_HPP
+#define UUSS_FEATURES_MAGNITUDE_PFEATURES_HPP
 #include <memory>
 namespace UUSS::Features::Magnitude
 {
@@ -10,14 +10,24 @@ class SpectralFeatures;
 }
 namespace UUSS::Features::Magnitude
 {
-/// @class ThreeChannelFeatures "threeChannelFeatures.hpp" "uuss/features/magnitude/threeChannelFeatures.hpp"
-/// @brief Extracts features for computing a magnitude from a three channel
-///        station.  This is for extracting information on the S wave.
+/*
+*/
+/// @class PFeatures "pFeatures.hpp" "uuss/features/magnitude/pFeatures.hpp"
+/// @brief Extracts features for computing a magnitude from the P arrival on
+///        the vertical channel.
 /// @copyright Ben Baker (University of Utah) distributed under the MIT license.
-class ThreeChannelFeatures
+class PFeatures
 {
 public:
-    ThreeChannelFeatures();
+    /// @brief Constructor.
+    PFeatures();
+/*
+    PFeatures(const std::vector<double> &frequencies = std::vector<double> {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 17, 18},
+              const std::vector<double> &durations = std::vector<double> {2.5},
+              const double preArrivalTime =-1,
+              const double postArrivalTime = 4,
+              const double pPickError = 0.05);
+*/
 
     /// @result The sampling rate of the signal from which the features
     ///         will be extracted in Hz.
@@ -27,16 +37,16 @@ public:
     [[nodiscard]] static double getTargetSamplingPeriod() noexcept;
     /// @result The duration of the signal from which the features will
     ///         be extracted in seconds.
-    [[nodiscard]] double getTargetSignalDuration() const noexcept;
+    [[nodiscard]] double getTargetSignalDuration() const;
     /// @result The length of the signal from which the features will
     ///         be extracted in seconds.
-    [[nodiscard]] int getTargetSignalLength() const noexcept;
+    [[nodiscard]] int getTargetSignalLength() const;
     /// @result The number of seconds before and after the arrival where the 
     ///         processing will be performed.  For example,
     ///         arrivalTime + result.first will indicate where the processing
     ///         window begins while arrivalTime + result.second will indicate
     ///         where the processing will end.
-    [[nodiscard]] std::pair<double, double> getArrivalTimeProcessingWindow() const noexcept;
+    [[nodiscard]] std::pair<double, double> getArrivalTimeProcessingWindow() const;
 
     /// @name Step 1: Initialization
     /// @{
@@ -49,6 +59,9 @@ public:
     void initialize(const Channel &channel);
     /// @result True indicates the class is initialized.
     [[nodiscard]] bool isInitialized() const noexcept;
+    /// @result A reference to the channel information.
+    /// @throws std::runtime_error if the class is not initialized.
+    [[nodiscard]] Channel& getChannelReference() const;
 
     /// @result The sampling rate in Hz.
     /// @throws std::runtime_error if \c isInitialized() is false.
@@ -74,54 +87,51 @@ public:
     /// @result True indicates the hypocenter was set.
     [[nodiscard]] bool haveHypocenter() const noexcept;
 
-    /// @brief Processes the signal.  
-    /// @param[in] zSignal   The vertical signal to process.
-    /// @param[in] nSignal   The north (or 1 channel) signal to process.
-    /// @param[in] eSignal   The east (or 2 channel) signal to process.
+    /// @brief Processes the signal.
+    /// @param[in] signal   The signal to process.
     /// @param[in] arrivalTimeRelativeToStart  The phase arrival time in seconds
-    ///                                        relative to the starts of all the
-    ///                                        signal.
-    /// @throws std::runtime_error if \c isInitialized() is false or 
-    ///         \c haveHypocenter() is false.
+    ///                                        relative to the signal start.
+    /// @throws std::runtime_error if \c isInitialized() is false.
     /// @throws std::invalid_argument if the signal is too small or the arrival
     ///         time relative to the start is less than the processing window
-    ///         start time.  Additionally, this will throw if not all the
-    ///         signals are of the same length.
+    ///         start time.
     /// @sa \c getArrivalTimeProcessingWindow(), \c getTargetSignalDuration()
-    template<typename U>
-    void process(const std::vector<U> &zSignal,
-                 const std::vector<U> &nSignal,
-                 const std::vector<U> &eSignal,
+    void process(const std::vector<double> &signal,
                  double arrivalTimeRelativeToStart);
-    /// @result True indicates the input signal was processed and the
-    ///         velocity signal and features are available.
-    [[nodiscard]] bool haveSignals() const noexcept;
-    /// @result The temporal features computed on the pre-arrival noise.
+    void process(int n, const double signal[],
+                 double arrivalTimeRelativeToStart);
+    /// @result True indicates the signal was set and the features
+    ///         were extracted.
+    [[nodiscard]] bool haveFeatures() const noexcept;
     [[nodiscard]] TemporalFeatures getTemporalNoiseFeatures() const;
-    /// @result The temporal features computed on the signal.
     [[nodiscard]] TemporalFeatures getTemporalSignalFeatures() const;
-    /// @result The spectral features computed on the pre-arrival noise.
     [[nodiscard]] SpectralFeatures getSpectralNoiseFeatures() const;
-    /// @result The spectral features computed on the signal.
     [[nodiscard]] SpectralFeatures getSpectralSignalFeatures() const;
-    /// @result The source depth. 
+    /// @result The source depth in kilometers.
+    /// @throws std::runtime_error if \c haveHypocenter() is false. 
     [[nodiscard]] double getSourceDepth() const;
     /// @result The source-receiver distance in kilometers.
+    /// @throws std::runtime_error if \c haveHypocenter() is false. 
     [[nodiscard]] double getSourceReceiverDistance() const;
-    /// @result The back-azimuth in degrees measured positive east of north.
-    /// @throws std::runtime_error if \c haveHypocenter() is false.
+    /// @result The azimuth from the receiver to the source in degrees 
+    ///         measured positive east of north.
+    /// @throws std::runtime_error if \c haveHypocenter() is false. 
     [[nodiscard]] double getBackAzimuth() const;
+
 
     /// @result The velocity signal from which to extract features.
     /// @throws std::runtime_error if \c haveSignal() is false.
-    [[nodiscard]] std::vector<double> getVerticalVelocitySignal() const;
-    [[nodiscard]] std::vector<double> getRadialVelocitySignal() const;
-    [[nodiscard]] std::vector<double> getTransverseVelocitySignal() const;
+    [[nodiscard]] std::vector<double> getVelocitySignal() const;
 
 
     void clear() noexcept; 
-    ~ThreeChannelFeatures();
+    ~PFeatures();
 
+
+    PFeatures(const PFeatures &) = delete;
+    PFeatures(PFeatures &&) noexcept = delete;
+    PFeatures& operator=(const PFeatures &) = delete;
+    PFeatures& operator=(PFeatures &&) noexcept = delete;
 private:
     class FeaturesImpl;
     std::unique_ptr<FeaturesImpl> pImpl;

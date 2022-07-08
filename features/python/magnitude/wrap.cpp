@@ -4,16 +4,14 @@
 #include <vector>
 #include <uuss/features/magnitude/hypocenter.hpp>
 #include <uuss/features/magnitude/channel.hpp>
-#include <uuss/features/magnitude/verticalChannelFeatures.hpp>
-#include <uuss/features/magnitude/threeChannelFeatures.hpp>
+#include <uuss/features/magnitude/pFeatures.hpp>
+#include <uuss/features/magnitude/sFeatures.hpp>
 #include <uuss/features/magnitude/temporalFeatures.hpp>
 #include <uuss/features/magnitude/spectralFeatures.hpp>
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 //#include "wrap.hpp"
 #include "initialize.hpp"
-
-using namespace PFeatures::Magnitude;
 
 namespace
 {
@@ -295,14 +293,14 @@ public:
 
 //----------------------------------------------------------------------------//
 
-class VerticalChannelFeatures
+class PFeatures
 {
 public:
-    VerticalChannelFeatures() :
-        pImpl(std::make_unique<UUSS::Features::Magnitude::VerticalChannelFeatures> ())
+    PFeatures() :
+        pImpl(std::make_unique<UUSS::Features::Magnitude::PFeatures> ())
     {
     }
-    ~VerticalChannelFeatures() = default;
+    ~PFeatures() = default;
 
     void initialize(const ::Channel &channel)
     {
@@ -368,11 +366,11 @@ public:
         return y;
     }
     void clear() noexcept{pImpl->clear();}
-    std::unique_ptr<UUSS::Features::Magnitude::VerticalChannelFeatures> pImpl;
-    VerticalChannelFeatures(const VerticalChannelFeatures &) = delete;
-    VerticalChannelFeatures(VerticalChannelFeatures &&) noexcept = delete;
-    VerticalChannelFeatures& operator=(const VerticalChannelFeatures &) = delete;
-    VerticalChannelFeatures& operator=(VerticalChannelFeatures &&) noexcept = delete;
+    std::unique_ptr<UUSS::Features::Magnitude::PFeatures> pImpl;
+    PFeatures(const PFeatures &) = delete;
+    PFeatures(PFeatures &&) noexcept = delete;
+    PFeatures& operator=(const PFeatures &) = delete;
+    PFeatures& operator=(PFeatures &&) noexcept = delete;
 };
 
 }
@@ -380,7 +378,7 @@ public:
 ///---------------------------------------------------------------------------//
 //                                Initialization                              //
 //----------------------------------------------------------------------------//
-void PFeatures::Magnitude::initialize(pybind11::module &m)
+void PyFeatures::Magnitude::initialize(pybind11::module &m)
 {
     pybind11::class_<::Hypocenter> h(m, "Hypocenter"); 
     h.def(pybind11::init<> ());
@@ -631,10 +629,10 @@ Read-Only Properties
                              &::SpectralFeatures::getAverageFrequenciesAndAmplitudes);
    
 
-    pybind11::class_<::VerticalChannelFeatures> vc(m, "VerticalChannelFeatures"); 
+    pybind11::class_<::PFeatures> vc(m, "PFeatures"); 
     vc.def(pybind11::init<> ());
     vc.doc() = R"""(
-Extracts the features from a vertical channel.
+Extracts the features P-arrival features from the vertical channel.
 
 Properties
 ----------
@@ -659,27 +657,27 @@ Read-only Properties
    temporal_signal_features : TemporalFeatures
        the temporal features of the signal. 
 )""";
-    vc.def("initialize", &::VerticalChannelFeatures::initialize,
+    vc.def("initialize", &::PFeatures::initialize,
            "Initializes the feature extractor based on the channel information.");
     vc.def_property("hypocenter",
-                    &::VerticalChannelFeatures::getHypocenter,
-                    &::VerticalChannelFeatures::setHypocenter);
-    vc.def("process", &::VerticalChannelFeatures::process,
+                    &::PFeatures::getHypocenter,
+                    &::PFeatures::setHypocenter);
+    vc.def("process", &::PFeatures::process,
            "Processes the waveform.  Additionally, the arrival time relative to the window start must be specified.");
     vc.def_property_readonly("velocity_signal",
-                             &::VerticalChannelFeatures::getVelocitySignal);
+                             &::PFeatures::getVelocitySignal);
     vc.def_property_readonly("source_receiver_distance",
-                             &::VerticalChannelFeatures::getSourceReceiverDistance);
+                             &::PFeatures::getSourceReceiverDistance);
     vc.def_property_readonly("back_azimuth",
-                             &::VerticalChannelFeatures::getBackAzimuth);
+                             &::PFeatures::getBackAzimuth);
     vc.def_property_readonly("spectral_noise_features",
-                             &::VerticalChannelFeatures::getSpectralNoiseFeatures);
+                             &::PFeatures::getSpectralNoiseFeatures);
     vc.def_property_readonly("spectral_signal_features",
-                             &::VerticalChannelFeatures::getSpectralSignalFeatures);
+                             &::PFeatures::getSpectralSignalFeatures);
     vc.def_property_readonly("temporal_noise_features",
-                             &::VerticalChannelFeatures::getTemporalNoiseFeatures);
+                             &::PFeatures::getTemporalNoiseFeatures);
     vc.def_property_readonly("temporal_signal_features",
-                             &::VerticalChannelFeatures::getTemporalSignalFeatures);
+                             &::PFeatures::getTemporalSignalFeatures);
 
 
 

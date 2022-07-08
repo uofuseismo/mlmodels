@@ -2,8 +2,8 @@
 #include <fstream>
 #include <vector>
 #include <string>
-#include "uuss/features/magnitude/verticalChannelFeatures.hpp"
-#include "uuss/features/magnitude/channelFeatures.hpp"
+#include "uuss/features/magnitude/pFeatures.hpp"
+#include "uuss/features/magnitude/sFeatures.hpp"
 #include "uuss/features/magnitude/hypocenter.hpp"
 #include "uuss/features/magnitude/channel.hpp"
 #include "uuss/features/magnitude/temporalFeatures.hpp"
@@ -100,7 +100,7 @@ TEST(FeaturesMagnitude, Channel)
     EXPECT_EQ(channel.getSimpleResponseUnits(), "DU/m/S**2");
 }
 
-TEST(FeaturesMagnitude, VerticalChannelFeatures)
+TEST(FeaturesMagnitude, PFeatures)
 {
     const std::string network{"UU"};
     const std::string station{"SRU"};
@@ -144,7 +144,7 @@ TEST(FeaturesMagnitude, VerticalChannelFeatures)
     double startTime{30.52};
     readSeismograms("data/sru_enz_hhz.txt", &acceleration, &velocity);
 
-    VerticalChannelFeatures features;
+    PFeatures features;
  
     EXPECT_NO_THROW(features.initialize(velocityChannel));
     EXPECT_TRUE(features.isInitialized());

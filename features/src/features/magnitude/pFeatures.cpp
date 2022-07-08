@@ -18,7 +18,7 @@
 #include <rtseis/filterRepresentations/sos.hpp>
 #include <rtseis/filterDesign/iir.hpp>
 #include <rtseis/utilities/interpolation/weightedAverageSlopes.hpp>
-#include "uuss/features/magnitude/channelFeatures.hpp"
+#include "uuss/features/magnitude/pFeatures.hpp"
 #include "uuss/features/magnitude/channel.hpp"
 #include "uuss/features/magnitude/hypocenter.hpp"
 #include "uuss/features/magnitude/preprocess.hpp"
@@ -30,6 +30,7 @@
 #define TARGET_SAMPLING_PERIOD 0.01 // 1/100
 #define PRE_ARRIVAL_TIME -1
 #define POST_ARRIVAL_TIME 4
+#define P_PICK_ERROR 0.05           // Alysha's P pickers are usually within 5 samples
 /*
 #define TARGET_SIGNAL_LENGTH 500    // 1s before to 4s after
 #define PRE_ARRIVAL_TIME 1          // 1s before P arrival
@@ -40,29 +41,32 @@
 
 using namespace UUSS::Features::Magnitude;
 
-class ChannelFeatures::FeaturesImpl
+class PFeatures::FeaturesImpl
 {
 public:
-    FeaturesImpl(const std::vector<double> &frequencies,
-                 const std::vector<double> &durations,
-                 const double preArrivalTime =-1,
-                 const double postArrivalTime = 4,
-                 const double pickError = 0.05) :
+    FeaturesImpl( //const std::vector<double> &frequencies,
+                  //const std::vector<double> &durations,
+                  //const double preArrivalTime  = PRE_ARRIVAL_TIME,
+                  //const double postArrivalTime = POST_ARRIVAL_TIME,
+                  //const double pickError       = P_PICK_ERROR
+                )
+/*
         mCenterFrequencies(frequencies),
         mDurations(durations),
         mPreArrivalTime(preArrivalTime),
         mPostArrivalTime(postArrivalTime),
         mPickError(pickError)
+*/
     {
-        if (preArrivalTime > 0)
+        if (mPreArrivalTime > 0)
         {
             throw std::invalid_argument("Pre arrival time must negative");
         }
-        if (postArrivalTime < 0)
+        if (mPostArrivalTime < 0)
         {
             throw std::invalid_argument("Post arrival time must be positive");
         }
-        if (pickError < 0)
+        if (mPickError < 0)
         {
             throw std::invalid_argument("Pick error must be non-negative");
         }
@@ -120,40 +124,9 @@ public:
         auto nSamples = static_cast<int> (mVelocitySignal.size());
         auto iPick = static_cast<int>
                      (std::round((-mPreArrivalTime - mPickError)/targetDT));
-        /*
-        // Get the temporal features of the noise. 
-        // (1) The variance is the signal power minus the DC power.
-        auto varianceNoise  = variance(iPick, mVelocitySignal.data());
-        // Get difference of min/max amplitude 
-        const auto [vMinNoise,  vMaxNoise]
-            = std::minmax_element(mVelocitySignal.begin(),
-                                  mVelocitySignal.begin() + iPick);
-        mTemporalNoiseFeatures.setVariance(varianceNoise);
-        mTemporalNoiseFeatures.setMinimumAndMaximumValue(
-            std::pair(*vMinNoise, *vMaxNoise));
-        */
         mTemporalNoiseFeatures
              = getTimeDomainFeatures(0, iPick, mVelocitySignal);
 
-        /*
-        // Get the spectral features of the noise.
-        SpectralFeatures spectralNoiseFeatures;
-        auto dominantFrequencyAmplitude
-            = getDominantFrequencyAndAmplitude(nScales, nSamples,
-                                               0, iPick,
-                                               mCenterFrequencies.data(),
-                                               mAmplitudeCWT.data());
-        mSpectralNoiseFeatures.setDominantFrequencyAndAmplitude(
-            dominantFrequencyAmplitude);
-
-        auto averageFrequencyAmplitude
-            = getAverageFrequencyAndAmplitude(nScales, nSamples,
-                                              0, iPick,
-                                              mCenterFrequencies.data(),
-                                              mAmplitudeCWT.data());
-        mSpectralNoiseFeatures.setAverageFrequenciesAndAmplitudes(
-            averageFrequencyAmplitude);
-        */
         mSpectralNoiseFeatures
             = getSpectralDomainFeatures(nSamples, nScales, 
                                         0, iPick,
@@ -167,41 +140,9 @@ public:
             auto iEnd = static_cast<int>
                         (std::round( (-mPreArrivalTime + duration)/targetDT));
             iEnd = std::min(iEnd, nSamples);
-            /*
-            auto nSubSamples = iEnd - iStart;
 
-            // Get variance in signal
-            auto varianceSignal = variance(nSubSamples,
-                                           mVelocitySignal.data() + iStart);
-            mTemporalSignalFeatures.setVariance(varianceSignal);
-            // Get min/max signal
-            const auto [vMinSignal, vMaxSignal]
-                = std::minmax_element(mVelocitySignal.data() + iStart,
-                                      mVelocitySignal.data() + iEnd);
-            mTemporalSignalFeatures.setMinimumAndMaximumValue(
-                std::pair(*vMinSignal, *vMaxSignal));
-            */
             mTemporalSignalFeatures
                 = getTimeDomainFeatures(iStart, iEnd, mVelocitySignal);
-
-            /*
-            // Extract dominant period
-            auto dominantFrequencyAmplitude
-                = getDominantFrequencyAndAmplitude(nScales, nSamples,
-                                                   iStart, iEnd,
-                                                   mCenterFrequencies.data(),
-                                                   mAmplitudeCWT.data());
-            mSpectralSignalFeatures.setDominantFrequencyAndAmplitude(
-                dominantFrequencyAmplitude); 
-
-            auto averageFrequencyAmplitude
-                = getAverageFrequencyAndAmplitude(nScales, nSamples,
-                                                  iStart, iEnd,
-                                                  mCenterFrequencies.data(),
-                                                  mAmplitudeCWT.data());
-            mSpectralSignalFeatures.setAverageFrequenciesAndAmplitudes(
-                 averageFrequencyAmplitude);
-            */
 
             mSpectralSignalFeatures
                = getSpectralDomainFeatures(nSamples, nScales, 
@@ -245,7 +186,7 @@ public:
     double mSourceReceiverBackAzimuth{-1000};
     double mPreArrivalTime{PRE_ARRIVAL_TIME};
     double mPostArrivalTime{POST_ARRIVAL_TIME};
-    double mPickError{0.05};
+    double mPickError{P_PICK_ERROR};
     // The max PGV in the 8.8 Maule event was about. 200 cm/s.
     // This is 200 cm/s which is effectively impossible for UT and
     // Yellowstone and likely indicates a gain problem.
@@ -255,45 +196,34 @@ public:
 };
 
 /// C'tor
-ChannelFeatures::ChannelFeatures(const std::vector<double> &frequencies,
-                                 const std::vector<double> &durations,
-                                 const double preArrivalTime,
-                                 const double postArrivalTime,
-                                 const double pickError) :
-    pImpl(std::make_unique<FeaturesImpl> (frequencies, durations,
-                                          preArrivalTime,
-                                          postArrivalTime,
-                                          pickError))
+PFeatures::PFeatures() :
+    pImpl(std::make_unique<FeaturesImpl> ())
 {
 }
 
 /// Reset class
-void ChannelFeatures::clear() noexcept
+void PFeatures::clear() noexcept
 {
-    auto centerFrequencies = pImpl->mCenterFrequencies;
-    auto durations = pImpl->mDurations;
-    auto [pre, post] = getArrivalTimeProcessingWindow();
-    auto pickError = pImpl->mPickError;
-    pImpl = std::make_unique<FeaturesImpl> (centerFrequencies, durations,
-                                            pre, post, pickError);
+    pImpl = std::make_unique<FeaturesImpl> ();
 }
 
 /// Destructor
-ChannelFeatures::~ChannelFeatures() = default;
+PFeatures::~PFeatures() = default;
 
 /// Set the signal
-void ChannelFeatures::process(const std::vector<double> &signal,
+void PFeatures::process(const std::vector<double> &signal,
                               const double arrivalTimeRelativeToStart)
 {
     if (signal.empty()){throw std::runtime_error("Signal is empty");}
     process(signal.size(), signal.data(), arrivalTimeRelativeToStart);
 }
 
-void ChannelFeatures::process(
+void PFeatures::process(
     const int n, const double *__restrict__ signal,
     const double arrivalTimeRelativeToStart)
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
+    if (signal == nullptr){throw std::invalid_argument("signal is NULL");}
     // Preprocess signal
     pImpl->mPreprocess.process(n, signal, arrivalTimeRelativeToStart);
     // Check max PGV makes sense
@@ -314,24 +244,23 @@ void ChannelFeatures::process(
     // Extract the time domain and spectral domain features
     pImpl->extractFeatures();
     pImpl->mHaveFeatures = true;
-    return;
 }
 
 /// Have features?
-bool ChannelFeatures::haveFeatures() const noexcept
+bool PFeatures::haveFeatures() const noexcept
 {
     return pImpl->mHaveFeatures;
 }
 
 /// Velocity signal
-std::vector<double> ChannelFeatures::getVelocitySignal() const
+std::vector<double> PFeatures::getVelocitySignal() const
 {
     if (!haveFeatures()){throw std::runtime_error("Signal not yet processed");}
     return pImpl->mVelocitySignal;
 }
 
 /// Initialize
-void ChannelFeatures::initialize(const Channel &channel)
+void PFeatures::initialize(const Channel &channel)
 {
     if (!channel.haveSamplingRate())
     {
@@ -366,59 +295,59 @@ void ChannelFeatures::initialize(const Channel &channel)
     pImpl->initializeCWT();
 }
 
-bool ChannelFeatures::isInitialized() const noexcept
+bool PFeatures::isInitialized() const noexcept
 {
     return pImpl->mInitialized;
 }
 
-double ChannelFeatures::getSamplingRate() const
+double PFeatures::getSamplingRate() const
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
     return pImpl->mPreprocess.getSamplingRate();
 }
 
-double ChannelFeatures::getSimpleResponseValue() const
+double PFeatures::getSimpleResponseValue() const
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
     return pImpl->mChannel.getSimpleResponseValue();
 }
 
-std::string ChannelFeatures::getSimpleResponseUnits() const
+std::string PFeatures::getSimpleResponseUnits() const
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
     return pImpl->mChannel.getSimpleResponseUnits();
 }
 
 /// Target information
-double ChannelFeatures::getTargetSamplingRate() noexcept
+double PFeatures::getTargetSamplingRate() noexcept
 {
     return Preprocess::getTargetSamplingRate();
 }
 
-double ChannelFeatures::getTargetSamplingPeriod() noexcept
+double PFeatures::getTargetSamplingPeriod() noexcept
 {
     return Preprocess::getTargetSamplingPeriod();
 }
 
-double ChannelFeatures::getTargetSignalDuration() const
+double PFeatures::getTargetSignalDuration() const
 {
     return (getTargetSignalLength() - 1)*getTargetSamplingPeriod();
 }
 
-int ChannelFeatures::getTargetSignalLength() const 
+int PFeatures::getTargetSignalLength() const 
 {
     return pImpl->mPreprocess.getTargetSignalLength();
 }
 
 std::pair<double, double>
-ChannelFeatures::getArrivalTimeProcessingWindow() const
+PFeatures::getArrivalTimeProcessingWindow() const
 {
     return std::pair<double, double> {pImpl->mPreArrivalTime,
                                       pImpl->mPostArrivalTime};
 }
 
 /// Hypocenter
-void ChannelFeatures::setHypocenter(const Hypocenter &hypocenter)
+void PFeatures::setHypocenter(const Hypocenter &hypocenter)
 {
     if (!hypocenter.haveLatitude())
     {
@@ -438,55 +367,55 @@ void ChannelFeatures::setHypocenter(const Hypocenter &hypocenter)
     pImpl->mHypocenter = hypocenter;
 }
 
-Hypocenter ChannelFeatures::getHypocenter() const
+Hypocenter PFeatures::getHypocenter() const
 {
     if (!haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
     return pImpl->mHypocenter;
 }
 
-bool ChannelFeatures::haveHypocenter() const noexcept
+bool PFeatures::haveHypocenter() const noexcept
 {
     return pImpl->mHypocenter.haveLatitude();
 }
 
 
-TemporalFeatures ChannelFeatures::getTemporalNoiseFeatures() const
+TemporalFeatures PFeatures::getTemporalNoiseFeatures() const
 {
     if (!haveFeatures()){throw std::runtime_error("Features not computed");}
     return pImpl->mTemporalNoiseFeatures;
 }
 
-TemporalFeatures ChannelFeatures::getTemporalSignalFeatures() const
+TemporalFeatures PFeatures::getTemporalSignalFeatures() const
 {
     if (!haveFeatures()){throw std::runtime_error("Features not computed");}
     return pImpl->mTemporalSignalFeatures;
 }
 
-SpectralFeatures ChannelFeatures::getSpectralNoiseFeatures() const
+SpectralFeatures PFeatures::getSpectralNoiseFeatures() const
 {
     if (!haveFeatures()){throw std::runtime_error("Features not computed");}
     return pImpl->mSpectralNoiseFeatures;
 }
 
-SpectralFeatures ChannelFeatures::getSpectralSignalFeatures() const
+SpectralFeatures PFeatures::getSpectralSignalFeatures() const
 {
     if (!haveFeatures()){throw std::runtime_error("Features not computed");}
     return pImpl->mSpectralSignalFeatures;
 }
 
-double ChannelFeatures::getSourceDepth() const
+double PFeatures::getSourceDepth() const
 {
     if (!haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
     return pImpl->mHypocenter.getDepth();
 }
 
-double ChannelFeatures::getSourceReceiverDistance() const
+double PFeatures::getSourceReceiverDistance() const
 {
     if (!haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
     return pImpl->mSourceReceiverDistance;
 }
 
-double ChannelFeatures::getBackAzimuth() const
+double PFeatures::getBackAzimuth() const
 {
     if (!haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
     return pImpl->mSourceReceiverBackAzimuth;
@@ -496,8 +425,8 @@ double ChannelFeatures::getBackAzimuth() const
 ///                              Template Instantiation                      ///
 ///--------------------------------------------------------------------------///
 /*
-template void UUSS::Features::Magnitude::ChannelFeatures::process(
+template void UUSS::Features::Magnitude::PFeatures::process(
     const std::vector<double> &, double); 
-template void UUSS::Features::Magnitude::ChannelFeatures::process(
+template void UUSS::Features::Magnitude::PFeatures::process(
     const std::vector<float> &, double);
 */

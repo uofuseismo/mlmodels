@@ -120,6 +120,7 @@ public:
         auto nSamples = static_cast<int> (mVelocitySignal.size());
         auto iPick = static_cast<int>
                      (std::round((-mPreArrivalTime - mPickError)/targetDT));
+        /*
         // Get the temporal features of the noise. 
         // (1) The variance is the signal power minus the DC power.
         auto varianceNoise  = variance(iPick, mVelocitySignal.data());
@@ -130,7 +131,11 @@ public:
         mTemporalNoiseFeatures.setVariance(varianceNoise);
         mTemporalNoiseFeatures.setMinimumAndMaximumValue(
             std::pair(*vMinNoise, *vMaxNoise));
+        */
+        mTemporalNoiseFeatures
+             = getTimeDomainFeatures(0, iPick, mVelocitySignal);
 
+        /*
         // Get the spectral features of the noise.
         SpectralFeatures spectralNoiseFeatures;
         auto dominantFrequencyAmplitude
@@ -148,6 +153,12 @@ public:
                                               mAmplitudeCWT.data());
         mSpectralNoiseFeatures.setAverageFrequenciesAndAmplitudes(
             averageFrequencyAmplitude);
+        */
+        mSpectralNoiseFeatures
+            = getSpectralDomainFeatures(nSamples, nScales, 
+                                        0, iPick,
+                                        mCenterFrequencies,
+                                        mAmplitudeCWT);
         // Get the spectral features in windows after arrival
         for (const auto &duration : mDurations)
         {
@@ -156,6 +167,7 @@ public:
             auto iEnd = static_cast<int>
                         (std::round( (-mPreArrivalTime + duration)/targetDT));
             iEnd = std::min(iEnd, nSamples);
+            /*
             auto nSubSamples = iEnd - iStart;
 
             // Get variance in signal
@@ -168,9 +180,13 @@ public:
                                       mVelocitySignal.data() + iEnd);
             mTemporalSignalFeatures.setMinimumAndMaximumValue(
                 std::pair(*vMinSignal, *vMaxSignal));
+            */
+            mTemporalSignalFeatures
+                = getTimeDomainFeatures(iStart, iEnd, mVelocitySignal);
 
+            /*
             // Extract dominant period
-            dominantFrequencyAmplitude
+            auto dominantFrequencyAmplitude
                 = getDominantFrequencyAndAmplitude(nScales, nSamples,
                                                    iStart, iEnd,
                                                    mCenterFrequencies.data(),
@@ -178,13 +194,20 @@ public:
             mSpectralSignalFeatures.setDominantFrequencyAndAmplitude(
                 dominantFrequencyAmplitude); 
 
-            averageFrequencyAmplitude
+            auto averageFrequencyAmplitude
                 = getAverageFrequencyAndAmplitude(nScales, nSamples,
                                                   iStart, iEnd,
                                                   mCenterFrequencies.data(),
                                                   mAmplitudeCWT.data());
             mSpectralSignalFeatures.setAverageFrequenciesAndAmplitudes(
                  averageFrequencyAmplitude);
+            */
+
+            mSpectralSignalFeatures
+               = getSpectralDomainFeatures(nSamples, nScales, 
+                                           iStart, iEnd,
+                                           mCenterFrequencies,
+                                           mAmplitudeCWT);
         }
     }
 //private:

@@ -134,6 +134,53 @@ void computeVelocityScalogram(
     auto aPtr = amplitudeCWT->data();
     cwt.getAmplitudeTransform(nSamples, nScales, &aPtr);
 }
+/// Extract domain domain features
+[[nodiscard]]
+UUSS::Features::Magnitude::TemporalFeatures
+    getTimeDomainFeatures(const int i0, const int i1,
+                          const std::vector<double> &velocitySignal)
+{
+    UUSS::Features::Magnitude::TemporalFeatures temporalFeatures;
+    // (1) The variance is the signal power minus the DC power.
+    auto nSamples = i1 - i0;
+    auto varianceNoise = variance(nSamples, velocitySignal.data() + i0);
+    // Get difference of min/max amplitude 
+    const auto [vMinNoise,  vMaxNoise]
+        = std::minmax_element(velocitySignal.data() + i0,
+                              velocitySignal.data() + i1);
+    temporalFeatures.setVariance(varianceNoise);
+    temporalFeatures.setMinimumAndMaximumValue(
+            std::pair(*vMinNoise, *vMaxNoise));
+    return temporalFeatures;
+}
+/// Extract spectral domain features
+[[nodiscard]]
+UUSS::Features::Magnitude::SpectralFeatures
+    getSpectralDomainFeatures(const int nSamples, const int nScales, 
+                              const int i0, const int i1,
+                              const std::vector<double> &centerFrequencies,
+                              const std::vector<double> &amplitudeCWT)
+{
+     UUSS::Features::Magnitude::SpectralFeatures spectralFeatures;
+     auto dominantFrequencyAmplitude
+        = getDominantFrequencyAndAmplitude(nScales, nSamples,
+                                           i0, i1,
+                                           centerFrequencies.data(),
+                                           amplitudeCWT.data());
+     spectralFeatures.setDominantFrequencyAndAmplitude(
+         dominantFrequencyAmplitude);
+
+     auto averageFrequencyAmplitude
+        = getAverageFrequencyAndAmplitude(nScales, nSamples,
+                                          i0, i1,
+                                          centerFrequencies.data(),
+                                          amplitudeCWT.data());
+     spectralFeatures.setAverageFrequenciesAndAmplitudes(
+         averageFrequencyAmplitude);
+ 
+     return spectralFeatures;
+}
+
 /*
 [[maybe_unused]]
 void processAcceleration(

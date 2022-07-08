@@ -41,12 +41,12 @@ public:
     /// @{
 
     /// @brief Initializes the feature extraction tool for this channel.
-    /// @param[in] channel  The channel information.
+    /// @param[in] northChannel  The north (1) channel information.
+    /// @param[in] eastChannel   The east (2) channel information.
     /// @throws std::invalid_argument if the channel.haveSamplingRate() or
     ///         channel.haveSimpleResponse() is false.
     /// @note Initialization is expensive.  Do this as infrequently as possible.
-    void initialize(const Channel &verticalChannel,
-                    const Channel &northChannel,
+    void initialize(const Channel &northChannel,
                     const Channel &eastChannel);
     /// @result True indicates the class is initialized.
     [[nodiscard]] bool isInitialized() const noexcept;
@@ -95,16 +95,32 @@ public:
                  const double *nSignal, const double *eSignal,
                  double arrivalTimeRelativeToStart);
     /// @result True indicates the input signal was processed and the
-    ///         velocity signal and features are available.
-    [[nodiscard]] bool haveSignals() const noexcept;
-    /// @result The temporal features computed on the pre-arrival noise.
-    [[nodiscard]] TemporalFeatures getTemporalNoiseFeatures() const;
-    /// @result The temporal features computed on the signal.
-    [[nodiscard]] TemporalFeatures getTemporalSignalFeatures() const;
-    /// @result The spectral features computed on the pre-arrival noise.
-    [[nodiscard]] SpectralFeatures getSpectralNoiseFeatures() const;
-    /// @result The spectral features computed on the signal.
-    [[nodiscard]] SpectralFeatures getSpectralSignalFeatures() const;
+    ///         velocity-based features are available.
+    [[nodiscard]] bool haveFeatures() const noexcept;
+    /// @result The temporal features computed on the radial channel for the
+    ///         the pre-arrival noise.
+    [[nodiscard]] TemporalFeatures getRadialTemporalNoiseFeatures() const;
+    /// @result The temporal features computed on the radial channel for the
+    ///         the S signal.
+    [[nodiscard]] TemporalFeatures getRadialTemporalSignalFeatures() const;
+    /// @result The temporal features computed on the transverse channel for the
+    ///         the pre-arrival noise.
+    [[nodiscard]] TemporalFeatures getTransverseTemporalNoiseFeatures() const;
+    /// @result The temporal features computed on the transverse channel for the
+    ///         the S signal.
+    [[nodiscard]] TemporalFeatures getTransverseTemporalSignalFeatures() const;
+    /// @result The spectral features computed on the radial channel for
+    ///         the pre-arrival noise.
+    [[nodiscard]] SpectralFeatures getRadialSpectralNoiseFeatures() const;
+    /// @result The spectral features computed on the radial channel for
+    ///         the S signal signal.
+    [[nodiscard]] SpectralFeatures getRadialSpectralSignalFeatures() const;
+    /// @result The spectral features computed on the transverse channel for
+    ///         the pre-arrival noise.
+    [[nodiscard]] SpectralFeatures getTransverseSpectralNoiseFeatures() const;
+    /// @result The spectral features computed on the transverse channel for
+    ///         the S signal signal.
+    [[nodiscard]] SpectralFeatures getTransverseSpectralSignalFeatures() const;
     /// @result The source depth. 
     [[nodiscard]] double getSourceDepth() const;
     /// @result The source-receiver distance in kilometers.
@@ -114,7 +130,7 @@ public:
     [[nodiscard]] double getBackAzimuth() const;
 
     /// @result The velocity signal from which to extract features.
-    /// @throws std::runtime_error if \c haveSignal() is false.
+    /// @throws std::runtime_error if \c haveFeatures() is false.
     [[nodiscard]] std::vector<double> getVerticalVelocitySignal() const;
     [[nodiscard]] std::vector<double> getRadialVelocitySignal() const;
     [[nodiscard]] std::vector<double> getTransverseVelocitySignal() const;

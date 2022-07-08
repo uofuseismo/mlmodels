@@ -277,12 +277,7 @@ void PFeatures::initialize(const Channel &channel)
         throw std::runtime_error("units = " + units + " not handled");
     }
     clear();
-    // Make response proportional to micrometers.  Response units are 
-    // 1/meter so to go to 1/micrometer we do 1/(meter*1e6) which effectively
-    // divides the input by 1e6.
     pImpl->mChannel = channel;
-    pImpl->mInitialized = true;
-
     // Initialize preprocessor
     pImpl->mPreprocess.initialize(channel.getSamplingRate(),
                                   channel.getSimpleResponseValue(),
@@ -293,6 +288,7 @@ void PFeatures::initialize(const Channel &channel)
     pImpl->mVelocitySignal.resize(targetSignalLength, 0);
     // Initialize the CWT (need to initialize preprocessor before this)
     pImpl->initializeCWT();
+    pImpl->mInitialized = true;
 }
 
 bool PFeatures::isInitialized() const noexcept

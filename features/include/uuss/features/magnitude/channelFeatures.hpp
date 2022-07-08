@@ -33,16 +33,16 @@ public:
     [[nodiscard]] static double getTargetSamplingPeriod() noexcept;
     /// @result The duration of the signal from which the features will
     ///         be extracted in seconds.
-    [[nodiscard]] double getTargetSignalDuration() const noexcept;
+    [[nodiscard]] double getTargetSignalDuration() const;
     /// @result The length of the signal from which the features will
     ///         be extracted in seconds.
-    [[nodiscard]] int getTargetSignalLength() const noexcept;
+    [[nodiscard]] int getTargetSignalLength() const;
     /// @result The number of seconds before and after the arrival where the 
     ///         processing will be performed.  For example,
     ///         arrivalTime + result.first will indicate where the processing
     ///         window begins while arrivalTime + result.second will indicate
     ///         where the processing will end.
-    [[nodiscard]] std::pair<double, double> getArrivalTimeProcessingWindow() const noexcept;
+    [[nodiscard]] std::pair<double, double> getArrivalTimeProcessingWindow() const;
 
     /// @name Step 1: Initialization
     /// @{

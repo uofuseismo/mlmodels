@@ -14,6 +14,7 @@
 #include <rtseis/filterRepresentations/sos.hpp>
 #include <rtseis/filterDesign/iir.hpp>
 #include <rtseis/utilities/interpolation/weightedAverageSlopes.hpp>
+#include "private/distanceAzimuth.hpp"
 namespace
 {
 template<typename T>
@@ -54,6 +55,84 @@ template<typename T>
 [[nodiscard]] T absoluteMaximum(const std::vector<T> &x)
 {
     return absoluteMaximum(x.size(), x.data());
+}
+/// Convenience interface for computing distance and azimuth.
+void distanceAzimuth(const UUSS::Features::Magnitude::Hypocenter &hypocenter,
+                     const UUSS::Features::Magnitude::Channel &channel,
+                     double *distance, double *backAzimuth)
+{
+    auto sourceLatitude    = hypocenter.getLatitude();
+    auto sourceLongitude   = hypocenter.getLongitude();
+    auto receiverLatitude  = channel.getLatitude();
+    auto receiverLongitude = channel.getLongitude();
+    double greatCircleDistance, azimuth;
+    computeDistanceAzimuthWGS84(sourceLatitude, sourceLongitude,
+                                receiverLatitude, receiverLongitude,
+                                &greatCircleDistance,
+                                distance,
+                                &azimuth,
+                                backAzimuth);
+}
+/// Gets the dominant and frequency from the CWT. 
+std::pair<double, double> getDominantFrequencyAndAmplitude(
+    const int nScales, const int nSamples,
+    const int iStart, const int iEnd,
+    const double *__restrict__ centerFrequencies,
+    const double *__restrict__ amplitudeCWT)
+{
+    std::pair<double, double> dominantFrequencyAmplitude{0, 0};
+    for (int j = 0; j < nScales; ++j)
+    {
+        for (int i = iStart; i < iEnd; ++i)
+        {
+            auto indx = j*nSamples + i;
+            auto amplitude = amplitudeCWT[indx];
+            if (amplitude > dominantFrequencyAmplitude.second)
+            {
+                dominantFrequencyAmplitude.first  = centerFrequencies[j];
+                dominantFrequencyAmplitude.second = amplitude;
+            }
+        }
+    }
+    return dominantFrequencyAmplitude;
+}
+/// Average amplitude in the frequency in the bins
+std::vector<std::pair<double, double>> getAverageFrequencyAndAmplitude(
+    const int nScales, const int nSamples,
+    const int iStart, const int iEnd,
+    const double *__restrict__ centerFrequencies,
+    const double *__restrict__ amplitudeCWT)
+{
+    std::vector<std::pair<double, double>> averageFrequencyAmplitude(nScales);
+    for (int j = 0; j < nScales; ++j)
+    {
+        double averageAmplitude = 0;
+        for (int i = iStart; i < iEnd; ++i)
+        {
+            auto indx = j*nSamples + i;
+            averageAmplitude = averageAmplitude + amplitudeCWT[indx];
+        }
+        averageFrequencyAmplitude[j] = std::pair(centerFrequencies[j],
+                                                 averageAmplitude/nScales);
+    }
+    return averageFrequencyAmplitude;
+}
+/// Compute CWT
+void computeVelocityScalogram(
+    const std::vector<double> &velocitySignal,
+    std::vector<double> *amplitudeCWT,
+    RTSeis::Transforms::ContinuousWavelet<double> &cwt)
+{   
+    // Calculate the scalogram
+    cwt.transform(velocitySignal.size(), velocitySignal.data());
+    auto nScales  = cwt.getNumberOfScales(); 
+    auto nSamples = cwt.getNumberOfSamples();
+    if (static_cast<int> (amplitudeCWT->size()) != nScales*nSamples)
+    {
+        amplitudeCWT->resize(nScales*nSamples, 0);
+    }
+    auto aPtr = amplitudeCWT->data();
+    cwt.getAmplitudeTransform(nSamples, nScales, &aPtr);
 }
 /*
 [[maybe_unused]]

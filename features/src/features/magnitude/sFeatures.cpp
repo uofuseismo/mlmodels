@@ -367,7 +367,6 @@ void SFeatures::process(
 
     auto radialPtr = pImpl->mRadialVelocity.data();
     auto transversePtr = pImpl->mTransverseVelocity.data();
-backAzimuth =0;
     RTSeis::Rotate::northEastToRadialTransverse(nSamples,
                                                 backAzimuth,
                                                 pImpl->mNorthVelocity.data(),

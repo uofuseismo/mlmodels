@@ -384,6 +384,7 @@ public:
     void initialize(const ::Channel &nChannel,
                     const ::Channel &eChannel)
     {
+std::cout << "wtf" << std::endl;
 std::cout << nChannel.pImpl->getAzimuth() << std::endl;
         pImpl->initialize(*nChannel.pImpl,
                           *eChannel.pImpl);

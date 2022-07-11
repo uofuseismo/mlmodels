@@ -17,6 +17,10 @@ namespace
 {
 struct SimpleResponse
 {
+    //SimpleResponse(const SimpleResponse &) = default;
+    //SimpleResponse(SimpleResponse &&) noexcept = default;
+    //SimpleResponse& operator=(const SimpleResponse &) = default;
+    //SimpleResponse& operator=(SimpleResponse &&) noexcept = default; 
     void setValue(const double value)
     {
         if (value == 0){throw std::invalid_argument("Value is 0");}
@@ -538,6 +542,7 @@ Properties
                    &::Hypocenter::setEventIdentifier);
     h.def("clear", &::Hypocenter::clear, "Resets the class.");
     // Copy rules
+    /*
     h.def("__copy__", [](const ::Hypocenter &self)
           {
              return ::Hypocenter(self);
@@ -546,6 +551,7 @@ Properties
           {
              return ::Hypocenter(self);
           });
+    */
     // Pickling rules
     h.def(pybind11::pickle(
         [](const ::Hypocenter &hypo)
@@ -589,6 +595,7 @@ Properties
     sr.def_property("units",
                     &::SimpleResponse::getUnits, &::SimpleResponse::setUnits);
     // Copy rules
+    /*
     sr.def("__copy__", [](const ::SimpleResponse &self)
            {
               return ::SimpleResponse(self);
@@ -597,6 +604,7 @@ Properties
            {
               return ::SimpleResponse(self);
            });
+    */
     // Pickling rules
     sr.def(pybind11::pickle(
         [](const ::SimpleResponse &response)
@@ -617,6 +625,7 @@ Properties
         }
     )); 
 
+    //------------------------------------------------------------------------//
 
     pybind11::class_<::Channel> c(m, "Channel"); 
     c.def(pybind11::init<> ());
@@ -677,6 +686,7 @@ Optional Properties
                    &::Channel::getLocationCode, &::Channel::setLocationCode);
     c.def("clear", &::Channel::clear, "Resets the class.");
     // Copy rules
+     /*
     c.def("__copy__", [](const ::Channel &self)
           {
              return ::Channel(self);
@@ -685,6 +695,7 @@ Optional Properties
           {
              return ::Channel(self);
           });
+    */
     // Pickling rules
     c.def(pybind11::pickle(
         [](const ::Channel &channel)
@@ -740,6 +751,8 @@ Optional Properties
         }
     ));
  
+    //------------------------------------------------------------------------//
+
     pybind11::class_<::TemporalFeatures> tf(m, "TemporalFeatures");
     tf.def(pybind11::init<> ());
     tf.doc() = R"""(
@@ -784,6 +797,7 @@ Read-Only Properties
     sf.def_property_readonly("average_frequencies_and_amplitudes",
                              &::SpectralFeatures::getAverageFrequenciesAndAmplitudes);
    
+    //------------------------------------------------------------------------//
 
     pybind11::class_<::PFeatures> pfeatures(m, "PFeatures"); 
     pfeatures.def(pybind11::init<> ());
@@ -834,6 +848,8 @@ Read-only Properties
                                     &::PFeatures::getTemporalNoiseFeatures);
     pfeatures.def_property_readonly("temporal_signal_features",
                                     &::PFeatures::getTemporalSignalFeatures);
+
+    //------------------------------------------------------------------------//
 
     pybind11::class_<::SFeatures> sfeatures(m, "SFeatures"); 
     sfeatures.def(pybind11::init<> ());

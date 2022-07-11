@@ -406,12 +406,14 @@ public:
                                            pybind11::array::forcecast> &eArray,
                  const double arrivalTime)
     {
+std::cout << "hey now" << std::endl;
         std::vector<double> n(nArray.size());
         std::copy(nArray.data(), nArray.data() + nArray.size(), n.begin());
 
         std::vector<double> e(eArray.size());
         std::copy(eArray.data(), eArray.data() + eArray.size(), e.begin());
 
+std::cout << "process: " << n.size() << " " << e.size() << std::endl;
         pImpl->process(n, e, arrivalTime);
     }
     pybind11::array_t<double> getRadialVelocitySignal() const

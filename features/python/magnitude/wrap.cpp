@@ -406,6 +406,7 @@ public:
                                                  pybind11::array::forcecast> &eArray,
                  const double arrivalTime)
     {
+        if (!isInitialized()){throw std::runtime_error("Class not initialized");}
 std::cout << "in it" << std::endl;
 /*
         if (nArray.size() != eArray.size())
@@ -423,7 +424,6 @@ std::cout << "process: " << n.size() << " " << e.size() << std::endl;
         pImpl->process(n, e, arrivalTime);
 */
     }
-/*
     pybind11::array_t<double> getRadialVelocitySignal() const
     {
         auto signal = pImpl->getRadialVelocitySignal();
@@ -492,7 +492,6 @@ std::cout << "process: " << n.size() << " " << e.size() << std::endl;
         auto features = pImpl->getTransverseSpectralSignalFeatures();
         return SpectralFeatures(features);
     }
-*/
     void clear() noexcept{pImpl->clear();}
     std::unique_ptr<UUSS::Features::Magnitude::SFeatures> pImpl;
     SFeatures(const SFeatures &) = delete;
@@ -869,7 +868,6 @@ Read-only Properties
                            &::SFeatures::setHypocenter);
     sfeatures.def("process", &::SFeatures::process,
                   "Processes the north and east waveforms.  Additionally, the arrival time relative to the window start must be specified.");
-/*
     sfeatures.def_property_readonly("radial_velocity_signal",
                                     &::SFeatures::getRadialVelocitySignal);
     sfeatures.def_property_readonly("transverse_velocity_signal",
@@ -878,8 +876,6 @@ Read-only Properties
                                     &::SFeatures::getSourceReceiverDistance);
     sfeatures.def_property_readonly("back_azimuth",
                                     &::SFeatures::getBackAzimuth);
-*/
-/*
     sfeatures.def_property_readonly("radial_spectral_noise_features",
                                     &::SFeatures::getRadialSpectralNoiseFeatures);
     sfeatures.def_property_readonly("radial_spectral_signal_features",
@@ -896,5 +892,4 @@ Read-only Properties
                                     &::SFeatures::getTransverseTemporalNoiseFeatures);
     sfeatures.def_property_readonly("transverse_temporal_signal_features",
                                     &::SFeatures::getTransverseTemporalSignalFeatures);
-*/
 }

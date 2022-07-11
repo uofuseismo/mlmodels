@@ -219,13 +219,13 @@ void SFeatures::initialize(const Channel &north, const Channel &east)
     std::transform(nUnits.begin(), nUnits.end(), nUnits.begin(), ::toupper);
     if (nUnits != "DU/M/S**2" && nUnits != "DU/M/S")
     {
-        throw std::runtime_error("north units = " + nUnits + " not handled");
+        throw std::invalid_argument("north units = " + nUnits + " not handled");
     }
     auto eUnits = east.getSimpleResponseUnits();
     std::transform(eUnits.begin(), eUnits.end(), eUnits.begin(), ::toupper);
     if (eUnits != "DU/M/S**2" && eUnits != "DU/M/S")
     {
-        throw std::runtime_error("east units = " + eUnits + " not handled");
+        throw std::invalid_argument("east units = " + eUnits + " not handled");
     }
     auto northAzimuth = north.getAzimuth();
     auto eastAzimuth = east.getAzimuth();

@@ -274,7 +274,7 @@ void PFeatures::initialize(const Channel &channel)
     std::transform(units.begin(), units.end(), units.begin(), ::toupper);
     if (units != "DU/M/S**2" && units != "DU/M/S")
     {
-        throw std::runtime_error("units = " + units + " not handled");
+        throw std::invalid_argument("units = " + units + " not handled");
     }
     clear();
     pImpl->mChannel = channel;

@@ -373,6 +373,123 @@ public:
     PFeatures& operator=(PFeatures &&) noexcept = delete;
 };
 
+class SFeatures
+{
+public:
+    SFeatures() :
+        pImpl(std::make_unique<UUSS::Features::Magnitude::SFeatures> ())
+    {
+    }
+    ~SFeatures() = default;
+    void initialize(const ::Channel &nChannel,
+                    const ::Channel &eChannel)
+    {
+        pImpl->initialize(*nChannel.pImpl,
+                          *eChannel.pImpl);
+    }
+    bool isInitialized() const noexcept
+    {
+        return pImpl->isInitialized();
+    }
+    void setHypocenter(const Hypocenter &hypo)
+    {
+        pImpl->setHypocenter(*hypo.pImpl);
+    }
+    Hypocenter getHypocenter() const
+    {
+        Hypocenter hypo(pImpl->getHypocenter());
+        return hypo;
+    }
+    void process(pybind11::array_t<double, pybind11::array::c_style |
+                                           pybind11::array::forcecast> &nArray,
+                 pybind11::array_t<double, pybind11::array::c_style |
+                                           pybind11::array::forcecast> &eArray,
+                 const double arrivalTime)
+    {
+        std::vector<double> n(nArray.size());
+        std::copy(nArray.data(), nArray.data() + nArray.size(), n.begin());
+
+        std::vector<double> e(eArray.size());
+        std::copy(eArray.data(), eArray.data() + eArray.size(), e.begin());
+
+        pImpl->process(n, e, arrivalTime);
+    }
+    pybind11::array_t<double> getRadialVelocitySignal() const
+    {
+        auto signal = pImpl->getRadialVelocitySignal();
+        auto y = pybind11::array_t<double, pybind11::array::c_style>
+                 (signal.size());
+        pybind11::buffer_info yBuffer = y.request();
+        auto yPtr = static_cast<double *> (yBuffer.ptr);
+        std::copy(signal.begin(), signal.end(), yPtr);
+        return y;
+    }
+    pybind11::array_t<double> getTransverseVelocitySignal() const
+    {
+        auto signal = pImpl->getTransverseVelocitySignal();
+        auto y = pybind11::array_t<double, pybind11::array::c_style>
+                 (signal.size());
+        pybind11::buffer_info yBuffer = y.request();
+        auto yPtr = static_cast<double *> (yBuffer.ptr);
+        std::copy(signal.begin(), signal.end(), yPtr);
+        return y;
+    }
+    double getSourceReceiverDistance() const
+    {   
+        return pImpl->getSourceReceiverDistance();
+    }   
+    double getBackAzimuth() const
+    {   
+        return pImpl->getBackAzimuth();
+    }
+    TemporalFeatures getRadialTemporalNoiseFeatures() const
+    {
+        auto features = pImpl->getRadialTemporalNoiseFeatures();
+        return TemporalFeatures(features);
+    }
+    TemporalFeatures getRadialTemporalSignalFeatures() const
+    {   
+        auto features = pImpl->getRadialTemporalSignalFeatures();
+        return TemporalFeatures(features);
+    }   
+    SpectralFeatures getRadialSpectralNoiseFeatures() const
+    {   
+        auto features = pImpl->getRadialSpectralNoiseFeatures();
+        return SpectralFeatures(features);
+    }   
+    SpectralFeatures getRadialSpectralSignalFeatures() const
+    {   
+        auto features = pImpl->getRadialSpectralSignalFeatures();
+        return SpectralFeatures(features);
+    }
+    TemporalFeatures getTransverseTemporalNoiseFeatures() const
+    {   
+        auto features = pImpl->getTransverseTemporalNoiseFeatures();
+        return TemporalFeatures(features);
+    }   
+    TemporalFeatures getTransverseTemporalSignalFeatures() const
+    {   
+        auto features = pImpl->getTransverseTemporalSignalFeatures();
+        return TemporalFeatures(features);
+    }   
+    SpectralFeatures getTransverseSpectralNoiseFeatures() const
+    {   
+        auto features = pImpl->getTransverseSpectralNoiseFeatures();
+        return SpectralFeatures(features);
+    }   
+    SpectralFeatures getTransverseSpectralSignalFeatures() const
+    {   
+        auto features = pImpl->getTransverseSpectralSignalFeatures();
+        return SpectralFeatures(features);
+    }
+    void clear() noexcept{pImpl->clear();}
+    std::unique_ptr<UUSS::Features::Magnitude::SFeatures> pImpl;
+    SFeatures(const SFeatures &) = delete;
+    SFeatures(SFeatures &&) noexcept = delete;
+    SFeatures& operator=(const SFeatures &) = delete;
+    SFeatures& operator=(SFeatures &&) noexcept = delete;
+};
+
 }
 
 ///---------------------------------------------------------------------------//
@@ -629,9 +746,9 @@ Read-Only Properties
                              &::SpectralFeatures::getAverageFrequenciesAndAmplitudes);
    
 
-    pybind11::class_<::PFeatures> vc(m, "PFeatures"); 
-    vc.def(pybind11::init<> ());
-    vc.doc() = R"""(
+    pybind11::class_<::PFeatures> pfeatures(m, "PFeatures"); 
+    pfeatures.def(pybind11::init<> ());
+    pfeatures.doc() = R"""(
 Extracts the features P-arrival features from the vertical channel.
 
 Properties
@@ -657,28 +774,86 @@ Read-only Properties
    temporal_signal_features : TemporalFeatures
        the temporal features of the signal. 
 )""";
-    vc.def("initialize", &::PFeatures::initialize,
-           "Initializes the feature extractor based on the channel information.");
-    vc.def_property("hypocenter",
-                    &::PFeatures::getHypocenter,
-                    &::PFeatures::setHypocenter);
-    vc.def("process", &::PFeatures::process,
-           "Processes the waveform.  Additionally, the arrival time relative to the window start must be specified.");
-    vc.def_property_readonly("velocity_signal",
-                             &::PFeatures::getVelocitySignal);
-    vc.def_property_readonly("source_receiver_distance",
-                             &::PFeatures::getSourceReceiverDistance);
-    vc.def_property_readonly("back_azimuth",
-                             &::PFeatures::getBackAzimuth);
-    vc.def_property_readonly("spectral_noise_features",
-                             &::PFeatures::getSpectralNoiseFeatures);
-    vc.def_property_readonly("spectral_signal_features",
-                             &::PFeatures::getSpectralSignalFeatures);
-    vc.def_property_readonly("temporal_noise_features",
-                             &::PFeatures::getTemporalNoiseFeatures);
-    vc.def_property_readonly("temporal_signal_features",
-                             &::PFeatures::getTemporalSignalFeatures);
+    pfeatures.def("initialize", &::PFeatures::initialize,
+                  "Initializes the feature extractor based on the channel information.");
+    pfeatures.def_property("hypocenter",
+                           &::PFeatures::getHypocenter,
+                           &::PFeatures::setHypocenter);
+    pfeatures.def("process", &::PFeatures::process,
+                  "Processes the waveform.  Additionally, the arrival time relative to the window start must be specified.");
+    pfeatures.def_property_readonly("velocity_signal",
+                                    &::PFeatures::getVelocitySignal);
+    pfeatures.def_property_readonly("source_receiver_distance",
+                                    &::PFeatures::getSourceReceiverDistance);
+    pfeatures.def_property_readonly("back_azimuth",
+                                    &::PFeatures::getBackAzimuth);
+    pfeatures.def_property_readonly("spectral_noise_features",
+                                    &::PFeatures::getSpectralNoiseFeatures);
+    pfeatures.def_property_readonly("spectral_signal_features",
+                                    &::PFeatures::getSpectralSignalFeatures);
+    pfeatures.def_property_readonly("temporal_noise_features",
+                                    &::PFeatures::getTemporalNoiseFeatures);
+    pfeatures.def_property_readonly("temporal_signal_features",
+                                    &::PFeatures::getTemporalSignalFeatures);
 
+    pybind11::class_<::SFeatures> sfeatures(m, "SFeatures"); 
+    sfeatures.def(pybind11::init<> ());
+    sfeatures.doc() = R"""(
+Extracts the features SH and SV-arrival features from a three-component seismogram.
 
+Properties
+----------
+    hypocenter : Hypocenter
+       The hypocentral information.
+
+Read-only Properties
+--------------------
+   radial_velocity_signal : np.array
+       The processed radial velocity signal.  This should be in units of
+       micrometers/second.
+   source_receiver_distance : float
+       The source-receiver distance in km. 
+   back_azimuth : float
+       The receiver-to-source azimuth in degrees measured positive east of north.
+   spectral_noise_features : SpectralFeatures
+       The spectral features of the noise.
+   spectral_signal_features : SpectralFeatures
+       The spectral features of the signal.
+   temporal_signal_features : TemporalFeatures
+       The temporal features of the noise.
+   temporal_signal_features : TemporalFeatures
+       the temporal features of the signal. 
+)""";
+    sfeatures.def("initialize", &::SFeatures::initialize,
+                  "Initializes the feature extractor based on the north (1) and east (2) channel information.");
+    sfeatures.def_property("hypocenter",
+                           &::SFeatures::getHypocenter,
+                           &::SFeatures::setHypocenter);
+    sfeatures.def("process", &::SFeatures::process,
+           "Processes the north and east waveforms.  Additionally, the arrival time relative to the window start must be specified.");
+    sfeatures.def_property_readonly("radial_velocity_signal",
+                                    &::SFeatures::getRadialVelocitySignal);
+    sfeatures.def_property_readonly("transverse_velocity_signal",
+                                    &::SFeatures::getTransverseVelocitySignal);
+    sfeatures.def_property_readonly("source_receiver_distance",
+                                     &::SFeatures::getSourceReceiverDistance);
+    sfeatures.def_property_readonly("back_azimuth",
+                                     &::SFeatures::getBackAzimuth);
+    sfeatures.def_property_readonly("radial_spectral_noise_features",
+                                    &::SFeatures::getRadialSpectralNoiseFeatures);
+    sfeatures.def_property_readonly("radial_spectral_signal_features",
+                                    &::SFeatures::getRadialSpectralSignalFeatures);
+    sfeatures.def_property_readonly("radial_temporal_noise_features",
+                                    &::SFeatures::getRadialTemporalNoiseFeatures);
+    sfeatures.def_property_readonly("radial_temporal_signal_features",
+                                    &::SFeatures::getRadialTemporalSignalFeatures);
+    sfeatures.def_property_readonly("transverse_spectral_noise_features",
+                                    &::SFeatures::getTransverseSpectralNoiseFeatures);
+    sfeatures.def_property_readonly("transverse_spectral_signal_features",
+                                    &::SFeatures::getTransverseSpectralSignalFeatures);
+    sfeatures.def_property_readonly("transverse_temporal_noise_features",
+                                    &::SFeatures::getTransverseTemporalNoiseFeatures);
+    sfeatures.def_property_readonly("transverse_temporal_signal_features",
+                                    &::SFeatures::getTransverseTemporalSignalFeatures);
 
 }

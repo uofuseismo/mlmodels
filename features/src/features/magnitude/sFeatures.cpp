@@ -509,3 +509,17 @@ SpectralFeatures SFeatures::getTransverseSpectralSignalFeatures() const
     if (!haveFeatures()){throw std::runtime_error("Features not computed");}
     return pImpl->mTransverseSpectralSignalFeatures;
 }
+
+/// Radial velocity signal
+std::vector<double> SFeatures::getRadialVelocitySignal() const
+{
+    if (!haveFeatures()){throw std::runtime_error("Features not computed");}
+    return pImpl->mRadialVelocity;
+}
+
+/// Transverse velocity signal
+std::vector<double> SFeatures::getTransverseVelocitySignal() const
+{
+    if (!haveFeatures()){throw std::runtime_error("Features not computed");}
+    return pImpl->mTransverseVelocity;
+}

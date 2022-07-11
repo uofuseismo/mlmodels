@@ -131,7 +131,7 @@ public:
 
     /// @result The velocity signal from which to extract features.
     /// @throws std::runtime_error if \c haveFeatures() is false.
-    [[nodiscard]] std::vector<double> getVerticalVelocitySignal() const;
+    //[[nodiscard]] std::vector<double> getVerticalVelocitySignal() const;
     [[nodiscard]] std::vector<double> getRadialVelocitySignal() const;
     [[nodiscard]] std::vector<double> getTransverseVelocitySignal() const;
 

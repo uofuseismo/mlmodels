@@ -383,6 +383,7 @@ public:
     SFeatures() :
         pImpl(std::make_unique<UUSS::Features::Magnitude::SFeatures> ())
     {
+std::cout << "c'tro" << std::endl;
     }
     ~SFeatures() = default;
     void initialize(const ::Channel &nChannel,

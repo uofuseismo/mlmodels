@@ -139,6 +139,10 @@ public:
     void clear() noexcept; 
     ~SFeatures();
 
+    SFeatures(const SFeatures &) = delete;
+    SFeatures(SFeatures &&) noexcept = delete;
+    SFeatures& operator=(const SFeatures &) = delete;
+    SFeatures& operator=(SFeatures &&) noexcept = delete;
 private:
     class FeaturesImpl;
     std::unique_ptr<FeaturesImpl> pImpl;

@@ -400,8 +400,8 @@ public:
         Hypocenter hypo(pImpl->getHypocenter());
         return hypo;
     }
-    void process(const pybind11::array_t<double, pybind11::array::c_style |
-                                                 pybind11::array::forcecast> &nArray,
+    void process(//const pybind11::array_t<double, pybind11::array::c_style |
+//                                                 pybind11::array::forcecast> &nArray,
 //                 const pybind11::array_t<double, pybind11::array::c_style |
 //                                                 pybind11::array::forcecast> &eArray,
                  const double arrivalTime)

@@ -387,7 +387,7 @@ void Preprocess::process(const int n,
     {
         signalToCut = resample(n, signal,
                                getSamplingRate(),
-                               getTargetSamplingPeriod());
+                               getTargetSamplingRate());
         if (static_cast<int> (signalToCut.size()) < getTargetSignalLength())
         {
             throw std::invalid_argument("Interpolated signal too short");

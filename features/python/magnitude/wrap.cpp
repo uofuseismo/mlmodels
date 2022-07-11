@@ -402,11 +402,12 @@ public:
     }
     void process(const pybind11::array_t<double, pybind11::array::c_style |
                                                  pybind11::array::forcecast> &nArray,
-                 const pybind11::array_t<double, pybind11::array::c_style |
-                                                 pybind11::array::forcecast> &eArray,
+//                 const pybind11::array_t<double, pybind11::array::c_style |
+//                                                 pybind11::array::forcecast> &eArray,
                  const double arrivalTime)
     {
 std::cout << "in it" << std::endl;
+/*
         if (nArray.size() != eArray.size())
         {
             throw std::runtime_error("n_signal.size() ! = e_signal.size()");
@@ -420,6 +421,7 @@ std::cout << "hey now" << std::endl;
 
 std::cout << "process: " << n.size() << " " << e.size() << std::endl;
         pImpl->process(n, e, arrivalTime);
+*/
     }
     pybind11::array_t<double> getRadialVelocitySignal() const
     {

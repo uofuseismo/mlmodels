@@ -416,6 +416,17 @@ void SFeatures::setHypocenter(const Hypocenter &hypocenter)
     pImpl->mHypocenter = hypocenter;
 }
 
+Hypocenter SFeatures::getHypocenter() const
+{
+    if (!haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
+    return pImpl->mHypocenter;
+}
+
+bool SFeatures::haveHypocenter() const noexcept
+{
+    return pImpl->mHypocenter.haveLatitude();
+}
+
 double SFeatures::getBackAzimuth() const
 {
     if (!haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
@@ -426,11 +437,6 @@ double SFeatures::getSourceReceiverDistance() const
 {
     if (!haveHypocenter()){throw std::runtime_error("Hypocenter not set");}
     return pImpl->mSourceReceiverDistance;
-}
-
-bool SFeatures::haveHypocenter() const noexcept
-{
-    return pImpl->mHypocenter.haveLatitude();
 }
 
 /// Target information

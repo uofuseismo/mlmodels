@@ -229,7 +229,7 @@ void SFeatures::initialize(const Channel &north, const Channel &east)
     }
     auto northAzimuth = north.getAzimuth();
     auto eastAzimuth = east.getAzimuth();
-    if (std::abs(northAzimuth - eastAzimuth) > 1.e-4)
+    if (std::abs(northAzimuth - eastAzimuth) - 90 > 1.e-4)
     {
         throw std::invalid_argument(
             "Component azimuths must be 90 degrees apart");

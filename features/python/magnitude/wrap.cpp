@@ -319,8 +319,8 @@ public:
         Hypocenter hypo(pImpl->getHypocenter());
         return hypo;
     }
-    void process(pybind11::array_t<double, pybind11::array::c_style |
-                                           pybind11::array::forcecast> &array,
+    void process(const pybind11::array_t<double, pybind11::array::c_style |
+                                                 pybind11::array::forcecast> &array,
                  const double arrivalTime)
     {
         std::vector<double> x(array.size());
@@ -400,10 +400,10 @@ public:
         Hypocenter hypo(pImpl->getHypocenter());
         return hypo;
     }
-    void process(pybind11::array_t<double, pybind11::array::c_style |
-                                           pybind11::array::forcecast> &nArray,
-                 pybind11::array_t<double, pybind11::array::c_style |
-                                           pybind11::array::forcecast> &eArray,
+    void process(const pybind11::array_t<double, pybind11::array::c_style |
+                                                 pybind11::array::forcecast> &nArray,
+                 const pybind11::array_t<double, pybind11::array::c_style |
+                                                 pybind11::array::forcecast> &eArray,
                  const double arrivalTime)
     {
 std::cout << "in it" << std::endl;

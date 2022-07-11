@@ -883,7 +883,6 @@ Read-only Properties
                            &::SFeatures::setHypocenter);
     sfeatures.def("process", &::SFeatures::process,
                   "Processes the north and east waveforms.  Additionally, the arrival time relative to the window start must be specified.");
-/*
     sfeatures.def_property_readonly("radial_velocity_signal",
                                     &::SFeatures::getRadialVelocitySignal);
     sfeatures.def_property_readonly("transverse_velocity_signal",
@@ -892,6 +891,7 @@ Read-only Properties
                                     &::SFeatures::getSourceReceiverDistance);
     sfeatures.def_property_readonly("back_azimuth",
                                     &::SFeatures::getBackAzimuth);
+/*
     sfeatures.def_property_readonly("radial_spectral_noise_features",
                                     &::SFeatures::getRadialSpectralNoiseFeatures);
     sfeatures.def_property_readonly("radial_spectral_signal_features",

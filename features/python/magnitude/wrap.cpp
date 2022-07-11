@@ -406,6 +406,11 @@ public:
                                            pybind11::array::forcecast> &eArray,
                  const double arrivalTime)
     {
+std::cout << "in it" << std::endl;
+        if (nArray.size() != eArray.size())
+        {
+            throw std::runtime_error("n_signal.size() ! = e_signal.size()");
+        }
 std::cout << "hey now" << std::endl;
         std::vector<double> n(nArray.size());
         std::copy(nArray.data(), nArray.data() + nArray.size(), n.begin());
@@ -859,15 +864,15 @@ Read-only Properties
                            &::SFeatures::getHypocenter,
                            &::SFeatures::setHypocenter);
     sfeatures.def("process", &::SFeatures::process,
-           "Processes the north and east waveforms.  Additionally, the arrival time relative to the window start must be specified.");
+                 "Processes the north and east waveforms.  Additionally, the arrival time relative to the window start must be specified.");
     sfeatures.def_property_readonly("radial_velocity_signal",
                                     &::SFeatures::getRadialVelocitySignal);
     sfeatures.def_property_readonly("transverse_velocity_signal",
                                     &::SFeatures::getTransverseVelocitySignal);
     sfeatures.def_property_readonly("source_receiver_distance",
-                                     &::SFeatures::getSourceReceiverDistance);
+                                    &::SFeatures::getSourceReceiverDistance);
     sfeatures.def_property_readonly("back_azimuth",
-                                     &::SFeatures::getBackAzimuth);
+                                    &::SFeatures::getBackAzimuth);
     sfeatures.def_property_readonly("radial_spectral_noise_features",
                                     &::SFeatures::getRadialSpectralNoiseFeatures);
     sfeatures.def_property_readonly("radial_spectral_signal_features",

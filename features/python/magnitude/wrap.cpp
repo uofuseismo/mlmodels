@@ -525,6 +525,15 @@ Properties
                    &::Hypocenter::getEventIdentifier,
                    &::Hypocenter::setEventIdentifier);
     h.def("clear", &::Hypocenter::clear, "Resets the class.");
+    // Copy rules
+    h.def("__copy__", [](const ::Hypocenter &self)
+          {
+             return ::Hypocenter(self);
+          });
+    h.def("__deepcopy__", [](const ::Hypocenter &self)
+          {
+             return ::Hypocenter(self);
+          });
     // Pickling rules
     h.def(pybind11::pickle(
         [](const ::Hypocenter &hypo)
@@ -567,6 +576,15 @@ Properties
                     &::SimpleResponse::getValue, &::SimpleResponse::setValue);
     sr.def_property("units",
                     &::SimpleResponse::getUnits, &::SimpleResponse::setUnits);
+    // Copy rules
+    sr.def("__copy__", [](const ::SimpleResponse &self)
+           {
+              return ::SimpleResponse(self);
+           });
+    sr.def("__deepcopy__", [](const ::SimpleResponse &self)
+           {
+              return ::SimpleResponse(self);
+           });
     // Pickling rules
     sr.def(pybind11::pickle(
         [](const ::SimpleResponse &response)
@@ -646,6 +664,15 @@ Optional Properties
     c.def_property("location_code",
                    &::Channel::getLocationCode, &::Channel::setLocationCode);
     c.def("clear", &::Channel::clear, "Resets the class.");
+    // Copy rules
+    c.def("__copy__", [](const ::Channel &self)
+          {
+             return ::Channel(self);
+          });
+    c.def("__deepcopy__", [](const ::Channel &self)
+          {
+             return ::Channel(self);
+          });
     // Pickling rules
     c.def(pybind11::pickle(
         [](const ::Channel &channel)

@@ -135,7 +135,7 @@ public:
         mTransverseAmplitudeCWT.resize(scales.size()*nSamples, 0);
     }
     const std::vector<double> mCenterFrequencies{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18};
-    const std::vector<double> mDurations{4}; // No idea on saturation - probably bigger than M5 
+    const std::vector<double> mDurations{3.5}; // No idea on saturation - probably bigger than M5 
 
     std::vector<double> mRadialAmplitudeCWT;
     std::vector<double> mTransverseAmplitudeCWT;

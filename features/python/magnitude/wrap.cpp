@@ -416,15 +416,13 @@ public:
         {
             throw std::runtime_error("n_signal.size() ! = e_signal.size()");
         }
-/*
-        std::vector<double> n(nArray.size());
-        std::copy(nArray.data(), nArray.data() + nArray.size(), n.begin());
+        std::vector<double> north(nArray.size());
+        std::copy(nArray.data(), nArray.data() + nArray.size(), north.begin());
 
-        std::vector<double> e(eArray.size());
-        std::copy(eArray.data(), eArray.data() + eArray.size(), e.begin());
+        std::vector<double> east(eArray.size());
+        std::copy(eArray.data(), eArray.data() + eArray.size(), east.begin());
 
-        pImpl->process(n, e, arrivalTime);
-*/
+        pImpl->process(north, east, arrivalTime);
     }
     pybind11::array_t<double> getRadialVelocitySignal() const
     {

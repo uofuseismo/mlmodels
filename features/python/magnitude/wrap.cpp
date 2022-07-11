@@ -100,7 +100,6 @@ public:
     Channel() :
         pImpl(std::make_unique<UUSS::Features::Magnitude::Channel> ()) 
     {   
-std::cout << "channel ctor" << std::endl;
     }   
     Channel(const Channel &channel){*this = channel;}
     Channel(Channel &&channel) noexcept{*this = std::move(channel);}
@@ -385,14 +384,11 @@ public:
     SFeatures() :
         pImpl(std::make_unique<UUSS::Features::Magnitude::SFeatures> ())
     {
-std::cout << "c'tro" << std::endl;
     }
     ~SFeatures() = default;
     void initialize(const ::Channel &nChannel,
                     const ::Channel &eChannel)
     {
-std::cout << "wtf" << std::endl;
-std::cout << nChannel.pImpl->getAzimuth() << std::endl;
         pImpl->initialize(*nChannel.pImpl,
                           *eChannel.pImpl);
     }
@@ -416,20 +412,17 @@ std::cout << nChannel.pImpl->getAzimuth() << std::endl;
                  const double arrivalTime)
     {
         if (!isInitialized()){throw std::runtime_error("Class not initialized");}
-std::cout << "in it" << std::endl;
-/*
         if (nArray.size() != eArray.size())
         {
             throw std::runtime_error("n_signal.size() ! = e_signal.size()");
         }
-std::cout << "hey now" << std::endl;
+/*
         std::vector<double> n(nArray.size());
         std::copy(nArray.data(), nArray.data() + nArray.size(), n.begin());
 
         std::vector<double> e(eArray.size());
         std::copy(eArray.data(), eArray.data() + eArray.size(), e.begin());
 
-std::cout << "process: " << n.size() << " " << e.size() << std::endl;
         pImpl->process(n, e, arrivalTime);
 */
     }

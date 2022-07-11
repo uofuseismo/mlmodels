@@ -891,9 +891,9 @@ Read-only Properties
                                     &::SFeatures::getSourceReceiverDistance);
     sfeatures.def_property_readonly("back_azimuth",
                                     &::SFeatures::getBackAzimuth);
-/*
     sfeatures.def_property_readonly("radial_spectral_noise_features",
                                     &::SFeatures::getRadialSpectralNoiseFeatures);
+/*
     sfeatures.def_property_readonly("radial_spectral_signal_features",
                                     &::SFeatures::getRadialSpectralSignalFeatures);
     sfeatures.def_property_readonly("radial_temporal_noise_features",

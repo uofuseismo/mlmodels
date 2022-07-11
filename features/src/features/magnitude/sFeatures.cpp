@@ -304,6 +304,7 @@ void SFeatures::process(
     if (nSignal == nullptr){throw std::invalid_argument("nSignal is NULL");}
     if (eSignal == nullptr){throw std::invalid_argument("eSignal is NULL");}
     // Preprocess the signals
+std::cout << "processing std::endl;" << std::endl;
     pImpl->mNorthPreprocess.process(n, nSignal, arrivalTimeRelativeToStart);
     pImpl->mEastPreprocess.process(n, eSignal, arrivalTimeRelativeToStart);
     // Get the pre-processed signals
@@ -339,6 +340,7 @@ void SFeatures::process(
     // Get signal and extract features
     pImpl->mNorthPreprocess.getVelocitySignal(&pImpl->mNorthVelocity);
     pImpl->mEastPreprocess.getVelocitySignal(&pImpl->mEastVelocity);
+std::cout << "have vel signals" << std::endl;
 #ifndef NDEBUG
     assert(pImpl->mNorthVelocity.size() == pImpl->mEastVelocity.size());
 #endif

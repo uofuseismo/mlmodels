@@ -875,7 +875,6 @@ Read-only Properties
    temporal_signal_features : TemporalFeatures
        the temporal features of the signal. 
 )""";
-/*
     sfeatures.def("initialize",
                   &::SFeatures::initialize,
                   "Initializes the feature extractor based on the north (1) and east (2) channel information.");
@@ -884,6 +883,7 @@ Read-only Properties
                            &::SFeatures::setHypocenter);
     sfeatures.def("process", &::SFeatures::process,
                   "Processes the north and east waveforms.  Additionally, the arrival time relative to the window start must be specified.");
+/*
     sfeatures.def_property_readonly("radial_velocity_signal",
                                     &::SFeatures::getRadialVelocitySignal);
     sfeatures.def_property_readonly("transverse_velocity_signal",

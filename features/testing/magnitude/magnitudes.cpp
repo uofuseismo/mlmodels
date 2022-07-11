@@ -124,7 +124,7 @@ TEST(FeaturesMagnitude, PFeatures)
     velocityChannel.setStationCode(station);
     velocityChannel.setChannelCode("HHZ");
     velocityChannel.setLocationCode(locationCode);
-    velocityChannel.setSamplingRate(100);
+    velocityChannel.setSamplingRate(samplingRate);
     velocityChannel.setLatitude(stationLatitude);
     velocityChannel.setLongitude(stationLongitude);
     velocityChannel.setSimpleResponse(velocitySimpleResponse, velocityUnits);
@@ -180,6 +180,64 @@ std::cout << features.getTemporalNoiseFeatures() << std::endl;
     }
     ofl.close();
 */
+}
+
+TEST(FeaturesMagnitude, SFeatures)
+{
+    const std::string network{"WY"};
+    const std::string station{"YHB"};
+    const std::string locationCode{"01"};
+    const double stationLatitude{44.7508};
+    const double stationLongitude{-111.1962};
+    const double nChannelAzimuth{0};
+    const double eChannelAzimuth{90};
+    const int64_t evid{60000622};
+    const double eventLatitude{44.7645};
+    const double eventLongitude{-111.088};
+    const double eventDepth{7.69};
+    double samplingRate{100};
+    const std::string velocityUnits{"DU/M/S"};
+    const double velocitySimpleResponse{466228912.415855};
+    const double arrivalTimeRelativeToStart{32.53978109359741};
+
+    std::vector<double> nSignal, eSignal;
+    readSeismograms("data/wy_yhb_hhn_hhe_01_60000622.txt", &nSignal, &eSignal);
+
+    Channel northChannel;
+    northChannel.setNetworkCode(network);
+    northChannel.setStationCode(station);
+    northChannel.setChannelCode("HHZ");
+    northChannel.setLocationCode(locationCode);
+    northChannel.setSamplingRate(samplingRate);
+    northChannel.setLatitude(stationLatitude);
+    northChannel.setLongitude(stationLongitude);
+    northChannel.setSimpleResponse(velocitySimpleResponse, velocityUnits);
+    northChannel.setAzimuth(nChannelAzimuth);
+
+    Channel eastChannel(northChannel);
+    eastChannel.setAzimuth(eChannelAzimuth);
+
+    Hypocenter hypo;
+    hypo.setLatitude(eventLatitude);
+    hypo.setLongitude(eventLongitude);
+    hypo.setDepth(eventDepth);
+    hypo.setEventIdentifier(evid);
+
+    SFeatures features;
+    EXPECT_NO_THROW(features.initialize(northChannel, eastChannel));
+    EXPECT_NO_THROW(features.setHypocenter(hypo));
+    EXPECT_TRUE(features.isInitialized());
+    EXPECT_NO_THROW(features.process(nSignal, eSignal, arrivalTimeRelativeToStart));
+    auto rSignal = features.getRadialVelocitySignal();
+    auto tSignal = features.getTransverseVelocitySignal();
+
+auto ofl = std::ofstream("rt.txt");
+for (int i = 0; i < rSignal.size(); ++i)
+{
+ ofl << i*0.01 << " " << rSignal[i] << " " << tSignal[i] << std::endl;
+}
+ofl.close();
+
 }
 
 }

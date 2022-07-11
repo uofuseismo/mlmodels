@@ -310,11 +310,11 @@ public:
     {
         return pImpl->isInitialized();
     } 
-    void setHypocenter(const Hypocenter &hypo)
+    void setHypocenter(const ::Hypocenter &hypo)
     {
         pImpl->setHypocenter(*hypo.pImpl);
     }
-    Hypocenter getHypocenter() const
+    ::Hypocenter getHypocenter() const
     {
         Hypocenter hypo(pImpl->getHypocenter());
         return hypo;
@@ -335,22 +335,22 @@ public:
     {
         return pImpl->getBackAzimuth();
     }
-    TemporalFeatures getTemporalNoiseFeatures() const
+    ::TemporalFeatures getTemporalNoiseFeatures() const
     {
         auto features = pImpl->getTemporalNoiseFeatures();
         return TemporalFeatures(features);
     }
-    TemporalFeatures getTemporalSignalFeatures() const
+    ::TemporalFeatures getTemporalSignalFeatures() const
     {
         auto features = pImpl->getTemporalSignalFeatures();
         return TemporalFeatures(features);
     }
-    SpectralFeatures getSpectralNoiseFeatures() const
+    ::SpectralFeatures getSpectralNoiseFeatures() const
     {   
         auto features = pImpl->getSpectralNoiseFeatures();
         return SpectralFeatures(features);
     }   
-    SpectralFeatures getSpectralSignalFeatures() const
+    ::SpectralFeatures getSpectralSignalFeatures() const
     {   
         auto features = pImpl->getSpectralSignalFeatures();
         return SpectralFeatures(features);
@@ -391,11 +391,11 @@ public:
     {
         return pImpl->isInitialized();
     }
-    void setHypocenter(const Hypocenter &hypo)
+    void setHypocenter(const ::Hypocenter &hypo)
     {
         pImpl->setHypocenter(*hypo.pImpl);
     }
-    Hypocenter getHypocenter() const
+    ::Hypocenter getHypocenter() const
     {
         Hypocenter hypo(pImpl->getHypocenter());
         return hypo;
@@ -452,42 +452,42 @@ std::cout << "process: " << n.size() << " " << e.size() << std::endl;
     {   
         return pImpl->getBackAzimuth();
     }
-    TemporalFeatures getRadialTemporalNoiseFeatures() const
+    ::TemporalFeatures getRadialTemporalNoiseFeatures() const
     {
         auto features = pImpl->getRadialTemporalNoiseFeatures();
         return TemporalFeatures(features);
     }
-    TemporalFeatures getRadialTemporalSignalFeatures() const
+    ::TemporalFeatures getRadialTemporalSignalFeatures() const
     {   
         auto features = pImpl->getRadialTemporalSignalFeatures();
         return TemporalFeatures(features);
     }   
-    SpectralFeatures getRadialSpectralNoiseFeatures() const
+    ::SpectralFeatures getRadialSpectralNoiseFeatures() const
     {   
         auto features = pImpl->getRadialSpectralNoiseFeatures();
         return SpectralFeatures(features);
     }   
-    SpectralFeatures getRadialSpectralSignalFeatures() const
+    ::SpectralFeatures getRadialSpectralSignalFeatures() const
     {   
         auto features = pImpl->getRadialSpectralSignalFeatures();
         return SpectralFeatures(features);
     }
-    TemporalFeatures getTransverseTemporalNoiseFeatures() const
+    ::TemporalFeatures getTransverseTemporalNoiseFeatures() const
     {   
         auto features = pImpl->getTransverseTemporalNoiseFeatures();
         return TemporalFeatures(features);
     }   
-    TemporalFeatures getTransverseTemporalSignalFeatures() const
+    ::TemporalFeatures getTransverseTemporalSignalFeatures() const
     {   
         auto features = pImpl->getTransverseTemporalSignalFeatures();
         return TemporalFeatures(features);
     }   
-    SpectralFeatures getTransverseSpectralNoiseFeatures() const
+    ::SpectralFeatures getTransverseSpectralNoiseFeatures() const
     {   
         auto features = pImpl->getTransverseSpectralNoiseFeatures();
         return SpectralFeatures(features);
     }   
-    SpectralFeatures getTransverseSpectralSignalFeatures() const
+    ::SpectralFeatures getTransverseSpectralSignalFeatures() const
     {   
         auto features = pImpl->getTransverseSpectralSignalFeatures();
         return SpectralFeatures(features);

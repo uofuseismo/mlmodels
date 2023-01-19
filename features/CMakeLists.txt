@@ -5,8 +5,10 @@ enable_testing()
 find_package(GTest REQUIRED)
 set(FindRTSeis_DIR ${CMAKE_SOURCE_DIR}/cmake)
 set(FindGeographicLib_DIR ${CMAKE_SOURCE_DIR}/cmake)
+set(FindSolarCalculator_DIR ${CMAKE_SOURCE_DIR}/cmake)
 find_package(FindRTSeis REQUIRED)
 find_package(FindGeographicLib REQUIRED)
+find_package(FindSolarCalculator REQUIRED)
 
 # Versioning information
 configure_file(${CMAKE_SOURCE_DIR}/include/private/version.hpp.in

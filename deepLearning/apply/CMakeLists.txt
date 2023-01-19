@@ -6,6 +6,8 @@ enable_testing()
 #                    Define the compiler standard and requisites                         #
 ##########################################################################################
 include(CheckCXXCompilerFlag)
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 include(FindOpenMP)
@@ -18,6 +20,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
 find_package(Torch REQUIRED)
 find_package(GTest REQUIRED)
+find_package(OpenVINO CONFIG COMPONENTS Runtime)
+if (${OpenVINO_Runtime_FOUND})
+   message("OpenVINO runtime found")
+endif()
 
 configure_file(${CMAKE_SOURCE_DIR}/include/private/version.hpp.in
                ${CMAKE_SOURCE_DIR}/include/uuss/version.hpp)
@@ -25,12 +31,12 @@ set(PUBLIC_HEADER_DIRECTORIES
     include/uuss)
 set(PRIVATE_HEADER_DIRECTORIES
     includeprivate)
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${RTSEIS_INCLUDE_DIR}
-    ${HDF5_INCLUDE_DIR}
-    ${TORCH_INCLUDE_DIRS}
-)
+#include_directories(
+#    ${CMAKE_CURRENT_SOURCE_DIR}/include
+#    ${RTSEIS_INCLUDE_DIR}
+#    ${HDF5_INCLUDE_DIR}
+#    ${TORCH_INCLUDE_DIRS}
+#)
 
 if (WRAP_PYTHON)
    find_package(PythonInterp 3)
@@ -123,11 +129,20 @@ set_target_properties(uussmlmodels PROPERTIES
                       CXX_STANDARD 20
                       CXX_STANDARD_REQUIRED YES
                       CXX_EXTENSIONS NO)
-target_include_directories(uussmlmodels PUBLIC ${PUBLIC_HEADER_FILES})
-target_include_directories(uussmlmodels PRIVATE ${PRIVATE_HEADER_FILES})
+target_include_directories(uussmlmodels
+                           PRIVATE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include/private>
+                           PRIVATE ${RTSEIS_INCLUDE_DIR} ${TORCH_INCLUDE_DIRS} ${HDF5_INCLUDE_DIR}
+                           PUBLIC  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>)
+#                           PUBLIC ${PUBLIC_HEADER_FILES}
+#                           PRIVATE ${PRIVATE_HEADER_FILES})
 if (OpenMP_CXX_FOUND)
-    target_link_libraries(uussmlmodels PUBLIC OpenMP::OpenMP_CXX)
+   target_link_libraries(uussmlmodels PUBLIC OpenMP::OpenMP_CXX)
 endif()
+if (${OpenVINO_Runtime_FOUND})
+   target_include_directories(uussmlmodels PRIVATE openvino::runtime)
+   target_link_libraries(uussmlmodels PRIVATE openvino::runtime)
+endif()
+
 
 # Python
 if (WRAP_PYTHON)
@@ -146,6 +161,7 @@ if (WRAP_PYTHON)
                          CXX_STANDARD_REQUIRED YES 
                          CXX_EXTENSIONS NO) 
    target_include_directories(pyuussmlmodels PRIVATE pybind11
+                              ${CMAKE_SOURCE_DIR}/include
                               ${CMAKE_SOURCE_DIR}/python)
 endif()
 
@@ -160,7 +176,8 @@ add_executable(unitTests
 target_link_libraries(unitTests PRIVATE uussmlmodels ${TORCH_LIBRARIES} ${GTEST_BOTH_LIBRARIES})
 #${RTSEIS_LIBRARY} ${HDF5_LIBRARIES} ${TORCH_LIBRARIES}
 #                                  ${GTEST_BOTH_LIBRARIES})
-target_include_directories(unitTests PRIVATE ${GTEST_INCLUDE_DIRS})
+target_include_directories(unitTests
+                           PRIVATE ${CMAKE_SOURCE_DIR}/include ${GTEST_INCLUDE_DIRS})
 set_target_properties(unitTests PROPERTIES
                       CXX_STANDARD 20
                       CXX_STANDARD_REQUIRED YES

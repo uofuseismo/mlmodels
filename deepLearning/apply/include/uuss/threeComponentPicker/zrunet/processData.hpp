@@ -74,7 +74,7 @@ public:
                                       double samplingPeriod);
 
     /// @result The sampling period of the processed signals.
-    [[nodiscard]] double getTargetSamplingPeriod() const noexcept;
+    [[nodiscard]] static double getTargetSamplingPeriod() noexcept;
 
     ProcessData(const ProcessData &p) = delete;
     ProcessData& operator=(const ProcessData &p) = delete;

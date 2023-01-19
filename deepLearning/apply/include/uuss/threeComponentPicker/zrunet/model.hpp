@@ -1,5 +1,5 @@
-#ifndef UUSS_THREECOMPONENTPICKER_ZRUNET_MODEL_HPP
-#define UUSS_THREECOMPONENTPICKER_ZRUNET_MODEL_HPP
+#ifndef UUSS_THREE_COMPONENT_PICKER_ZRUNET_MODEL_HPP
+#define UUSS_THREE_COMPONENT_PICKER_ZRUNET_MODEL_HPP
 #include <memory>
 #include "uuss/enums.hpp"
 // Forward declarations
@@ -16,6 +16,7 @@ class Model
 public:
     /// @name Constructors
     /// @{
+
     /// @brief Constructor.
     Model();
     /// @brief Move constructor.
@@ -26,11 +27,14 @@ public:
 
     /// @name Operators
     /// @{
+
+    /// @brief Move assignment.
     Model& operator=(Model &&model) noexcept;
     /// @}
 
     /// @name Destructors
     /// @{
+
     /// @brief Destructor.
     ~Model();
     /// @}
@@ -70,12 +74,13 @@ public:
 
     /// @name Inference
     /// @{
+
     /// @brief Predicts the posterior probabilites on a seismogram.
     /// @param[in] nSamples          The numer of samples in the traces.  This
     ///                              must be greater than nSamplesInWindow.
     /// @param[in] nSamplesInWindow  The number of samples in the classification
     ///                              window.  For example, if this is 1008 then
-    ///                              that is the number of points in teh window
+    ///                              that is the number of points in the window
     ///                              fed to the neural network.  This must be at
     ///                              least \c getMinimumSeismogramLength() but
     ///                              cannot exceed nSamples.

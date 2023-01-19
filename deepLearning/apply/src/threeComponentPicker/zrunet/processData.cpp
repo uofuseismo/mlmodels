@@ -3,6 +3,8 @@
 #include <rtseis/postProcessing/singleChannel/waveform.hpp>
 #include "uuss/threeComponentPicker/zrunet/processData.hpp"
 
+#define TARGET_SAMPLING_PERIOD 0.01
+
 using namespace UUSS::ThreeComponentPicker::ZRUNet;
 
 class ProcessData::ProcessDataImpl
@@ -11,7 +13,7 @@ public:
     /// Holds the data processing waveform
     RTSeis::PostProcessing::SingleChannel::Waveform<double> mWave;
     /// Anticipating 100 Hz sampling rate
-    double mTargetSamplingPeriod = 0.01;
+    double mTargetSamplingPeriod = TARGET_SAMPLING_PERIOD;
     /// Remove trend
     bool mRemoveTrend = true;
     /// Taper the data prior to filtering
@@ -157,9 +159,9 @@ void ProcessData::processWaveform(
 }
 
 /// Get sampling period
-double ProcessData::getTargetSamplingPeriod() const noexcept
+double ProcessData::getTargetSamplingPeriod() noexcept
 {
-    return pImpl->mTargetSamplingPeriod;
+    return TARGET_SAMPLING_PERIOD;
 }
 
 ///--------------------------------------------------------------------------///

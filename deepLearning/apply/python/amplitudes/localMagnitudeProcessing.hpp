@@ -2,6 +2,7 @@
 #define PUUSSMLMODEL_AMPLITUDES_LOCALMAGNITUDEPROCESSING_HPP
 #include <memory>
 #include <pybind11/pybind11.h>
+#include <pybind11/numpy.h>
 // Forward declarations
 namespace UUSS::Amplitudes
 {
@@ -18,10 +19,11 @@ public:
     ~LocalMagnitudeProcessing();
     /// Preprocess the input waveform.
     [[nodiscard]]
-    std::vector<double> processWaveform(const bool isVelocity, //std::string &channel,
-                                        const double gain,
+    std::vector<double> processWaveform(bool isVelocity, //std::string &channel,
+                                        double gain,
+    //pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &z, 
                                         const std::vector<double> &x, 
-                                        const double samplingPeriod = 0.01);
+                                        double samplingPeriod = 0.01);
     [[nodiscard]]
     std::vector<int> computeMinMaxSignal(const std::vector<double> &x);
     /// @result The target sampling period in seconds.

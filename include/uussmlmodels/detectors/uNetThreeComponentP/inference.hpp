@@ -15,13 +15,22 @@ public:
     {
         ONNX = 0 /*!< ONNX model format for use with OpenVINO. */
     };
+    /// @brief Defines the device the inference should be performed on.
+    enum Device
+    {
+        CPU = 0, /*!< Perform inference on the CPU. */
+        GPU = 1, /*!< Perform inference on the GPU.  If this device is not
+                      available then the CPU will be used. */
+    };
 public:
     /// @brief Constructors
     /// @{
 
     /// @brief Constructor.
     Inference();
-    
+    /// @brief Constructor where inference will be performed on a
+    ///        desired device.
+    explicit Inference(const Device device);
     /// @}
 
     /// @name Initialization
@@ -44,6 +53,12 @@ public:
     [[nodiscard]] static double getSamplingRate() noexcept;
     /// @brief The minimum signal length on which to perform inference.
     [[nodiscard]] static int getMinimumSignalLength() noexcept;
+    /// @brief Checks if the seismogram is a valid length.  Nominally, this
+    ///        means that the seismogram length is the requisite minimum
+    ///        length (\c getMinimumSeismogramLength()) and is divisible by 16.
+    /// @param[in] nSamples   The number of samples.
+    /// @result True indicates that the seismogram length is valid.
+    [[nodiscard]] bool isValidSignalLength(int nSamples) const noexcept;
     /// @}
 
     /// @name Model Evaluation
@@ -53,7 +68,9 @@ public:
     ///        P arrival or being noise.
     /// @throws std::invalid_argument if \c isValidSignalLength() is false.
     /// @throws std::runtime_error if \c isInitialized() is false.
-    std::vector<float> predictProbability(const std::vector<float> &signal) const;
+    std::vector<float> predictProbability(const std::vector<float> &vertical,
+                                          const std::vector<float> &north,
+                                          const std::vector<float> &east) const;
     /// @}
 
     /// @name Destructors

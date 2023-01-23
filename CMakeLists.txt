@@ -5,7 +5,9 @@ enable_testing()
 set(BUILD_SHARED_LIBS YES)
 include(CheckCXXCompilerFlag)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+message("Module paths: " ${CMAKE_MODULE_PATH})
 find_package(GTest REQUIRED)
+find_package(RTSeis REQUIRED)
 find_package(Torch)
 find_package(OpenVINO CONFIG COMPONENTS Runtime)
 if (${TORCH_FOUND})
@@ -19,34 +21,64 @@ if (${OpenVINO_Runtime_FOUND})
 endif()
 
 set(PUBLIC_HEADERS
-    ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentP/inference/inference.hpp)
+    ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentP/inference.hpp
+    ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentP/preprocessing.hpp)
 set(INFERENCE_SRC
-   ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentP/inference/inference.cpp)
+   ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentP/inference/inference.cpp
+   ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentP/preprocessing/preprocessing.cpp)
 
 add_library(uussmlmodels ${INFERENCE_SRC})
 set_target_properties(uussmlmodels PROPERTIES
                       CXX_STANDARD 20
                       CXX_STANDARD_REQUIRED YES 
-                      CXX_EXTENSIONS NO) 
+                      CXX_EXTENSIONS NO)
 target_include_directories(uussmlmodels
-                           PUBLIC  $<BUILD_INTERFACE:${PUBLIC_HEADERS}>
-                           PUBLIC  $<INSTALL_INTERFACE:${PUBLIC_HEADERS}>
-                           PRIVATE ${RTSEIS_INCLUDE_DIR})
-target_link_libraries(uussmlmodels PRIVATE ${RTSEIS_LIBRARY})
+                           PRIVATE ${RTSeis_INCLUDE_DIR}
+                           PRIVATE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
+                           PUBLIC  $<INSTALL_INTERFACE:include>)
+target_link_libraries(uussmlmodels INTERFACE ${RTSeis_LIBRARY})
 if (${OpenVINO_Runtime_FOUND})
    target_include_directories(uussmlmodels PRIVATE openvino::runtime)
    target_link_libraries(uussmlmodels PRIVATE openvino::runtime)
 endif()
 if (${TORCH_FOUND})
-   target_include_directories(uussmlmodels PRIVATE ${TORCH_INDLUE_DIRS})
-   target_link_libraries(uussmlmodels PRIVATE ${TORCH_LIBRARIES})
+   target_include_directories(uussmlmodels PRIVATE ${TORCH_INDLUDE_DIRS})
+   target_link_libraries(uussmlmodels INTERFACE ${TORCH_LIBRARIES})
 endif()
+
+##########################################################################################
+#                                           Testing                                      #
+##########################################################################################
+file(COPY ${CMAKE_SOURCE_DIR}/testing/data DESTINATION .)
+set(TEST_SRC
+    testing/main.cpp
+    testing/detectors/uNetThreeComponentP.cpp)
+add_executable(unitTests ${TEST_SRC})
+set_target_properties(unitTests PROPERTIES
+                      CXX_STANDARD 20
+                      CXX_STANDARD_REQUIRED YES 
+                      CXX_EXTENSIONS NO) 
+target_link_libraries(unitTests PRIVATE uussmlmodels ${GTEST_BOTH_LIBRARIES})
+if (${OpenVINO_Runtime_FOUND})
+   target_link_libraries(unitTests PRIVATE openvino::runtime)
+endif()
+if (${TORCH_FOUND})
+   target_link_libraries(unitTests PRIVATE ${TORCH_LIBRARIES})
+endif()
+
+target_include_directories(unitTests
+                           PRIVATE ${CMAKE_SOURCE_DIR}/include ${GTEST_INCLUDE_DIRS})
+add_test(NAME unitTests
+         COMMAND unitTests)
 
 ##########################################################################################
 #                                         Installation                                   #
 ##########################################################################################
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
+configure_package_config_file(
+    cmake/UUSSMLModelsConfig.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
+    INSTALL_DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}")
 write_basic_package_version_file(
     "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
     VERSION "${version}"
@@ -55,24 +87,34 @@ write_basic_package_version_file(
 if (WRAP_PYTHON)
    message("add python result")
    install(TARGETS uussmlmodels
-           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/urts
-           LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-           PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+           EXPORT ${PROJECT_NAME}-targets
+           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+           LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+           ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+           INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+           PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+           COMPONENT Runtime)
 else()
    install(TARGETS uussmlmodels
-           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}/urts
-           LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-           ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-           PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+           EXPORT ${PROJECT_NAME}-targets
+           RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+           LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+           ARCHIVE  DESTINATION ${CMAKE_INSTALL_LIBDIR}
+           INCLUDES DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+           PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+           COMPONENT Runtime)
 endif()
-#install(DIRECTORY ${PUBLIC_HEADERS}
-#        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
-#install(FILES
-#        #"${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake"
-#        "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
-#        DESTINATION "${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME}"
-#        COMPONENT ${PROJECT_NAME})
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/include/uussmlmodels
+        DESTINATION ${CMAKE_INSTALL_INCLUDEDIR})
+export(EXPORT ${PROJECT_NAME}-targets
+       FILE "${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Targets.cmake")
+install(EXPORT ${PROJECT_NAME}-targets
+        FILE ${PROJECT_NAME}Targets.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+install(FILES
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
+        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
 ##########################################################################################
 #                                     CPACK Packaging                                    #
 ##########################################################################################

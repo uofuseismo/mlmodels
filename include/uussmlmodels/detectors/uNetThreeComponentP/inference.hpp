@@ -51,8 +51,12 @@ public:
     /// @brief The sampling rate of the input signal to inference and output
     ///        probability signal in Hz.
     [[nodiscard]] static double getSamplingRate() noexcept;
-    /// @brief The minimum signal length on which to perform inference.
+    /// @result The minimum signal length on which to perform inference.
+    /// @note This is the number of samples in a single example.
     [[nodiscard]] static int getMinimumSignalLength() noexcept;
+    /// @result The expected number of samples in a waveform.  This is
+    ///         consistent with the length of the training examples.
+    [[nodiscard]] static int getExpectedSignalLength() noexcept;
     /// @brief Checks if the seismogram is a valid length.  Nominally, this
     ///        means that the seismogram length is the requisite minimum
     ///        length (\c getMinimumSeismogramLength()) and is divisible by 16.

@@ -1,5 +1,6 @@
 #ifndef UTILITIES_HPP
 #define UTILITIES_HPP
+#include <iostream>
 #include <numeric>
 #include <algorithm>
 #include <limits>
@@ -29,33 +30,36 @@ void rescaleAndCopy(const size_t n,
     if (eMax > eps)
     {
         auto xnorm = static_cast<T> (1.0/static_cast<double> (eMax));
-        std::transform(east, east + n, tensor,
+        std::transform(east, east + n,
+                       tensor + 0*n,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
     }
     else
     {
-        std::fill(tensor, tensor + n, 0);
+        std::fill(tensor + 0*n, tensor + 1*n, 0);
     }
 
     auto nMax = ::getMaxAbs(n, north);
     if (nMax > eps)
     {
         auto xnorm = static_cast<T> (1.0/static_cast<double> (nMax));
-        std::transform(north, north + n, tensor + n,
+        std::transform(north, north + n,
+                       tensor + 1*n,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
     }
     else
     {
-        std::fill(tensor + n, tensor + 2*n, 0);
+        std::fill(tensor + 1*n, tensor + 2*n, 0);
     }
 
     auto zMax = ::getMaxAbs(n, vertical);
     if (zMax > eps)
     {
         auto xnorm = static_cast<T> (1.0/static_cast<double> (zMax));
-        std::transform(vertical, vertical + n, tensor + 2*n,
+        std::transform(vertical, vertical + n,
+                       tensor + 2*n,
                        std::bind(std::multiplies<T>(),
                        std::placeholders::_1, xnorm));
     }

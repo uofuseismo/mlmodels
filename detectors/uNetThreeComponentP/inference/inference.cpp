@@ -42,6 +42,12 @@ int Inference::getMinimumSignalLength() noexcept
     return MINIMUM_SIGNAL_LENGTH;
 }
 
+/// Expected signal length
+int Inference::getExpectedSignalLength() noexcept
+{
+    return MINIMUM_SIGNAL_LENGTH;
+}
+
 /// Valid?
 bool Inference::isValidSignalLength(const int nSamples) const noexcept
 {

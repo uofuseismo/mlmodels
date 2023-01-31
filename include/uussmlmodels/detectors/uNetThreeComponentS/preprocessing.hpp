@@ -1,11 +1,11 @@
-#ifndef UUSS_DETECTORS_UNET_THREE_COMPONENT_P_PREPROCESSING_HPP
-#define UUSS_DETECTORS_UNET_THREE_COMPONENT_P_PREPROCESSING_HPP
+#ifndef UUSS_DETECTORS_UNET_THREE_COMPONENT_S_PREPROCESSING_HPP
+#define UUSS_DETECTORS_UNET_THREE_COMPONENT_S_PREPROCESSING_HPP
 #include <tuple>
 #include <vector>
 #include <memory>
-namespace UUSSMLModels::Detectors::UNetThreeComponentP
+namespace UUSSMLModels::Detectors::UNetThreeComponentS
 {
-/// @class Preprocessing "preprocessing.hpp" "models/detectors/uNetThreeComponentP/preprocessing.hpp"
+/// @class Preprocessing "preprocessing.hpp" "models/detectors/uNetThreeComponentS/preprocessing.hpp"
 /// @brief Performs the waveform pre-processing.
 /// @copyright Ben Baker (University of Utah) distributed under the MIT license.
 class Preprocessing

@@ -1,10 +1,10 @@
-#ifndef UUSS_DETECTORS_UNET_THREE_COMPONENT_P_INFERENCE_HPP
-#define UUSS_DETECTORS_UNET_THREE_COMPONENT_P_INFERENCE_HPP
+#ifndef UUSS_DETECTORS_UNET_THREE_COMPONENT_S_INFERENCE_HPP
+#define UUSS_DETECTORS_UNET_THREE_COMPONENT_S_INFERENCE_HPP
 #include <vector>
 #include <memory>
-namespace UUSSMLModels::Detectors::UNetThreeComponentP
+namespace UUSSMLModels::Detectors::UNetThreeComponentS
 {
-/// @class Inference "inference.hpp" "models/detectors/uNetThreeComponentP/inference.hpp"
+/// @class Inference "inference.hpp" "models/detectors/uNetThreeComponentS/inference.hpp"
 /// @brief Performs model inference.
 /// @copyright Ben Baker (University of Utah) distributed under the MIT license.
 class Inference
@@ -18,9 +18,7 @@ public:
     /// @brief Defines the device the inference should be performed on.
     enum Device
     {
-        CPU = 0, /*!< Perform inference on the CPU. */
-        GPU = 1  /*!< Perform inference on the GPU.
-                      If this device is not available then the CPU will be used. */
+        CPU = 0 /*!< Perform inference on the CPU. */
     };
 public:
     /// @brief Constructors
@@ -69,11 +67,11 @@ public:
     /// @{
 
     /// @brief Predicts the probability of a sample corresponding to a
-    ///        P arrival (1) or being noise (0).
+    ///        S arrival (1) or being noise (0).
     /// @param[in] vertical  The preprocessed signal on the vertical channel.
     /// @param[in] north     The preprocessed signal on the north channel.
     /// @param[in] east      The preprocessed signal on the east channel.
-    /// @result The probability of the a sample corresponding to a P wave.
+    /// @result The probability of the a sample corresponding to a S wave.
     /// @throws std::invalid_argument if the signal length is not equal
     ///         to \c getExpectedSignalLength() or any signals have an
     ///         inconsistent size.
@@ -83,7 +81,7 @@ public:
                                       const std::vector<U> &north,
                                       const std::vector<U> &east) const;
     /// @brief Predicts the probability of a sample corresponding to a 
-    ///        P arrival.  This uses a 500-sample sliding window that overlaps
+    ///        S arrival.  This uses a 500-sample sliding window that overlaps
     ///        with subsequent windows.
     /// @param[in] vertical  The preprocessed signal on the vertical channel.
     /// @param[in] north     The preprocessed signal on the north channel.

@@ -22,10 +22,14 @@ endif()
 
 set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentP/inference.hpp
-    ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentP/preprocessing.hpp)
+    ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentP/preprocessing.hpp
+    ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentS/inference.hpp
+    ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentS/preprocessing.hpp)
 set(INFERENCE_SRC
    ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentP/inference/inference.cpp
-   ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentP/preprocessing/preprocessing.cpp)
+   ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentP/preprocessing/preprocessing.cpp
+   ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentS/inference/inference.cpp
+   ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentS/preprocessing/preprocessing.cpp)
 
 add_library(uussmlmodels ${INFERENCE_SRC})
 set_target_properties(uussmlmodels PROPERTIES
@@ -36,7 +40,7 @@ target_include_directories(uussmlmodels
                            PRIVATE ${RTSeis_INCLUDE_DIR}
                            PRIVATE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
                            PUBLIC  $<INSTALL_INTERFACE:include>)
-target_link_libraries(uussmlmodels INTERFACE ${RTSeis_LIBRARY})
+target_link_libraries(uussmlmodels PRIVATE ${RTSeis_LIBRARY})
 if (${OpenVINO_Runtime_FOUND})
    target_include_directories(uussmlmodels PRIVATE openvino::runtime)
    target_link_libraries(uussmlmodels PRIVATE openvino::runtime)

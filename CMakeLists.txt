@@ -56,7 +56,8 @@ endif()
 file(COPY ${CMAKE_SOURCE_DIR}/testing/data DESTINATION .)
 set(TEST_SRC
     testing/main.cpp
-    testing/detectors/uNetThreeComponentP.cpp)
+    testing/detectors/uNetThreeComponentP.cpp
+    testing/detectors/uNetThreeComponentS.cpp)
 add_executable(unitTests ${TEST_SRC})
 set_target_properties(unitTests PROPERTIES
                       CXX_STANDARD 20

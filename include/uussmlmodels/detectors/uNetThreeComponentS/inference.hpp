@@ -18,7 +18,9 @@ public:
     /// @brief Defines the device the inference should be performed on.
     enum Device
     {
-        CPU = 0 /*!< Perform inference on the CPU. */
+        CPU = 0, /*!< Perform inference on the CPU. */
+        GPU = 1  /*!< Perform inference on the GPU.
+                      If this device is not available then the CPU will be used. */
     };
 public:
     /// @brief Constructors

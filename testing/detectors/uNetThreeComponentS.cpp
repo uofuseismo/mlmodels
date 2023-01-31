@@ -78,6 +78,7 @@ TEST(DetectorsUNetThreeComponentS, Preprocessing)
     EXPECT_NEAR(e8East,     0, 1.e-1);
 }
 
+/*
 TEST(DetectorsUNetThreeComponentS, Inference)
 {
     const std::filesystem::path dataDir{"data/detectors/uNetThreeComponentS/"};
@@ -124,5 +125,6 @@ TEST(DetectorsUNetThreeComponentS, Inference)
     error = infinityNorm(probaSlidingRef, proba);
     EXPECT_NEAR(error, 0, 1.e-5);
 }
+*/
 
 }

@@ -17,6 +17,11 @@ using namespace UUSSMLModels::Detectors::UNetThreeComponentP;
 class Inference::InferenceImpl
 {
 public:
+    /// Constructor
+    explicit InferenceImpl(const Inference::Device device) :
+        mOpenVINO(device)
+    {
+    }
     OpenVINOImpl mOpenVINO;   
     bool mUseOpenVINO{false};
     bool mInitialized{false};
@@ -24,7 +29,13 @@ public:
 
 /// Constructor
 Inference::Inference() :
-    pImpl(std::make_unique<InferenceImpl> ())
+    Inference(Inference::Device::CPU)
+{
+}
+
+/// Constructor with given device
+Inference::Inference(const Inference::Device device) :
+    pImpl(std::make_unique<InferenceImpl> (device))
 {
 }
 

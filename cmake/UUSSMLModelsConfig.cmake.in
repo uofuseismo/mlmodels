@@ -1,0 +1,35 @@
+# UUSSMLModels cmake module
+#
+# The following import targets are created
+#
+# ::
+#
+#   libuussmlmodels-static
+#   libuussmlmodels
+#
+# This module sets the following variables in your project::
+#
+#   UUSSMLModels_FOUND - true if UUSSMLModels found on the system
+#   UUSSMLModels_INCLUDE_DIR - the directory containing UUSSMLModels headers
+#   UUSSMLModels_LIBRARY - 
+#   UUSSMLModels_STATIC_LIBRARY
+
+@PACKAGE_INIT@
+
+if(NOT TARGET uusmlmodels AND NOT TARGET uussmlmodels-static)
+  include("${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake")
+
+  if (TARGET uussmlmodels)
+    get_target_property(@PROJECT_NAME@_INCLUDE_DIR uussmlmodels INTERFACE_INCLUDE_DIRECTORIES)
+  else ()
+    get_target_property(@PROJECT_NAME@_INCLUDE_DIR uussmlmodels-static INTERFACE_INCLUDE_DIRECTORIES)
+  endif()
+
+  if (TARGET uussmlmodels)
+    get_target_property(@PROJECT_NAME@_LIBRARY uussmlmodels LOCATION)
+  endif()
+  if (TARGET uusmlmodels-static)
+    get_target_property(@PROJECT_NAME@_STATIC_LIBRARY uussmlmodels-static LOCATION)
+  endif()
+endif()
+

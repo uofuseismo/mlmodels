@@ -4,14 +4,14 @@
 #include <vector>
 #include <algorithm>
 #include <numeric>
-#include "uussmlmodels/detectors/uNetThreeComponentP/inference.hpp"
+#include "uussmlmodels/detectors/uNetOneComponentP/inference.hpp"
 #include "utilities.hpp"
 
 #define SAMPLING_RATE 100
 #define MINIMUM_SIGNAL_LENGTH 1008
 #define EXPECTED_SIGNAL_LENGTH 1008
 
-using namespace UUSSMLModels::Detectors::UNetThreeComponentP;
+using namespace UUSSMLModels::Detectors::UNetOneComponentP;
 #include "openvino.hpp"
 
 class Inference::InferenceImpl
@@ -96,15 +96,9 @@ bool Inference::isInitialized() const noexcept
 
 template<typename U>
 std::vector<U>
-    Inference::predictProbability(const std::vector<U> &vertical,
-                                  const std::vector<U> &north,
-                                  const std::vector<U> &east) const
+Inference::predictProbability(const std::vector<U> &vertical) const
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
-    if (vertical.size() != north.size() || vertical.size() != east.size())
-    {
-        throw std::invalid_argument("Inconsistent signal sizes");
-    }
     if (static_cast<int> (vertical.size()) != getExpectedSignalLength())
     {
         throw std::invalid_argument("Signal length must equal "
@@ -114,8 +108,7 @@ std::vector<U>
     if (pImpl->mUseOpenVINO)
     {
 #ifdef WITH_OPENVINO
-        pImpl->mOpenVINO.predictProbability(vertical, north, east,
-                                            &probabilitySignal);
+        pImpl->mOpenVINO.predictProbability(vertical, &probabilitySignal);
 #else
        throw std::runtime_error("Recompile with OpenVino");
 #endif
@@ -125,15 +118,10 @@ std::vector<U>
 
 template<typename U>
 std::vector<U>
-    Inference::predictProbabilitySlidingWindow(const std::vector<U> &vertical,
-                                               const std::vector<U> &north,
-                                               const std::vector<U> &east) const
+Inference::predictProbabilitySlidingWindow(
+    const std::vector<U> &vertical) const
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
-    if (vertical.size() != north.size() || vertical.size() != east.size())
-    {
-        throw std::invalid_argument("Inconsistent signal sizes");
-    }
     if (static_cast<int> (vertical.size()) < getExpectedSignalLength())
     {
         throw std::invalid_argument("Signal length must be at least "
@@ -148,7 +136,7 @@ std::vector<U>
     if (pImpl->mUseOpenVINO)
     {   
 #ifdef WITH_OPENVINO
-        pImpl->mOpenVINO.predictProbabilitySlidingWindow(vertical, north, east,
+        pImpl->mOpenVINO.predictProbabilitySlidingWindow(vertical,
                                                          &probabilitySignal,
                                                          windowStart,
                                                          windowEnd);
@@ -165,22 +153,14 @@ std::vector<U>
 ///                           Template Instantiation                         ///
 ///--------------------------------------------------------------------------///
 template std::vector<double>
-UUSSMLModels::Detectors::UNetThreeComponentP::Inference::predictProbability(
-    const std::vector<double> &,
-    const std::vector<double> &,
+UUSSMLModels::Detectors::UNetOneComponentP::Inference::predictProbability(
     const std::vector<double> &) const;
 template std::vector<float> 
-UUSSMLModels::Detectors::UNetThreeComponentP::Inference::predictProbability(
-    const std::vector<float> &,
-    const std::vector<float> &,
+UUSSMLModels::Detectors::UNetOneComponentP::Inference::predictProbability(
     const std::vector<float> &) const;
 template std::vector<double> 
-UUSSMLModels::Detectors::UNetThreeComponentP::Inference::predictProbabilitySlidingWindow(
-    const std::vector<double> &,
-    const std::vector<double> &,
+UUSSMLModels::Detectors::UNetOneComponentP::Inference::predictProbabilitySlidingWindow(
     const std::vector<double> &) const;
 template std::vector<float> 
-UUSSMLModels::Detectors::UNetThreeComponentP::Inference::predictProbabilitySlidingWindow(
-    const std::vector<float> &,
-    const std::vector<float> &,
+UUSSMLModels::Detectors::UNetOneComponentP::Inference::predictProbabilitySlidingWindow(
     const std::vector<float> &) const;

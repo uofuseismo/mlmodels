@@ -23,6 +23,19 @@ Inference::Inference() :
 /// Destructor
 Inference::~Inference() = default;
 
+/// Load the model weights
+void Inference::load(const std::string &fileName,
+                     const Inference::ModelFormat format)
+{
+    return pImpl->mInference.load(fileName);
+}
+
+/// Initialized?
+bool Inference::isInitialized() const noexcept
+{
+    return pImpl->mInference.isInitialized();
+}
+
 /// Sampling rate
 double Inference::getSamplingRate() noexcept
 { 
@@ -54,6 +67,7 @@ std::vector<U>
                                   const std::vector<U> &north,
                                   const std::vector<U> &east) const
 {
+    if (!isInitialized()){throw std::runtime_error("Class not initialized");}
     return pImpl->mInference.predictProbability(vertical, north, east);
 }
 
@@ -64,6 +78,7 @@ std::vector<U>
                                                const std::vector<U> &north,
                                                const std::vector<U> &east) const
 {
+    if (!isInitialized()){throw std::runtime_error("Class not initialized");}
     return pImpl->mInference.predictProbabilitySlidingWindow(vertical,
                                                              north,
                                                              east);

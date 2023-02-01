@@ -5,7 +5,7 @@
 namespace UUSSMLModels::Detectors::UNetThreeComponentP
 {
 /// @class Inference "inference.hpp" "models/detectors/uNetThreeComponentP/inference.hpp"
-/// @brief Performs model inference.
+/// @brief Performs model inference for the three-component P UNet detector.
 /// @copyright Ben Baker (University of Utah) distributed under the MIT license.
 class Inference
 {

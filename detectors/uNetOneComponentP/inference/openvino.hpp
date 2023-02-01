@@ -11,7 +11,8 @@ namespace
 class OpenVINOImpl
 {
 public:
-    OpenVINOImpl(const Inference::Device requestedDevice = Inference::Device::CPU)
+    explicit OpenVINOImpl(
+        const Inference::Device requestedDevice = Inference::Device::CPU)
     {
         auto availableDevices = mCore.get_available_devices();
         bool matchedDevice = false;
@@ -70,7 +71,7 @@ public:
             throw std::invalid_argument("Vertical is wrong size");
         }
         auto data = reinterpret_cast<float *> (mInputTensor.data());
-        ::rescaleAndCopy(EXPECTED_SIGNAL_LENGTH, vertical.data());
+        ::rescaleAndCopy(EXPECTED_SIGNAL_LENGTH, vertical.data(), data);
     }
     /// @brief Perform inference
     template<typename T>
@@ -78,7 +79,7 @@ public:
                             std::vector<T> *probability)
     {
         mInferenceRequest = mCompiledModel.create_infer_request();
-        setSignals(vertical);
+        setSignal(vertical);
         mInferenceRequest.set_input_tensor(mInputTensor);
         mInferenceRequest.infer();
         const auto &result = mInferenceRequest.get_output_tensor();  
@@ -93,7 +94,6 @@ public:
                                          const int windowStart = 254, // 1008/2 - 250
                                          const int windowEnd   = 754) // 1008/2 + 250
     {
-        constexpr int nComponents{1};
         auto batchSize = static_cast<int> (mBatchInputShape[0]);
         auto nSamples = static_cast<int> (vertical.size());
 #ifndef NDEBUG
@@ -103,6 +103,7 @@ public:
         auto batchData = reinterpret_cast<float *> (mBatchInputTensor.data());
         // We advance the window by the window size
         int windowSize = windowEnd - windowStart;
+        int lastCopy = 0;
         // Start the sliding window at iWindowStart
         for (int k = 0; k < nSamples; k = k + windowSize*batchSize)
         {
@@ -113,18 +114,18 @@ public:
                 // Extract the source signal from [i1:i2]
                 int i1 = k  + batch*windowSize;
                 int i2 = i1 + EXPECTED_SIGNAL_LENGTH;
-                int j1 = nComponents*batch*EXPECTED_SIGNAL_LENGTH;
-                //std::cout << i1 << " [" << i1 + windowStart << " " << i1 + windowEnd << "] " << i2 << " " << j1 << " " << std::endl;
+                int j1 = batch*EXPECTED_SIGNAL_LENGTH;
                 // Don't go out of bounds 
                 if (i2 > nSamples)
                 {
                     // Make sure mBatchInputTensor is filled with some value.
                     // We'll use zero but this will be ignored when we
                     // extract the probability signal.
-                    int j2 = nComponents*batchSize*EXPECTED_SIGNAL_LENGTH;
+                    int j2 = batchSize*EXPECTED_SIGNAL_LENGTH;
                     std::fill(batchData + j1, batchData + j2, 0);
                     break;
                 }
+                //std::cout << i1 << " [" << i1 + windowStart << " " << i1 + windowEnd << "] " << i2 << " " << j1 << " " << std::endl;
                 // Perform normalization
                 ::rescaleAndCopy(EXPECTED_SIGNAL_LENGTH,
                                  vertical.data() + i1,
@@ -140,28 +141,57 @@ public:
             auto pPtr = reinterpret_cast<const float *> (result.data());
             for (int window = 0; window < nWindows; ++window)
             {
-                // This is a hack -> basically we copy until the end then
-                // use overwrite the signal on the next iteration.  This
-                // allows the last window to stretch out.  Measuring the
-                // timing indicates the additional computational work
-                // is very small compared to the inference time. 
+                // Copy probabilities in the window into output vector
                 int i1 = window*EXPECTED_SIGNAL_LENGTH + windowStart;
-                int i2 = i1 + (EXPECTED_SIGNAL_LENGTH - windowStart); //windowSize;
+                int i2 = i1 + windowSize;//(EXPECTED_SIGNAL_LENGTH - windowStart); //windowSize;
                 int j1 = k + window*windowSize + windowStart;
-                // First window there's nothing to overwrite
+                // First window starts at 0 since there's nothing to overwrite
                 if (k == 0 && window == 0)
                 {
                     i1 = 0;
-                    i2 = EXPECTED_SIGNAL_LENGTH;
+                    i2 = windowStart + windowSize;
                     j1 = 0;
-                } 
+                }
 #ifndef NDEBUG
-                assert(j1 + (EXPECTED_SIGNAL_LEGNTH - windowStart) <= nSamples);
+                assert(j1 + (EXPECTED_SIGNAL_LENGTH - windowSize) <= nSamples);
 #endif
-                //std::cout << i1 << " " << i2 << " " << j1 << " " << j1 + (EXPECTED_SIGNAL_LENGTH - windowStart) << std::endl;
+                //std::cout << j1 << " " << j1 + (i2 - i1) << std::endl;
+                lastCopy = j1 + windowSize;
                 std::copy(pPtr + i1, pPtr + i2, probability->data() + j1);
             }
         }
+        // Do last window?  It's possible we already did it if j1 == nSamples
+        //std::cout << "LastCopy: " << lastCopy << std::endl;
+        int leftOverSignal = nSamples - lastCopy;
+        if (leftOverSignal > 0 && nSamples - EXPECTED_SIGNAL_LENGTH > 0)
+        {
+            // Just do inference on the last EXPECTED_SIGNAL_LENGTH segment
+            int i1 = nSamples - EXPECTED_SIGNAL_LENGTH; 
+            // Perform normalization
+            auto inputData = reinterpret_cast<float *> (mInputTensor.data());
+            ::rescaleAndCopy(EXPECTED_SIGNAL_LENGTH,
+                             vertical.data() + i1,
+                             inputData);
+            // Apply the model
+            mInferenceRequest = mCompiledModel.create_infer_request();
+            mInferenceRequest.set_input_tensor(mInputTensor);
+            mInferenceRequest.infer(); // Blocking
+            // Extract result
+            const auto &result = mInferenceRequest.get_output_tensor();
+            auto pPtr = reinterpret_cast<const float *> (result.data());
+            i1 = EXPECTED_SIGNAL_LENGTH - leftOverSignal;
+            int i2 = EXPECTED_SIGNAL_LENGTH;
+            int j1 = lastCopy;
+#ifndef NDEBUG
+            int j2 = nSamples;
+            assert(i1 >= 0);
+            assert(i2 - i1 == j2 - j1);
+            assert(i2 - i1 <= EXPECTED_SIGNAL_LENGTH);
+#endif
+            //std::cout << i1 << " " << i2 << " " << j1 << " " << nSamples << std::endl;
+            std::copy(pPtr + i1, pPtr + i2, probability->data() + j1);
+        }
+        
     }
 ///private:
     const ov::Shape mBatchInputShape{16, 1, EXPECTED_SIGNAL_LENGTH};

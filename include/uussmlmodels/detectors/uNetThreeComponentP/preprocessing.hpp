@@ -6,7 +6,8 @@
 namespace UUSSMLModels::Detectors::UNetThreeComponentP
 {
 /// @class Preprocessing "preprocessing.hpp" "models/detectors/uNetThreeComponentP/preprocessing.hpp"
-/// @brief Performs the waveform pre-processing.
+/// @brief Performs the waveform preprocessing for the three-component P
+///        detector.
 /// @copyright Ben Baker (University of Utah) distributed under the MIT license.
 class Preprocessing
 {
@@ -68,10 +69,6 @@ public:
     ///                            On exit, preprocess's behavior is undefined.
     /// @result The memory from preprocess moved to this.
     Preprocessing& operator=(Preprocessing &&preprocess) noexcept;
-    /// @}
-
-    /// @name Move assignment.
-    /// @br
     /// @}
 
     Preprocessing(const Preprocessing &) = delete;

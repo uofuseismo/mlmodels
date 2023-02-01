@@ -26,10 +26,12 @@ set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentS/inference.hpp
     ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentS/preprocessing.hpp)
 set(INFERENCE_SRC
-   ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentP/inference/inference.cpp
-   ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentP/preprocessing/preprocessing.cpp
-   ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentS/inference/inference.cpp
-   ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentS/preprocessing/preprocessing.cpp)
+    detectors/uNetOneComponentP/inference/inference.cpp
+    detectors/uNetOneComponentP/preprocessing/preprocessing.cpp
+    detectors/uNetThreeComponentP/inference/inference.cpp
+    detectors/uNetThreeComponentP/preprocessing/preprocessing.cpp
+    detectors/uNetThreeComponentS/inference/inference.cpp
+    detectors/uNetThreeComponentS/preprocessing/preprocessing.cpp)
 
 add_library(uussmlmodels ${INFERENCE_SRC})
 set_target_properties(uussmlmodels PROPERTIES
@@ -56,6 +58,7 @@ endif()
 file(COPY ${CMAKE_SOURCE_DIR}/testing/data DESTINATION .)
 set(TEST_SRC
     testing/main.cpp
+    testing/detectors/uNetOneComponentP.cpp 
     testing/detectors/uNetThreeComponentP.cpp
     testing/detectors/uNetThreeComponentS.cpp)
 add_executable(unitTests ${TEST_SRC})

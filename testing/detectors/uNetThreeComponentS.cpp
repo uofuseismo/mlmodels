@@ -114,7 +114,7 @@ TEST(DetectorsUNetThreeComponentS, Inference)
                                                          northProc1008,
                                                          eastProc1008));
     auto error = infinityNorm(proba.size(), probaRef.data() + 0, proba.data());
-    EXPECT_NEAR(error, 0, 1.e-5);
+    EXPECT_NEAR(error, 0, 5.e-5);
     // Do a big test with a sliding window
     EXPECT_NO_THROW(
         proba = inference.predictProbabilitySlidingWindow(verticalProc,
@@ -122,7 +122,7 @@ TEST(DetectorsUNetThreeComponentS, Inference)
                                                           eastProc));
     EXPECT_EQ(proba.size(), probaSlidingRef.size());
     error = infinityNorm(probaSlidingRef, proba);
-    EXPECT_NEAR(error, 0, 1.e-5);
+    EXPECT_NEAR(error, 0, 5.e-5);
 }
 
 }

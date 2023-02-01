@@ -239,7 +239,7 @@ public:
 };
 }
 #else
-class OpenVINO Impl
+class OpenVINOImpl
 {
 public:
 };

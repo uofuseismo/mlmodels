@@ -55,9 +55,9 @@ int Inference::getExpectedSignalLength() noexcept
 }
 
 /// Valid?
-bool Inference::isValidSignalLength(const int nSamples) const noexcept
+bool Inference::isValidSignalLength(const int nSamples) noexcept
 {
-    return pImpl->mInference.isValidSignalLength(nSamples);
+    return PModel::Inference::isValidSignalLength(nSamples);
 }
 
 /// Predict probability

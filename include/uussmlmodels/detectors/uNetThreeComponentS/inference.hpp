@@ -62,7 +62,7 @@ public:
     ///        length (\c getMinimumSeismogramLength()) and is divisible by 16.
     /// @param[in] nSamples   The number of samples.
     /// @result True indicates that the seismogram length is valid.
-    [[nodiscard]] bool isValidSignalLength(int nSamples) const noexcept;
+    [[nodiscard]] static bool isValidSignalLength(int nSamples) noexcept;
     /// @}
 
     /// @name Model Evaluation

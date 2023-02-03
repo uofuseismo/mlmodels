@@ -61,9 +61,9 @@ int Inference::getExpectedSignalLength() noexcept
 }
 
 /// Valid?
-bool Inference::isValidSignalLength(const int nSamples) const noexcept
+bool Inference::isValidSignalLength(const int nSamples) noexcept
 {
-    if (nSamples < getMinimumSignalLength()){return false;}
+    if (nSamples < Inference::getMinimumSignalLength()){return false;}
     if (nSamples%16 != 0){return false;}
     return true;
 }

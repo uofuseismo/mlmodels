@@ -123,6 +123,11 @@ install(FILES
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}Config.cmake
         ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake
         DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${PROJECT_NAME})
+install(FILES
+        ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentP/models/detectorsUNetThreeComponentP.onnx
+        ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentS/models/detectorsUNetThreeComponentS.onnx
+        ${CMAKE_SOURCE_DIR}/detectors/uNetOneComponentP/models/detectorsUNetOneComponentP.onnx
+        DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
 ##########################################################################################
 #                                     CPACK Packaging                                    #
 ##########################################################################################

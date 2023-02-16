@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(UUSSMLModels VERSION 0.1.0 LANGUAGES CXX)
+project(UUSSMLModels VERSION 0.1.0 LANGUAGES C CXX)
 enable_testing()
 
 set(BUILD_SHARED_LIBS YES)
@@ -8,6 +8,7 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 message("Module paths: " ${CMAKE_MODULE_PATH})
 find_package(GTest REQUIRED)
 find_package(RTSeis REQUIRED)
+find_package(HDF5 COMPONENTS C REQUIRED)
 find_package(Torch)
 find_package(OpenVINO CONFIG COMPONENTS Runtime)
 if (${TORCH_FOUND})
@@ -20,19 +21,26 @@ if (${OpenVINO_Runtime_FOUND})
    add_compile_definitions(WITH_OPENVINO)
 endif()
 
+configure_file(${CMAKE_SOURCE_DIR}/include/private/version.hpp.in
+               ${CMAKE_SOURCE_DIR}/include/uussmlmodels/version.hpp)
 set(PUBLIC_HEADERS
+    ${CMAKE_SOURCE_DIR}/include/uussmlmodels/version.hpp
     ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentP/inference.hpp
     ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentP/preprocessing.hpp
     ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentS/inference.hpp
-    ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentS/preprocessing.hpp)
+    ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetThreeComponentS/preprocessing.hpp
+    ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetOneComponentP/inference.hpp
+    ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetOneComponentP/preprocessing.hpp
+)
 set(INFERENCE_SRC
     detectors/uNetOneComponentP/inference/inference.cpp
     detectors/uNetOneComponentP/preprocessing/preprocessing.cpp
     detectors/uNetThreeComponentP/inference/inference.cpp
     detectors/uNetThreeComponentP/preprocessing/preprocessing.cpp
     detectors/uNetThreeComponentS/inference/inference.cpp
-    detectors/uNetThreeComponentS/preprocessing/preprocessing.cpp)
-
+    detectors/uNetThreeComponentS/preprocessing/preprocessing.cpp
+    include/private/h5io.hpp
+)
 add_library(uussmlmodels ${INFERENCE_SRC})
 set_target_properties(uussmlmodels PROPERTIES
                       CXX_STANDARD 20

@@ -39,6 +39,7 @@ set(INFERENCE_SRC
     detectors/uNetThreeComponentP/preprocessing/preprocessing.cpp
     detectors/uNetThreeComponentS/inference/inference.cpp
     detectors/uNetThreeComponentS/preprocessing/preprocessing.cpp
+    firstMotionClassifiers/cnnOneComponentP/inference/inference.cpp
     include/private/h5io.hpp
 )
 add_library(uussmlmodels ${INFERENCE_SRC})
@@ -47,10 +48,10 @@ set_target_properties(uussmlmodels PROPERTIES
                       CXX_STANDARD_REQUIRED YES 
                       CXX_EXTENSIONS NO)
 target_include_directories(uussmlmodels
-                           PRIVATE ${RTSeis_INCLUDE_DIR}
+                           PRIVATE ${RTSeis_INCLUDE_DIR} hdf5::hdf5
                            PRIVATE $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>
                            PUBLIC  $<INSTALL_INTERFACE:include>)
-target_link_libraries(uussmlmodels PRIVATE ${RTSeis_LIBRARY})
+target_link_libraries(uussmlmodels PRIVATE ${RTSeis_LIBRARY} hdf5::hdf5)
 if (${OpenVINO_Runtime_FOUND})
    target_include_directories(uussmlmodels PRIVATE openvino::runtime)
    target_link_libraries(uussmlmodels PRIVATE openvino::runtime)
@@ -66,6 +67,7 @@ endif()
 file(COPY ${CMAKE_SOURCE_DIR}/testing/data DESTINATION .)
 set(TEST_SRC
     testing/main.cpp
+    testing/firstMotionClassifiers/cnnOneComponentP.cpp
     testing/detectors/uNetOneComponentP.cpp 
     testing/detectors/uNetThreeComponentP.cpp
     testing/detectors/uNetThreeComponentS.cpp)

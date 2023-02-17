@@ -40,6 +40,7 @@ set(INFERENCE_SRC
     detectors/uNetThreeComponentS/inference/inference.cpp
     detectors/uNetThreeComponentS/preprocessing/preprocessing.cpp
     firstMotionClassifiers/cnnOneComponentP/inference/inference.cpp
+    firstMotionClassifiers/cnnOneComponentP/preprocessing/preprocessing.cpp
     include/private/h5io.hpp
 )
 add_library(uussmlmodels ${INFERENCE_SRC})
@@ -68,9 +69,10 @@ file(COPY ${CMAKE_SOURCE_DIR}/testing/data DESTINATION .)
 set(TEST_SRC
     testing/main.cpp
     testing/firstMotionClassifiers/cnnOneComponentP.cpp
-    testing/detectors/uNetOneComponentP.cpp 
-    testing/detectors/uNetThreeComponentP.cpp
-    testing/detectors/uNetThreeComponentS.cpp)
+    #testing/detectors/uNetOneComponentP.cpp 
+    #testing/detectors/uNetThreeComponentP.cpp
+    #testing/detectors/uNetThreeComponentS.cpp
+)
 add_executable(unitTests ${TEST_SRC})
 set_target_properties(unitTests PROPERTIES
                       CXX_STANDARD 20

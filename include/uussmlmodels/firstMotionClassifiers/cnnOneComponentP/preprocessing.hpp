@@ -1,11 +1,11 @@
-#ifndef UUSS_DETECTORS_UNET_ONE_COMPONENT_P_PREPROCESSING_HPP
-#define UUSS_DETECTORS_UNET_ONE_COMPONENT_P_PREPROCESSING_HPP
+#ifndef UUSS_MLMODELS_FIRST_MOTION_CLASSIFIERS_CNN_ONE_COMPONENT_P_INFERENCE_HPP
+#define UUSS_MLMODELS_FIRST_MOTION_CLASSIFIERS_CNN_ONE_COMPONENT_P_INFERENCE_HPP
 #include <vector>
 #include <memory>
-namespace UUSSMLModels::Detectors::UNetOneComponentP
+namespace UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP
 {
-/// @class Preprocessing "preprocessing.hpp" "models/detectors/uNetOneComponentP/preprocessing.hpp"
-/// @brief Performs the waveform preprocessing for the one-component detector.
+/// @class Preprocessing "preprocessing.hpp" "models/firstMotionClassifiers/cnnOneCompoentP/preprocessing.hpp"
+/// @brief Performs the waveform preprocessing for the first-motion classifier.
 /// @copyright Ben Baker (University of Utah) distributed under the MIT license.
 class Preprocessing
 {
@@ -34,10 +34,10 @@ public:
     /// @name Process Waveforms
     /// @{
 
-    /// @brief Preprocesses the waveform observed on the vertical channel.
+    /// @brief Preprocesses the vertical waveform.
     /// @param[in] vertical      The waveform on the vertical channel.
     /// @param[in] samplingRate  The sampling rate for the signals in Hz.
-    /// @result The processed vertical waveform.
+    /// @result The processed wavefrorm on the vertical channel.
     template<typename U>
     [[nodiscard]] std::vector<U> process(const std::vector<U> &vertical,
                                          double samplingRate = 100);

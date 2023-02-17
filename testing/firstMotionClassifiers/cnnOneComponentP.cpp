@@ -2,7 +2,7 @@
 #include <string>
 #include <chrono>
 #include <filesystem>
-#include <uussmlmodels/firstMotionClassifiers/cnnOneComponentP/inference.hpp>
+#include "uussmlmodels/firstMotionClassifiers/cnnOneComponentP/inference.hpp"
 //#include <uussmlmodels/firstMotionClassifiers/cnnOneComponentP/preprocessing.hpp>
 #include <gtest/gtest.h>
 
@@ -50,6 +50,16 @@ TEST(FirstMotionClassifiersCNNOneComponentP, Preprocessing)
 {
 
 }
+
+TEST(FirstMotionClassifiersCNNOneComponentP, Inference)
+{
+    EXPECT_EQ(Inference::getExpectedSignalLength(), 400);
+    EXPECT_NEAR(Inference::getSamplingRate(), 100, 1.e-14);
+const std::string h5File{"../firstMotionClassifiers/cnnOneComponentP/models/firstMotionClassifiersCNNOneComponentP.h5"};
+    Inference inference;
+    inference.load(h5File, Inference::ModelFormat::HDF5);
+}
+
 
 }
 

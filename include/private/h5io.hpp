@@ -1,10 +1,25 @@
 #ifndef PRIVATE_H5IO_HPP
 #define PRIVATE_H5IO_HPP
+#include <iostream>
 #include <vector>
 #include <filesystem>
 #include <hdf5.h>
 namespace
 {
+
+extern "C" herr_t groupNamesCallback(hid_t, const char *,
+                                     const H5L_info_t *linfo, void *opdata); 
+
+herr_t dataSetNamesCallback(hid_t, const char *name,
+                            const H5L_info_t *, void *opdata)
+{
+    auto groupNames = reinterpret_cast <std::vector<std::string>* > (opdata);
+    //auto groupID = H5Gopen2(locID, name, H5P_DEFAULT);
+    groupNames->push_back(name);
+    //H5Gclose(groupID);
+    return 0;
+}
+
 /// @class HDF5Loader
 /// @brief Utility to load weights from an HDF5 file.
 /// @copyright Ben Baker (University of Utah) distributed under the MIT license.
@@ -49,6 +64,19 @@ public:
         }
         mGroup = H5Gopen(mFile, groupName.c_str(), H5P_DEFAULT);
         mHaveGroup = true;
+    }
+    /// Lists elements in group
+    std::vector<std::string> getDataSetsInGroup() const
+    {
+        if (!mHaveGroup){throw std::runtime_error("Group not opened");}
+        std::vector<std::string> dataSetNames;
+        auto herr_t = H5Literate2(mGroup, H5_INDEX_NAME, H5_ITER_INC, nullptr,
+                                  &dataSetNamesCallback, &dataSetNames);
+        if (herr_t < 0)
+        {
+            throw std::runtime_error("Failed to iterate through group");
+        }
+        return dataSetNames;
     }
     /// Reads the dataset
     void readDataSet(const std::string &dataSetName,

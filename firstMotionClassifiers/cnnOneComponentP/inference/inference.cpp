@@ -3,19 +3,31 @@
 #define EXPECTED_SIGNAL_LENGTH 400
 #define SAMPLING_RATE 100
 #define N_CHANNELS 1
-#include "openvino.hpp"
-
 using namespace UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP;
+#include "openvino.hpp"
 
 class Inference::InferenceImpl
 {
 public:
-
+    /// Constructor
+    explicit InferenceImpl(const Inference::Device device) :
+        mOpenVINO(device)
+    {
+    }
+    OpenVINOImpl mOpenVINO;
+    bool mUseOpenVINO{false};
+    bool mInitialized{false};
 };
 
 /// Constructor
 Inference::Inference() :
-    pImpl(std::make_unique<InferenceImpl> ())
+    Inference(Inference::Device::CPU)
+{
+}
+
+/// Constructor with given device
+Inference::Inference(const Inference::Device device) :
+    pImpl(std::make_unique<InferenceImpl> (device))
 {
 }
 
@@ -32,4 +44,40 @@ int Inference::getExpectedSignalLength() noexcept
 double Inference::getSamplingRate() noexcept
 {
     return SAMPLING_RATE;
+}
+
+/// Load model
+void Inference::load(const std::string &fileName,
+                     const Inference::ModelFormat format)
+{
+    if (!std::filesystem::exists(fileName))
+    {
+        throw std::runtime_error("Model file: " + fileName + " does not exist");
+    }
+    if (format == Inference::ModelFormat::ONNX)
+    {
+#ifdef WITH_OPENVINO
+//        pImpl->mOpenVINO.load(fileName);
+        pImpl->mUseOpenVINO = true;
+        pImpl->mInitialized = true;
+#else
+        throw std::runtime_error("Recompile with OpenVino to read ONNX");
+#endif
+    }
+    else if (format == Inference::ModelFormat::HDF5)
+    {
+        Weights weights;
+        weights.loadFromHDF5(fileName);
+#ifdef WITH_OPENVINO
+        pImpl->mOpenVINO.createFromWeights(weights, 1);
+        pImpl->mUseOpenVINO = true;
+        pImpl->mInitialized = true;
+#else
+        throw std::runtime_error("Recompile with OpenVino to read ONNX");
+#endif
+    }
+    else
+    {
+        throw std::runtime_error("Unhandled model format");
+    }
 }

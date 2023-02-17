@@ -79,7 +79,7 @@ void Inference::load(const std::string &fileName,
         pImpl->mUseOpenVINO = true;
         pImpl->mInitialized = true;
 #else
-        throw std::runtime_error("Recompiled with OpenVino to read ONNX");
+        throw std::runtime_error("Recompile with OpenVino to read ONNX");
 #endif
     }
     else

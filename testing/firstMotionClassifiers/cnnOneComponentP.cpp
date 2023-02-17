@@ -3,7 +3,7 @@
 #include <chrono>
 #include <filesystem>
 #include "uussmlmodels/firstMotionClassifiers/cnnOneComponentP/inference.hpp"
-//#include <uussmlmodels/firstMotionClassifiers/cnnOneComponentP/preprocessing.hpp>
+#include <uussmlmodels/firstMotionClassifiers/cnnOneComponentP/preprocessing.hpp>
 #include <gtest/gtest.h>
 
 namespace

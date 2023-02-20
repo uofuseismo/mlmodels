@@ -15,6 +15,7 @@ public:
     {
     }
     OpenVINOImpl mOpenVINO;
+    double mProbabilityThreshold{1./3.};
     bool mUseOpenVINO{false};
     bool mInitialized{false};
 };
@@ -57,7 +58,7 @@ void Inference::load(const std::string &fileName,
     if (format == Inference::ModelFormat::ONNX)
     {
 #ifdef WITH_OPENVINO
-//        pImpl->mOpenVINO.load(fileName);
+        pImpl->mOpenVINO.load(fileName);
         pImpl->mUseOpenVINO = true;
         pImpl->mInitialized = true;
 #else
@@ -81,3 +82,43 @@ void Inference::load(const std::string &fileName,
         throw std::runtime_error("Unhandled model format");
     }
 }
+
+/// Initialized?
+bool Inference::isInitialized() const noexcept
+{
+    return pImpl->mInitialized;
+}
+
+/// Perform inference
+template<typename U>
+std::tuple<U, U, U> Inference::predictProbability(
+    const std::vector<U> &vertical) const
+{
+    if (!isInitialized()){throw std::runtime_error("Class not initialized");}
+    return pImpl->mOpenVINO.predictProbability(vertical);
+}
+
+/// Probability threshold
+void Inference::setProbabilityThreshold(const double threshold)
+{
+    if (threshold < 0 || threshold > 1)
+    {
+        throw std::invalid_argument("Threshold must be in range [0,1]");
+    }
+    pImpl->mProbabilityThreshold = threshold;
+}
+
+double Inference::getProbabilityThreshold() const noexcept
+{
+    return pImpl->mProbabilityThreshold;
+}
+
+///--------------------------------------------------------------------------///
+///                           Template Instantiation                         ///
+///--------------------------------------------------------------------------///
+template std::tuple<double, double, double>
+UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::predictProbability(
+    const std::vector<double> &) const;
+template std::tuple<float, float, float>
+UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::predictProbability(
+    const std::vector<float> &) const;

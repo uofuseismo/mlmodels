@@ -7,6 +7,7 @@
 #include <openvino/openvino.hpp>
 #include <openvino/opsets/opset1.hpp>
 #include <openvino/opsets/opset10.hpp>
+#include "../../../detectors/uNetOneComponentP/inference/utilities.hpp"
 #define MODEL_NAME "FMNet"
 namespace
 {
@@ -32,10 +33,6 @@ struct Weights
             //std::cout << dataSetName << " " << dimensions.size() << " " << values.size() << std::endl; 
             insert(dataSetName, values);
         }
-         
-    //void readDataSet(const std::string &dataSetName,
-//                     std::vector<hsize_t> *dims, std::vector<float> *values)
-
     }
     void insert(const std::string &name,
                 const std::vector<float> &weights)
@@ -214,11 +211,11 @@ void createFullyConnectedLayer(
     std::shared_ptr<ov::opset10::Constant>  &batchNormConstantBetaNode,
     std::shared_ptr<ov::opset10::Constant>  &batchNormConstantMeanNode,
     std::shared_ptr<ov::opset10::Constant>  &batchNormConstantVarianceNode,
-    std::shared_ptr<ov::opset10::BatchNormInference> &batchNormNode,
-    const bool transposeA = false,
-    const bool transposeB = false)
+    std::shared_ptr<ov::opset10::BatchNormInference> &batchNormNode)
 {
     constexpr double epsilon{1.e-5};
+    constexpr bool transposeA{false};
+    constexpr bool transposeB{false};
     // Fully connected Layer
     const ov::Shape fullyConnectedShape{inputShape, outputShape};
     fullyConnectedConstantNode
@@ -311,10 +308,10 @@ void createFinalLayer(
     std::shared_ptr<ov::opset10::MatMul>    &fullyConnectedNode,
     std::shared_ptr<ov::opset10::Constant>  &addConstantNode,
     std::shared_ptr<ov::opset10::Add>       &addNode,
-    std::shared_ptr<ov::opset10::Softmax>   &softMaxNode,
-    const bool transposeA = false,
-    const bool transposeB = true)
+    std::shared_ptr<ov::opset10::Softmax>   &softMaxNode)
 {
+    constexpr bool transposeA{false};
+    constexpr bool transposeB{false};
     // Fully connected Layer
     const ov::Shape fullyConnectedShape{inputShape, outputShape};
     fullyConnectedConstantNode
@@ -335,7 +332,7 @@ void createFinalLayer(
            );
 
     // Add bias
-    const ov::Shape addShape({outputShape, 1});
+    const ov::Shape addShape({1, outputShape});
     addConstantNode
         = std::make_shared<ov::opset10::Constant>
           (
@@ -351,7 +348,7 @@ void createFinalLayer(
           );
 
     // Softmax
-    const size_t axis = 1;
+    constexpr unsigned long axis{1};
     softMaxNode
         = std::make_shared<ov::opset10::Softmax> (addNode->output(0), axis);
 }
@@ -368,8 +365,6 @@ std::shared_ptr<ov::Model>
     //  Layer 5: MatrixMultiply (FullyConnected) -> ReLU -> BatchNorm
     //  Layer 6: MatrixMultiply (FullyConnected) -> ReLU -> BatchNorm
     //  Layer 6: MatrixMultiply (FullyConnected) -> Softmax
-    constexpr bool transposeA{false};
-    constexpr bool transposeB{false};
 
     // Input data.  OpenVINO defines a parameter as something the user will give
     // the model.   Data is NCW
@@ -477,6 +472,7 @@ std::shared_ptr<ov::Model>
         = std::make_shared<ov::opset1::Reshape> (thirdMaxPoolNode->output(0),
                                                  reshapeConstantNode->output(0),
                                                  true);
+
     // Fully connected layer 1
     std::shared_ptr<ov::opset10::Constant>  firstFullyConnectedConstantNode;
     std::shared_ptr<ov::opset10::MatMul>    firstFullyConnectedNode;
@@ -501,9 +497,7 @@ std::shared_ptr<ov::Model>
                               fourthBatchNormConstantBetaNode,
                               fourthBatchNormConstantMeanNode,
                               fourthBatchNormConstantVarianceNode,
-                              fourthBatchNormNode,
-                              transposeA,
-                              transposeB);
+                              fourthBatchNormNode);
 
     // Fully connected layer 2
     std::shared_ptr<ov::opset10::Constant>  secondFullyConnectedConstantNode;
@@ -529,9 +523,7 @@ std::shared_ptr<ov::Model>
                               fifthBatchNormConstantBetaNode,
                               fifthBatchNormConstantMeanNode,
                               fifthBatchNormConstantVarianceNode,
-                              fifthBatchNormNode,
-                              transposeA,
-                              transposeB);
+                              fifthBatchNormNode);
 
     // Last layer is a one-off
     std::shared_ptr<ov::opset10::Constant>  thirdFullyConnectedConstantNode;
@@ -547,9 +539,7 @@ std::shared_ptr<ov::Model>
                      thirdFullyConnectedNode,
                      sixthAddConstantNode,
                      sixthAddNode,
-                     softMaxNode,
-                     transposeA,
-                     transposeB);
+                     softMaxNode);
     // Result
     softMaxNode->get_output_tensor(0).set_names({"output_signal"});
     auto result = std::make_shared<ov::opset10::Result> (softMaxNode->output(0));
@@ -605,7 +595,7 @@ public:
             }
         }
     }
-    /// Create from weights
+    /// @brief Create from weights
     void createFromWeights(const Weights<float> &weights,
                            const size_t batchSize = 1)
     {
@@ -624,6 +614,31 @@ public:
         mFileName = fileName;
         mCompiledModel = mCore.compile_model(model, mDevice);
     }
+    /// @brief Sets the data
+    template<typename T>
+    void setSignal(const std::vector<T> &vertical)
+    {
+        if (vertical.size() != EXPECTED_SIGNAL_LENGTH)
+        {
+            throw std::invalid_argument("Vertical is wrong size");
+        }
+        auto data = reinterpret_cast<float *> (mInputTensor.data());
+        ::rescaleAndCopy(EXPECTED_SIGNAL_LENGTH, vertical.data(), data);
+    }
+    /// @brief Perform inference
+    template<typename T>
+    std::tuple<T, T, T> predictProbability(const std::vector<T> &vertical)
+    {
+        mInferenceRequest = mCompiledModel.create_infer_request();
+        setSignal(vertical);
+        mInferenceRequest.set_input_tensor(mInputTensor);
+        mInferenceRequest.infer();
+        const auto &result = mInferenceRequest.get_output_tensor();  
+        auto pPtr = reinterpret_cast<const float *> (result.data());
+        return std::tuple {static_cast<T> (pPtr[0]),
+                           static_cast<T> (pPtr[1]),
+                           static_cast<T> (pPtr[2])};
+    } 
 ///private:
     const ov::Shape mInputShape{1,  1, EXPECTED_SIGNAL_LENGTH};
     const ov::element::Type mInputType{ov::element::f32};

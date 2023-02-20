@@ -67,6 +67,7 @@ class FMNet(torch.nn.Module):
         x = self.fcn2(x)
         x = self.relu(x)
         x = self.bn5(x)
+        #print(x.detach().numpy())
         # Last layer
         x = self.fcn3(x)
         # Squash outputs to [0,1]
@@ -98,21 +99,24 @@ class FMNet(torch.nn.Module):
         g.create_dataset("bn_3.running_mean", data=np.array(self.bn3.running_mean.data.cpu()))
         g.create_dataset("bn_3.running_var", data=np.array(self.bn3.running_var.data.cpu()))
 
-        g.create_dataset("fcn_1.weight", data=np.array(self.fcn1.weight.data.cpu()))
+        # Note, Torch computes x A^T + b
+        g.create_dataset("fcn_1.weight", data=np.array(self.fcn1.weight.data.cpu().transpose(1, 0)))
         g.create_dataset("fcn_1.bias", data=np.array(self.fcn1.bias.data.cpu()))
         g.create_dataset("bn_4.weight", data=np.array(self.bn4.weight.data.cpu())) # gamma
         g.create_dataset("bn_4.bias", data=np.array(self.bn4.bias.data.cpu()))  # beta
         g.create_dataset("bn_4.running_mean", data=np.array(self.bn4.running_mean.data.cpu()))
         g.create_dataset("bn_4.running_var", data=np.array(self.bn4.running_var.data.cpu()))
 
-        g.create_dataset("fcn_2.weight", data=np.array(self.fcn2.weight.data.cpu()))
+        # Note, Torch computes x A^T + b
+        g.create_dataset("fcn_2.weight", data=np.array(self.fcn2.weight.data.cpu().transpose(1, 0)))
         g.create_dataset("fcn_2.bias", data=np.array(self.fcn2.bias.data.cpu()))
         g.create_dataset("bn_5.weight", data=np.array(self.bn5.weight.data.cpu())) # gamma
         g.create_dataset("bn_5.bias", data=np.array(self.bn5.bias.data.cpu()))  # beta
         g.create_dataset("bn_5.running_mean", data=np.array(self.bn5.running_mean.data.cpu()))
         g.create_dataset("bn_5.running_var", data=np.array(self.bn5.running_var.data.cpu()))
 
-        g.create_dataset("fcn_3.weight", data=np.array(self.fcn3.weight.data.cpu()))
+        # Note, Torch computes x A^T + b
+        g.create_dataset("fcn_3.weight", data=np.array(self.fcn3.weight.data.cpu().transpose(1, 0)))
         g.create_dataset("fcn_3.bias", data=np.array(self.fcn3.bias.data.cpu()))
 
         f.close()

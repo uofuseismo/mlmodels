@@ -11,6 +11,24 @@ namespace
 
 using namespace UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP;
 
+std::pair<std::vector<float>, std::vector<float>>
+loadWaveformTextFile(const std::filesystem::path &textFile)
+{
+    std::ifstream infile(textFile, std::ios::in);
+    std::string line;
+    std::vector<float> times, res;
+    times.reserve(400);
+    res.reserve(400);
+    while (std::getline(infile, line))
+    {
+        double t, v;
+        sscanf(line.c_str(), "%lf, %lf\n", &t, &v);
+        times.push_back(static_cast<float> (t));
+        res.push_back(static_cast<float> (v));
+    }
+    return std::pair {times, res};
+}
+
 std::vector<std::vector<float>>
 loadInputTextFile(const std::filesystem::path &textFile)
 {
@@ -83,7 +101,35 @@ T infinityNorm(const std::vector<T> &x, const std::vector<T> &y)
 
 TEST(FirstMotionClassifiersCNNOneComponentP, Preprocessing)
 {
+    constexpr double samplingRate{100};
+    const std::filesystem::path dataDir{"data/firstMotionClassifiers/cnnOneComponentP/"};
+    // Load input / reference waveforms
+    auto [times, vertical] = ::loadWaveformTextFile(dataDir / "uu.gzu.ehz.01.txt");
+    EXPECT_EQ(times.size(), 400);
+    auto [timesRef, verticalRef]
+         = ::loadWaveformTextFile(dataDir / "uu.gzu.ehz.01.proc.txt");
+    EXPECT_EQ(times.size(), timesRef.size());
 
+    Preprocessing processing;
+
+    EXPECT_NEAR(processing.getTargetSamplingRate(),   100,  1.e-14);
+    EXPECT_NEAR(processing.getTargetSamplingPeriod(), 0.01, 1.e-14);
+    auto verticalProc = processing.process(vertical, samplingRate);
+    EXPECT_EQ(vertical.size(), verticalProc.size());
+
+    // Tabulate infinity norms
+    EXPECT_EQ(verticalRef.size(), verticalProc.size());
+    auto e8Vertical = infinityNorm(verticalRef, verticalProc);
+
+    EXPECT_NEAR(e8Vertical, 0, 1.e-3);
+/*
+    std::ofstream procFile(dataDir / "uu.gzu.ehz.01.proc.txt");
+    for (int i = 0; i < static_cast<int> (times.size()); ++i)
+    {
+        procFile << times.at(i) << ", " << verticalProc.at(i) << std::endl;
+    }
+    procFile.close();
+*/
 }
 
 TEST(FirstMotionClassifiersCNNOneComponentP, InferenceONNX)

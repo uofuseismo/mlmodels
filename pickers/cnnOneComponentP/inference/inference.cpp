@@ -3,6 +3,8 @@
 #define EXPECTED_SIGNAL_LENGTH 400
 #define SAMPLING_RATE 100
 #define N_CHANNELS 1
+#define MIN_PERTURBATION -0.75
+#define MAX_PERTURBATION  0.75
 using namespace UUSSMLModels::Pickers::CNNOneComponentP;
 #include "openvino.hpp"
 
@@ -11,7 +13,7 @@ class Inference::InferenceImpl
 public:
     /// Constructor
     explicit InferenceImpl(const Inference::Device device) :
-        mOpenVINO(device)
+        mOpenVINO(device, MIN_PERTURBATION, MAX_PERTURBATION)
     {
     }
     OpenVINOImpl mOpenVINO;
@@ -90,19 +92,16 @@ bool Inference::isInitialized() const noexcept
 
 /// Perform inference
 template<typename U>
-std::tuple<U, U, U> Inference::predictProbability(
-    const std::vector<U> &vertical) const
+U Inference::predict(const std::vector<U> &vertical) const
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
-    return pImpl->mOpenVINO.predictProbability(vertical);
+    return pImpl->mOpenVINO.predict(vertical);
 }
 
 ///--------------------------------------------------------------------------///
 ///                           Template Instantiation                         ///
 ///--------------------------------------------------------------------------///
-template std::tuple<double, double, double>
-UUSSMLModels::Pickers::CNNOneComponentP::Inference::predictProbability(
+template double UUSSMLModels::Pickers::CNNOneComponentP::Inference::predict(
     const std::vector<double> &) const;
-template std::tuple<float, float, float>
-UUSSMLModels::Pickers::CNNOneComponentP::Inference::predictProbability(
+template float UUSSMLModels::Pickers::CNNOneComponentP::Inference::predict(
     const std::vector<float> &) const;

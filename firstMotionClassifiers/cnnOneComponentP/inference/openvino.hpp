@@ -368,18 +368,20 @@ std::shared_ptr<ov::Model>
 
     // Input data.  OpenVINO defines a parameter as something the user will give
     // the model.   Data is NCW
+/*
     auto parameterNode
         = std::make_shared<ov::opset10::Parameter>
             (ov::element::Type_t::f32,
              ov::Shape({batchSize, N_CHANNELS, EXPECTED_SIGNAL_LENGTH}));
-/*
+*/
+
     auto parameterNode
         = std::make_shared<ov::opset10::Parameter>
             (ov::element::Type_t::f32,
              ov::PartialShape({ov::Dimension::dynamic(),
                                N_CHANNELS,
                                EXPECTED_SIGNAL_LENGTH}));
-*/
+
     // Layer 1
     std::shared_ptr<ov::opset10::Constant>    firstConvolutionConstantNode;
     std::shared_ptr<ov::opset10::Convolution> firstConvolutionNode;

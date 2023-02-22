@@ -5,14 +5,14 @@ import torch
 import os
 import sys
 import argparse
-from fmnet import FMNet
+from cnnnet import CNNNet
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description = ''' 
 Converts torch models to either torchscript or ONNX.  For example, we can\n
 convert model_10.pt to ONNX with\n
 \n
-     modelConverter.py --input_file=model_011.pt --onnx_file=firstMotionClassifiersCNNOneComponentP.onnx\n
+     modelConverter.py --input_file=model_011.pt --onnx_file=pickersClassifiersCNNOneComponentP.onnx\n
 ''',
      formatter_class=argparse.RawTextHelpFormatter)
 
@@ -52,24 +52,26 @@ convert model_10.pt to ONNX with\n
     batch_size = 16
     num_channels = 1
     signal_length = 400
-    fmnet = FMNet(num_channels = num_channels)
+    cnnnet = CNNNet(num_channels = num_channels,
+                    min_lag =-0.75,
+                    max_lag = 0.75)
     try:
         check_point = torch.load(args.input_file)
-        fmnet.load_state_dict(check_point['model_state_dict'])
-        fmnet.eval() # Convert model to evaluation mode
+        cnnnet.load_state_dict(check_point['model_state_dict'])
+        cnnnet.eval() # Convert model to evaluation mode
     except Exception as e:
         print("Failed to load model.  Failed with: {}".format(str(e)))
         sys.exit(1)
 
     if (args.torchscript_file is not None):
         print("Converting to TorchScript...")
-        script_module = torch.jit.script(fmnet)
+        script_module = torch.jit.script(cnnnet)
         script_module.save(args.torchscript_file) 
  
     if (args.onnx_file is not None):
         print("Converting to ONNX...")
         dummy_input = torch.randn(1, num_channels, signal_length, requires_grad = False) # Flip/flop length
-        torch.onnx.export(fmnet,
+        torch.onnx.export(cnnnet,
                           (dummy_input, ),
                           f = args.onnx_file,
                           opset_version = 11,
@@ -79,5 +81,5 @@ convert model_10.pt to ONNX with\n
                                           'output_signal' : {0 : 'batch_size'}})
 
     if (args.hdf5_file is not None):
-        fmnet.write_weights_to_hdf5(args.hdf5_file) 
+        cnnnet.write_weights_to_hdf5(args.hdf5_file) 
     sys.exit(0) 

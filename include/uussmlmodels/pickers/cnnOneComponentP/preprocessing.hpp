@@ -2,7 +2,7 @@
 #define UUSS_MLMODELS_PICKERS_CNN_ONE_COMPONENT_P_PREPROCESSING_HPP
 #include <vector>
 #include <memory>
-namespace UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP
+namespace UUSSMLModels::Pickers::CNNOneComponentP
 {
 /// @class Preprocessing "preprocessing.hpp" "models/pickers/cnnOneCompoentP/preprocessing.hpp"
 /// @brief Performs the waveform preprocessing for the P pick regressor.

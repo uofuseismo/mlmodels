@@ -4,6 +4,9 @@
 #include <vector>
 #include <memory>
 #include <filesystem>
+#ifndef NDEBUG
+#include <cassert>
+#endif
 #include <openvino/openvino.hpp>
 #include <openvino/opsets/opset1.hpp>
 #include <openvino/opsets/opset10.hpp>
@@ -308,8 +311,15 @@ void createFinalLayer(
     std::shared_ptr<ov::opset10::MatMul>    &fullyConnectedNode,
     std::shared_ptr<ov::opset10::Constant>  &addConstantNode,
     std::shared_ptr<ov::opset10::Add>       &addNode,
-    std::shared_ptr<ov::opset10::Softmax>   &clampNode)
+    std::shared_ptr<ov::opset10::Clamp>     &clampNode,
+    const double minPerturbation =-0.75,
+    const double maxPerturbation = 0.75
+)
 {
+#ifndef NDEBUG
+    assert(minPerturbation < 0);
+    assert(maxPerturbation > 0);
+#endif
     constexpr bool transposeA{false};
     constexpr bool transposeB{false};
     // Fully connected Layer
@@ -347,13 +357,16 @@ void createFinalLayer(
            addConstantNode->output(0)
           );
 
-    // Clampm 
-    clampNode
-        = std::make_shared<ov::opset10::Clamp> (addNode->output(0), -50, 50);
+    // Clamp
+    clampNode = std::make_shared<ov::opset10::Clamp> (addNode->output(0),
+                                                      minPerturbation,
+                                                      maxPerturbation);
 }
 
 std::shared_ptr<ov::Model>
     createModel(const Weights<float> &weights,
+                const double minPerturbation =-0.75,
+                const double maxPerturbation = 0.75,
                 const uint64_t batchSize = 1)
 {
     // Architecture:
@@ -367,18 +380,20 @@ std::shared_ptr<ov::Model>
 
     // Input data.  OpenVINO defines a parameter as something the user will give
     // the model.   Data is NCW
+/*
     auto parameterNode
         = std::make_shared<ov::opset10::Parameter>
             (ov::element::Type_t::f32,
              ov::Shape({batchSize, N_CHANNELS, EXPECTED_SIGNAL_LENGTH}));
-/*
+*/
+
     auto parameterNode
         = std::make_shared<ov::opset10::Parameter>
             (ov::element::Type_t::f32,
              ov::PartialShape({ov::Dimension::dynamic(),
                                N_CHANNELS,
                                EXPECTED_SIGNAL_LENGTH}));
-*/
+
     // Layer 1
     std::shared_ptr<ov::opset10::Constant>    firstConvolutionConstantNode;
     std::shared_ptr<ov::opset10::Convolution> firstConvolutionNode;
@@ -529,7 +544,7 @@ std::shared_ptr<ov::Model>
     std::shared_ptr<ov::opset10::MatMul>    thirdFullyConnectedNode;
     std::shared_ptr<ov::opset10::Constant>  sixthAddConstantNode;
     std::shared_ptr<ov::opset10::Add>       sixthAddNode;
-    std::shared_ptr<of::opset10::Clamp>     clampNode;
+    std::shared_ptr<ov::opset10::Clamp>     clampNode;
 
     createFinalLayer(3, 512, 1,
                      weights,
@@ -538,7 +553,9 @@ std::shared_ptr<ov::Model>
                      thirdFullyConnectedNode,
                      sixthAddConstantNode,
                      sixthAddNode,
-                     clampNode);
+                     clampNode,
+                     minPerturbation,
+                     maxPerturbation);
     // Result
     clampNode->get_output_tensor(0).set_names({"output_signal"});
     auto result
@@ -556,8 +573,10 @@ std::shared_ptr<ov::Model>
 class OpenVINOImpl
 {
 public:
-    explicit OpenVINOImpl(
-        const Inference::Device requestedDevice = Inference::Device::CPU)
+    OpenVINOImpl(
+        const Inference::Device requestedDevice = Inference::Device::CPU,
+        double mMinPerturbation =-0.75,
+        double mMaxPerturbation = 0.75)
     {
         auto availableDevices = mCore.get_available_devices();
         bool matchedDevice = false;
@@ -599,7 +618,10 @@ public:
     void createFromWeights(const Weights<float> &weights,
                            const size_t batchSize = 1)
     {
-       auto model = createModel(weights, batchSize);
+       auto model = createModel(weights,
+                                mMinPerturbation,
+                                mMaxPerturbation,
+                                batchSize);
        mCompiledModel = mCore.compile_model(model, mDevice);
     }
     /// @brief Loads the ONNX file.
@@ -633,10 +655,10 @@ public:
         setSignal(vertical);
         mInferenceRequest.set_input_tensor(mInputTensor);
         mInferenceRequest.infer();
-        const auto &result = mInferenceRequest.get_output_tensor();  
+        const auto &result = mInferenceRequest.get_output_tensor();
         auto pickCorrection = reinterpret_cast<const float *> (result.data());
-        return std::tuple {static_cast<T> (pickCorrection)};
-    } 
+        return static_cast<T> (pickCorrection[0]);
+    }
 ///private:
     const ov::Shape mInputShape{1,  1, EXPECTED_SIGNAL_LENGTH};
     const ov::element::Type mInputType{ov::element::f32};
@@ -646,6 +668,8 @@ public:
     ov::InferRequest mInferenceRequest;
     std::filesystem::path mFileName;
     std::string mDevice{"CPU"};
+    double mMinPerturbation{-0.75};
+    double mMaxPerturbation{ 0.75};
 };
 
 }

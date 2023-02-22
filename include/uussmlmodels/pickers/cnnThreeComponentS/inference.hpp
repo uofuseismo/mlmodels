@@ -1,12 +1,12 @@
-#ifndef UUSS_MLMODELS_PICKERS_CNN_ONE_COMPONENT_P_INFERENCE_HPP
-#define UUSS_MLMODELS_PICKERS_CNN_ONE_COMPONENT_P_INFERENCE_HPP
+#ifndef UUSS_MLMODELS_PICKERS_CNN_THREE_COMPONENT_S_INFERENCE_HPP
+#define UUSS_MLMODELS_PICKERS_CNN_THREE_COMPONENT_S_INFERENCE_HPP
 #include <memory>
 #include <vector>
 #include <tuple>
-namespace UUSSMLModels::Pickers::CNNOneComponentP
+namespace UUSSMLModels::Pickers::CNNThreeComponentS
 {
-/// @class Inference "inference.hpp" "uussmlmodels/pickers/cnnOneComponentP/inference.hpp"
-/// @brief Computes the correction to add to a P pick.
+/// @class Inference "inference.hpp" "uussmlmodels/pickers/cnnThreeComponentS/inference.hpp"
+/// @brief Computes the correction to add to an S pick.
 /// @copyright Ben Baker (University of Utah) distributed under the MIT license.
 class Inference
 {
@@ -62,12 +62,16 @@ public:
 
     /// @brief Predicts the pick correction to add to a pick.
     /// @param[in] vertical  The preprocessed signal on the vertical channel.
+    /// @param[in] north     The preprocessed signal on the north (1) channel.
+    /// @param[in] east      The preprocessed signal on the east (2) channel.
     /// @result The pick correction in seconds to add to the pick.
     /// @throws std::invalid_argument if the signal length is not equal
     ///         to \c getExpectedSignalLength().
     /// @throws std::runtime_error if \c isInitialized() is false.
     template<typename U>
-    [[nodiscard]] U predict(const std::vector<U> &vertical) const;
+    [[nodiscard]] U predict(const std::vector<U> &vertical,
+                            const std::vector<U> &north,
+                            const std::vector<U> &east) const;
     /// @}
 
     /// @name Destructors

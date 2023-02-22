@@ -149,6 +149,7 @@ TEST(FirstMotionClassifiersCNNOneComponentP, InferenceONNX)
     EXPECT_NEAR(inference.getProbabilityThreshold(), 1./3, 1.e-14);
     EXPECT_NO_THROW(inference.load(onnxFile, Inference::ModelFormat::ONNX));
 
+    // Validate probabilities
     for (int i = 0; i < static_cast<int> (signals.size()); ++i)
     {
         auto [pUp, pDown, pUnknown]
@@ -160,6 +161,29 @@ TEST(FirstMotionClassifiersCNNOneComponentP, InferenceONNX)
         EXPECT_NEAR(std::abs(pDownReference - pDown), 0, 1.e-4);
         EXPECT_NEAR(std::abs(pUnknownReference - pUnknown), 0, 1.e-4);
     }
+
+    // Now test the classifier
+    constexpr double threshold = 0.9;
+    inference.setProbabilityThreshold(threshold);
+    for (int i = 0; i < static_cast<int> (signals.size()); ++i)
+    {
+        auto firstMotion = inference.predict(signals.at(i));
+        auto pUpReference      = std::get<0> (referenceProbabilities.at(i));
+        auto pDownReference    = std::get<1> (referenceProbabilities.at(i));
+        auto pUnknownReference = std::get<2> (referenceProbabilities.at(i));
+        auto firstMotionReference = Inference::FirstMotion::Unknown;
+        if (pUpReference > pUnknownReference &&
+            pUpReference > threshold)
+        {
+            firstMotionReference = Inference::FirstMotion::Up;
+        }
+        if (pDownReference > pUnknownReference &&
+            pDownReference > threshold)
+        {
+            firstMotionReference = Inference::FirstMotion::Down;
+        }
+        EXPECT_EQ(firstMotionReference, firstMotion);
+    }    
 }
 
 TEST(FirstMotionClassifiersCNNOneComponentP, InferenceHDF5)

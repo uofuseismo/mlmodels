@@ -1,3 +1,7 @@
+#include <cmath>
+#ifndef NDEBUG
+#include <cassert>
+#endif
 #include "uussmlmodels/firstMotionClassifiers/cnnOneComponentP/inference.hpp"
 #include "private/h5io.hpp"
 #define EXPECTED_SIGNAL_LENGTH 400
@@ -122,6 +126,38 @@ double Inference::getProbabilityThreshold() const noexcept
     return pImpl->mProbabilityThreshold;
 }
 
+/// Predicts up/down/unkonwn
+template<typename U>
+Inference::FirstMotion 
+Inference::predict(const std::vector<U> &vertical) const
+{
+    auto [pUp, pDown, pUnknown] = predictProbability(vertical);
+    auto pUp8 = static_cast<double> (pUp);
+    auto pDown8 = static_cast<double> (pDown);
+    auto pUnknown8 = static_cast<double> (pUnknown);
+    auto threshold = getProbabilityThreshold();
+    if (pUp8 > pDown8)
+    {
+        if (pUp8 > std::max(pUnknown8, threshold))
+        {
+            return FirstMotion::Up;
+        }
+        return FirstMotion::Unknown;
+    }
+    else
+    {
+        if (pDown8 > std::max(pUnknown8, threshold))
+        {
+            return FirstMotion::Down;
+        }
+        return FirstMotion::Unknown;
+    }
+#ifndef NDEBUG
+    assert(false);
+#endif
+}
+
+
 ///--------------------------------------------------------------------------///
 ///                           Template Instantiation                         ///
 ///--------------------------------------------------------------------------///
@@ -130,4 +166,11 @@ UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::predictProbab
     const std::vector<double> &) const;
 template std::tuple<float, float, float>
 UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::predictProbability(
+    const std::vector<float> &) const;
+
+template Inference::FirstMotion
+UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::predict(
+    const std::vector<double> &) const;
+template Inference::FirstMotion
+UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::predict(
     const std::vector<float> &) const;

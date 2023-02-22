@@ -36,8 +36,8 @@ if __name__ == "__main__":
     num_channels = 1
     signal_length = 400 
     model_file    = 'model_007.pt'
-    vertical_file = '../../../testing/data/pickers/cnnOneComponentP/cnnetTestInputs.txt'
-    output_file = '../../../testing/data/pickers/cnnOneComponentP/cnnetTestOutputs.txt'
+    vertical_file = '../../../testing/data/pickers/cnnOneComponentP/cnnnetTestInputs.txt'
+    output_file = '../../../testing/data/pickers/cnnOneComponentP/cnnnetTestOutputs.txt'
     
 
     print("Loading vertical signals...")

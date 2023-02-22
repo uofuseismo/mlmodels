@@ -20,6 +20,12 @@ Inference::Inference() :
 {
 }
 
+/// Reset class
+void Inference::clear() noexcept
+{
+    pImpl->mInference.clear();
+}
+
 /// Destructor
 Inference::~Inference() = default;
 

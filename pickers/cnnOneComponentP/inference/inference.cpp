@@ -1,9 +1,9 @@
-#include "uussmlmodels/firstMotionClassifiers/cnnOneComponentP/inference.hpp"
+#include "uussmlmodels/pickers/cnnOneComponentP/inference.hpp"
 #include "private/h5io.hpp"
 #define EXPECTED_SIGNAL_LENGTH 400
 #define SAMPLING_RATE 100
 #define N_CHANNELS 1
-using namespace UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP;
+using namespace UUSSMLModels::Pickers::CNNOneComponentP;
 #include "openvino.hpp"
 
 class Inference::InferenceImpl
@@ -11,13 +11,10 @@ class Inference::InferenceImpl
 public:
     /// Constructor
     explicit InferenceImpl(const Inference::Device device) :
-        mOpenVINO(device),
-        mDevice(device)
+        mOpenVINO(device)
     {
     }
     OpenVINOImpl mOpenVINO;
-    double mProbabilityThreshold{1./3.};
-    const Inference::Device mDevice{Inference::Device::CPU};
     bool mUseOpenVINO{false};
     bool mInitialized{false};
 };
@@ -36,13 +33,6 @@ Inference::Inference(const Inference::Device device) :
 
 /// Destructor
 Inference::~Inference() = default;
-
-/// Reset class
-void Inference::clear() noexcept
-{
-    auto device = pImpl->mDevice;
-    pImpl = std::make_unique<InferenceImpl> (device);
-}
 
 /// Expected signal length
 int Inference::getExpectedSignalLength() noexcept
@@ -107,27 +97,12 @@ std::tuple<U, U, U> Inference::predictProbability(
     return pImpl->mOpenVINO.predictProbability(vertical);
 }
 
-/// Probability threshold
-void Inference::setProbabilityThreshold(const double threshold)
-{
-    if (threshold < 0 || threshold > 1)
-    {
-        throw std::invalid_argument("Threshold must be in range [0,1]");
-    }
-    pImpl->mProbabilityThreshold = threshold;
-}
-
-double Inference::getProbabilityThreshold() const noexcept
-{
-    return pImpl->mProbabilityThreshold;
-}
-
 ///--------------------------------------------------------------------------///
 ///                           Template Instantiation                         ///
 ///--------------------------------------------------------------------------///
 template std::tuple<double, double, double>
-UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::predictProbability(
+UUSSMLModels::Pickers::CNNOneComponentP::Inference::predictProbability(
     const std::vector<double> &) const;
 template std::tuple<float, float, float>
-UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::predictProbability(
+UUSSMLModels::Pickers::CNNOneComponentP::Inference::predictProbability(
     const std::vector<float> &) const;

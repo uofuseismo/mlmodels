@@ -19,10 +19,12 @@ class Inference::InferenceImpl
 public:
     /// Constructor
     explicit InferenceImpl(const Inference::Device device) :
-        mOpenVINO(device)
+        mOpenVINO(device),
+        mDevice(device)
     {
     }
     OpenVINOImpl mOpenVINO;   
+    Inference::Device mDevice{Inference::Device::CPU};
     bool mUseOpenVINO{false};
     bool mInitialized{false};
 };
@@ -37,6 +39,13 @@ Inference::Inference() :
 Inference::Inference(const Inference::Device device) :
     pImpl(std::make_unique<InferenceImpl> (device))
 {
+}
+
+/// Reset class and release memory
+void Inference::clear() noexcept
+{
+    auto device = pImpl->mDevice;
+    pImpl = std::make_unique<InferenceImpl> (device);
 }
 
 /// Destructor

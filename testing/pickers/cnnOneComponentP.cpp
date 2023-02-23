@@ -90,7 +90,7 @@ template<class T>
 T infinityNorm(const std::vector<T> &x, const std::vector<T> &y) 
 {
     auto n = static_cast<int> (std::min(x.size(), y.size()));
-    return infinityNorm(n, x.data(),  y.data());
+    return ::infinityNorm(n, x.data(),  y.data());
 }
 
 
@@ -114,7 +114,7 @@ TEST(PickersCNNOneComponentP, Preprocessing)
 
     // Tabulate infinity norms
     EXPECT_EQ(verticalRef.size(), verticalProc.size());
-    auto e8Vertical = infinityNorm(verticalRef, verticalProc);
+    auto e8Vertical = ::infinityNorm(verticalRef, verticalProc);
 
     EXPECT_NEAR(e8Vertical, 0, 1.e-3);
 }
@@ -126,8 +126,8 @@ TEST(PickersCNNOneComponentP, InferenceONNX)
     // Load data and reference solutions
     const std::string dataFile{"data/pickers/cnnOneComponentP/cnnnetTestInputs.txt"};
     const std::string perturbationFile{"data/pickers/cnnOneComponentP/cnnnetTestOutputs.txt"};
-    auto signals = loadInputTextFile(dataFile);
-    auto referencePerturbations = loadOutputTextFile(perturbationFile);
+    auto signals = ::loadInputTextFile(dataFile);
+    auto referencePerturbations = ::loadOutputTextFile(perturbationFile);
     ASSERT_EQ(signals.size(), referencePerturbations.size());
 
     // Check some basics

@@ -660,7 +660,7 @@ public:
         return static_cast<T> (pickCorrection[0]);
     }
 ///private:
-    const ov::Shape mInputShape{1,  1, EXPECTED_SIGNAL_LENGTH};
+    const ov::Shape mInputShape{1,  N_CHANNELS, EXPECTED_SIGNAL_LENGTH};
     const ov::element::Type mInputType{ov::element::f32};
     ov::Tensor mInputTensor{mInputType, mInputShape};
     ov::Core mCore;

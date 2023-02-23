@@ -1,6 +1,7 @@
 #ifndef UUSS_MLMODELS_PICKERS_CNN_THREE_COMPONENT_S_PREPROCESSING_HPP
 #define UUSS_MLMODELS_PICKERS_CNN_THREE_COMPONENT_S_PREPROCESSING_HPP
 #include <vector>
+#include <tuple>
 #include <memory>
 namespace UUSSMLModels::Pickers::CNNThreeComponentS
 {
@@ -41,10 +42,11 @@ public:
     /// @param[in] samplingRate  The sampling rate for the signals in Hz.
     /// @result The processed vertical, north, and east waveforms.
     template<typename U>
-    [[nodiscard]] std::vector<U> process(const std::vector<U> &vertical,
-                                         const std::vector<U> &north,
-                                         const std::vector<U> &east,
-                                         double samplingRate = 100);
+    [[nodiscard]] std::tuple<std::vector<U>, std::vector<U>, std::vector<U>>
+        process(const std::vector<U> &vertical,
+                const std::vector<U> &north,
+                const std::vector<U> &east,
+                double samplingRate = 100);
     /// @}
 
     /// @name Target Sampling Rate

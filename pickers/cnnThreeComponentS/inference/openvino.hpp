@@ -646,11 +646,17 @@ public:
         {
             throw std::invalid_argument("Vertical is wrong size");
         }
+        if (north.size() != EXPECTED_SIGNAL_LENGTH)
+        {
+            throw std::invalid_argument("North is wrong size");
+        }
+        if (east.size() != EXPECTED_SIGNAL_LENGTH)
+        {
+            throw std::invalid_argument("East is wrong size");
+        }
         auto data = reinterpret_cast<float *> (mInputTensor.data());
         ::rescaleAndCopy(EXPECTED_SIGNAL_LENGTH,
-                         vertical.data(),
-                         north.data(),
-                         east.data(),
+                         vertical.data(), north.data(), east.data(),
                          data);
     }
     /// @brief Perform inference
@@ -668,7 +674,7 @@ public:
         return static_cast<T> (pickCorrection[0]);
     }
 ///private:
-    const ov::Shape mInputShape{1,  1, EXPECTED_SIGNAL_LENGTH};
+    const ov::Shape mInputShape{1,  N_CHANNELS, EXPECTED_SIGNAL_LENGTH};
     const ov::element::Type mInputType{ov::element::f32};
     ov::Tensor mInputTensor{mInputType, mInputShape};
     ov::Core mCore;

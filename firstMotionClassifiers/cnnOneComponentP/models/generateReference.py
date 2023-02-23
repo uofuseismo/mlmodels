@@ -35,7 +35,7 @@ def rescale(v : np.array) -> np.array:
 if __name__ == "__main__":
     num_channels = 1
     signal_length = 400 
-    model_file    = 'model_011.pt'
+    model_file    = 'fmPicker_model002.pt' #'model_011.pt'
     vertical_file = '../../../testing/data/firstMotionClassifiers/cnnOneComponentP/fmnetTestInputs.txt'
     output_file = '../../../testing/data/firstMotionClassifiers/cnnOneComponentP/fmnetTestOutputs.txt'
     

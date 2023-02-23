@@ -190,6 +190,7 @@ TEST(FirstMotionClassifiersCNNOneComponentP, InferenceHDF5)
 {
     // Models
     const std::string h5File{"../firstMotionClassifiers/cnnOneComponentP/models/firstMotionClassifiersCNNOneComponentP.h5"};
+    if (!std::filesystem::exists(h5File)){return;}
     // Load data and reference solutions
     const std::string dataFile{"data/firstMotionClassifiers/cnnOneComponentP/fmnetTestInputs.txt"};
     const std::string probabilityFile{"data/firstMotionClassifiers/cnnOneComponentP/fmnetTestOutputs.txt"};

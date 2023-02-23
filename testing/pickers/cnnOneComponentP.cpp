@@ -149,6 +149,7 @@ TEST(PickersCNNOneComponentP, InferenceHDF5)
 {
     // Models
     const std::string h5File{"../pickers/cnnOneComponentP/models/pickersCNNOneComponentP.h5"};
+    if (!std::filesystem::exists(h5File)){return;}
     // Load data and reference solutions
     const std::string dataFile{"data/pickers/cnnOneComponentP/cnnnetTestInputs.txt"};
     const std::string perturbationFile{"data/pickers/cnnOneComponentP/cnnnetTestOutputs.txt"};

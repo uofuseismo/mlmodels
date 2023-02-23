@@ -217,6 +217,7 @@ TEST(PickersCNNThreeComponentS, InferenceHDF5)
 {
     // Models
     const std::string h5File{"../pickers/cnnThreeComponentS/models/pickersCNNThreeComponentS.h5"};
+    if (!std::filesystem::exists(h5File)){return;}
     // Load data and reference solutions
     const std::string dataFile{"data/pickers/cnnThreeComponentS/cnnnetTestInputs.txt"};
     const std::string perturbationFile{"data/pickers/cnnThreeComponentS/cnnnetTestOutputs.txt"};

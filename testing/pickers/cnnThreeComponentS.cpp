@@ -213,4 +213,32 @@ TEST(PickersCNNThreeComponentS, InferenceONNX)
     }
 }
 
+TEST(PickersCNNThreeComponentS, InferenceHDF5)
+{
+    // Models
+    const std::string h5File{"../pickers/cnnThreeComponentS/models/pickersCNNThreeComponentS.h5"};
+    // Load data and reference solutions
+    const std::string dataFile{"data/pickers/cnnThreeComponentS/cnnnetTestInputs.txt"};
+    const std::string perturbationFile{"data/pickers/cnnThreeComponentS/cnnnetTestOutputs.txt"};
+    auto signals = ::loadInputTextFile(dataFile);
+    auto referencePerturbations = ::loadOutputTextFile(perturbationFile);
+    ASSERT_EQ(signals.size(), referencePerturbations.size());
+
+    Inference inference;
+    EXPECT_NO_THROW(inference.load(h5File, Inference::ModelFormat::HDF5));
+    EXPECT_TRUE(inference.isInitialized());
+
+    // Validate pick corrections 
+    for (int i = 0; i < static_cast<int> (signals.size()); ++i)
+    {
+        auto zne = signals.at(i);
+        const auto &vertical = std::get<0> (zne);
+        const auto &north    = std::get<1> (zne);
+        const auto &east     = std::get<2> (zne);
+        auto perturbation = inference.predict(vertical, north, east);
+        auto perturbationReference = referencePerturbations.at(i);
+        EXPECT_NEAR(std::abs(perturbationReference - perturbation), 0, 1.e-4);
+    }   
+}
+
 }

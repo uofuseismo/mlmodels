@@ -479,7 +479,7 @@ std::shared_ptr<ov::Model>
                            thirdMaxPoolNode);
 
     // Reshape?
-    std::vector<int64_t> newShape{6400};
+    std::vector<int64_t> newShape{9600};
     const ov::Shape flattenDimensions{newShape.size()};
     auto reshapeConstantNode = std::make_shared<ov::opset10::Constant> (ov::element::i64, flattenDimensions, newShape);
     auto reshapeNode
@@ -499,7 +499,7 @@ std::shared_ptr<ov::Model>
     std::shared_ptr<ov::opset10::Constant>  fourthBatchNormConstantVarianceNode;
     std::shared_ptr<ov::opset10::BatchNormInference> fourthBatchNormNode;
 
-    createFullyConnectedLayer(1, 4, 6400, 512,
+    createFullyConnectedLayer(1, 4, 9600, 512,
                               weights,
                               reshapeNode->output(0),
                               firstFullyConnectedConstantNode,

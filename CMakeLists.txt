@@ -43,6 +43,8 @@ set(INFERENCE_SRC
     firstMotionClassifiers/cnnOneComponentP/preprocessing/preprocessing.cpp
     pickers/cnnOneComponentP/inference/inference.cpp
     pickers/cnnOneComponentP/preprocessing/preprocessing.cpp
+    pickers/cnnThreeComponentS/inference/inference.cpp
+    pickers/cnnThreeComponentS/preprocessing/preprocessing.cpp
     include/private/h5io.hpp
 )
 add_library(uussmlmodels ${INFERENCE_SRC})
@@ -71,6 +73,7 @@ file(COPY ${CMAKE_SOURCE_DIR}/testing/data DESTINATION .)
 set(TEST_SRC
     testing/main.cpp
     testing/pickers/cnnOneComponentP.cpp
+    testing/pickers/cnnThreeComponentS.cpp
     testing/firstMotionClassifiers/cnnOneComponentP.cpp
     testing/detectors/uNetOneComponentP.cpp 
     testing/detectors/uNetThreeComponentP.cpp
@@ -80,7 +83,7 @@ add_executable(unitTests ${TEST_SRC})
 set_target_properties(unitTests PROPERTIES
                       CXX_STANDARD 20
                       CXX_STANDARD_REQUIRED YES 
-                      CXX_EXTENSIONS NO) 
+                      CXX_EXTENSIONS NO)
 target_link_libraries(unitTests PRIVATE uussmlmodels ${GTEST_BOTH_LIBRARIES})
 if (${OpenVINO_Runtime_FOUND})
    target_link_libraries(unitTests PRIVATE openvino::runtime)
@@ -142,6 +145,9 @@ install(FILES
         ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentP/models/detectorsUNetThreeComponentP.onnx
         ${CMAKE_SOURCE_DIR}/detectors/uNetThreeComponentS/models/detectorsUNetThreeComponentS.onnx
         ${CMAKE_SOURCE_DIR}/detectors/uNetOneComponentP/models/detectorsUNetOneComponentP.onnx
+        ${CMAKE_SOURCE_DIR}/firstMotionClassifiers/cnnOneComponentP/models/firstMotionClassifiersCNNOneComponentP.onnx
+        ${CMAKE_SOURCE_DIR}/pickers/cnnOneComponentP/models/pickersCNNOneComponentP.onnx
+        ${CMAKE_SOURCE_DIR}/pickers/cnnThreeComponentS/models/pickersCNNThreeComponentS.onnx
         DESTINATION ${CMAKE_INSTALL_DATADIR}/${PROJECT_NAME})
 ##########################################################################################
 #                                     CPACK Packaging                                    #

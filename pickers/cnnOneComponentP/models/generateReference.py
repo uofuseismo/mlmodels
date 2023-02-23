@@ -35,7 +35,7 @@ if __name__ == "__main__":
     max_perturbation = 0.75
     num_channels = 1
     signal_length = 400 
-    model_file    = 'model_007.pt'
+    model_file    = 'pPicker_seed1_model25.pt' #'model_007.pt'
     vertical_file = '../../../testing/data/pickers/cnnOneComponentP/cnnnetTestInputs.txt'
     output_file = '../../../testing/data/pickers/cnnOneComponentP/cnnnetTestOutputs.txt'
     
@@ -49,7 +49,7 @@ if __name__ == "__main__":
                     max_lag = max_perturbation)
     try:
         check_point = torch.load(model_file)
-        cnnnet.load_state_dict(check_point['model_state_dict'])
+        cnnnet.load_state_dict(check_point['state_dict']) # change from model_state_dict to state_dict
         cnnnet.eval() # Convert model to evaluation mode
     except Exception as e:
         print("Failed to load model.  Failed with: {}".format(str(e)))

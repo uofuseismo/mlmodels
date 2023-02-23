@@ -57,7 +57,7 @@ convert model_10.pt to ONNX with\n
                     max_lag = 0.75)
     try:
         check_point = torch.load(args.input_file)
-        cnnnet.load_state_dict(check_point['model_state_dict'])
+        cnnnet.load_state_dict(check_point['state_dict']) # change from model_state_dict to state_dict
         cnnnet.eval() # Convert model to evaluation mode
     except Exception as e:
         print("Failed to load model.  Failed with: {}".format(str(e)))

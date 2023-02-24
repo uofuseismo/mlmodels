@@ -132,6 +132,9 @@ Inference::FirstMotion
 Inference::predict(const std::vector<U> &vertical) const
 {
     auto [pUp, pDown, pUnknown] = predictProbability(vertical);
+    auto threshold = getProbabilityThreshold();
+    return convertProbabilityToClass(pUp, pDown, pUnknown, threshold);
+/*
     auto pUp8 = static_cast<double> (pUp);
     auto pDown8 = static_cast<double> (pDown);
     auto pUnknown8 = static_cast<double> (pUnknown);
@@ -155,8 +158,64 @@ Inference::predict(const std::vector<U> &vertical) const
 #ifndef NDEBUG
     assert(false);
 #endif
+*/
 }
 
+template<typename T>
+Inference::FirstMotion 
+UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::convertProbabilityToClass(
+    const T probabilityUp,
+    const T probabilityDown,
+    const T probabilityUnknown,
+    const double threshold)
+{
+    constexpr T eps = std::numeric_limits<T>::epsilon()*100;
+    if (threshold < 0 || threshold > 1)
+    {
+        throw std::invalid_argument("Threshold must be in range [0,1]");
+    }
+    if (probabilityUp < 0 || probabilityUp > 1)
+    {
+        throw std::invalid_argument("Up probability must be in range [0,1]");
+    }
+    if (probabilityDown < 0 || probabilityDown > 1)
+    {
+        throw std::invalid_argument("Down probability must be in range [0,1]");
+    }
+    if (probabilityUnknown < 0 || probabilityUnknown > 1)
+    {
+        throw std::invalid_argument(
+            "Unknown probability must be in range [0,1]");
+    }
+    auto pSum = probabilityUp + probabilityDown + probabilityUnknown;
+    if (std::abs(pSum - 1) > eps)
+    {
+        throw std::invalid_argument("Probabilities do not sum to unity");
+    }
+
+    auto pUp8 = static_cast<double> (probabilityUp);
+    auto pDown8 = static_cast<double> (probabilityDown);
+    auto pUnknown8 = static_cast<double> (probabilityUnknown);
+    if (pUp8 > pDown8)
+    {
+        if (pUp8 > std::max(pUnknown8, threshold))
+        {
+            return Inference::FirstMotion::Up;
+        }
+        return Inference::FirstMotion::Unknown;
+    }
+    else
+    {
+        if (pDown8 > std::max(pUnknown8, threshold))
+        {
+            return Inference::FirstMotion::Down;
+        }
+        return Inference::FirstMotion::Unknown;
+    }
+#ifndef NDEBUG
+    assert(false);
+#endif
+}
 
 ///--------------------------------------------------------------------------///
 ///                           Template Instantiation                         ///

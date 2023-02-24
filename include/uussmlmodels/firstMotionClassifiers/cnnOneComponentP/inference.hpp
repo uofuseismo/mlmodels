@@ -134,5 +134,23 @@ private:
     class InferenceImpl;
     std::unique_ptr<InferenceImpl> pImpl;
 };
+/// @brief Converts probabilities to class.
+/// @param[in] probabilityUp       The posterior probability of the first motion
+///                                being up.
+/// @param[in] probabilityDown     The posterior probability of the first motion
+///                                being down.
+/// @param[in] probabilityUnknown  The posterior probability of the first motion
+///                                being unknown.
+/// @param[in] threshold  The threshold above which the up or down probability
+///                       must exceed to not be classified to as unknown.
+/// @throws std::invalid_argument if any input is not between 0 and 1 and
+///         the probabilities do not sum to one.
+/// @result The class coresponding to the given probabilities.
+template<typename T>
+[[nodiscard]] 
+Inference::FirstMotion convertProbabilityToClass(T prbobabilityUp,
+                                                 T probabilityDown,
+                                                 T probabilityUnkown,
+                                                 double threshold = 1./3.);
 }
 #endif

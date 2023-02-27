@@ -16,7 +16,13 @@ public:
 
 /// Constructor
 Inference::Inference() :
-    pImpl(std::make_unique<InferenceImpl> (Inference::Device::CPU))
+    Inference(Inference::Device::CPU)
+{
+}
+
+/// Constructor with given device
+Inference::Inference(const Inference::Device device) :
+    pImpl(std::make_unique<InferenceImpl> (device))
 {
 }
 

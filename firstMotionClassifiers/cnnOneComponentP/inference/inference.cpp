@@ -233,3 +233,20 @@ UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::predict(
 template Inference::FirstMotion
 UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::predict(
     const std::vector<float> &) const;
+
+template
+Inference::FirstMotion 
+UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::convertProbabilityToClass(
+    double probabilityUp,
+    double probabilityDown,
+    double probabilityUnknown,
+    double threshold);
+template
+Inference::FirstMotion 
+UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::convertProbabilityToClass(
+    float probabilityUp,
+    float probabilityDown,
+    float probabilityUnknown,
+    double threshold);
+
+

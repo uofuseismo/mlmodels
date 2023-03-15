@@ -96,6 +96,12 @@ std::vector<U>
                                                              east);
 }
 
+/// Window
+std::pair<int, int> Inference::getCentralWindowStartEndIndex() noexcept
+{
+    return PModel::Inference::getCentralWindowStartEndIndex();
+}
+
 ///--------------------------------------------------------------------------///
 ///                           Template Instantiation                         ///
 ///--------------------------------------------------------------------------///

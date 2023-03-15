@@ -63,6 +63,13 @@ public:
     /// @param[in] nSamples   The number of samples.
     /// @result True indicates that the seismogram length is valid.
     [[nodiscard]] static bool isValidSignalLength(int nSamples) noexcept;
+    /// @result When training, the examples are only shifted +/- some lag around
+    ///         about the center of the window.  Consequently, for a signal of
+    ///         length \c getExpectedsignalLength() result.first is the first
+    ///         sample where the probability signals should be believed and
+    ///         result.second is the last sample where the signals should be
+    ///         believed.
+    [[nodiscard]] static std::pair<int, int> getCentralWindowStartEndIndex() noexcept;
     /// @}
 
     /// @name Model Evaluation

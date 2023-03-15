@@ -94,6 +94,8 @@ TEST(DetectorsUNetThreeComponentP, Inference)
     Inference inference;
     EXPECT_EQ(inference.getExpectedSignalLength(), 1008);
     EXPECT_EQ(inference.getMinimumSignalLength(), 1008);
+    EXPECT_EQ(inference.getCentralWindowStartEndIndex().first,  254);
+    EXPECT_EQ(inference.getCentralWindowStartEndIndex().second, 754);
     EXPECT_NEAR(inference.getSamplingRate(), 100, 1.e-14);
     EXPECT_TRUE(inference.isValidSignalLength(1008));
     EXPECT_FALSE(inference.isValidSignalLength(1009));

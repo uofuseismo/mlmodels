@@ -10,6 +10,8 @@
 #define SAMPLING_RATE 100
 #define MINIMUM_SIGNAL_LENGTH 1008
 #define EXPECTED_SIGNAL_LENGTH 1008
+#define WINDOW_START 254
+#define WINDOW_END   754
 
 using namespace UUSSMLModels::Detectors::UNetThreeComponentP;
 #include "openvino.hpp"
@@ -149,8 +151,8 @@ std::vector<U>
                                   + std::to_string(getExpectedSignalLength()));
     }
     std::vector<U> probabilitySignal;
-    constexpr int windowStart = 254;
-    constexpr int windowEnd   = 754;
+    constexpr int windowStart = WINDOW_START;
+    constexpr int windowEnd   = WINDOW_END;
 #ifndef NDEBUG
     assert(windowEnd - windowStart == 500);
 #endif
@@ -169,6 +171,10 @@ std::vector<U>
     return probabilitySignal;
 }
 
+std::pair<int, int> Inference::getCentralWindowStartEndIndex() noexcept
+{
+    return std::pair {WINDOW_START, WINDOW_END};
+}
 
 ///--------------------------------------------------------------------------///
 ///                           Template Instantiation                         ///

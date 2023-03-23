@@ -126,18 +126,22 @@ TEST(DetectorsUNetThreeComponentP, Inference)
     error = infinityNorm(probaSlidingRef, proba);
     EXPECT_NEAR(error, 0, 5.e-5);
 
-    /*
+    
     // In case you need to check performance.
-    for (int i =0 ; i <50; ++i)
+    /*
+    constexpr int nTries = 50;
+    double averageEvaluationTime = 0;
+    for (int i =0 ; i < nTries; ++i)
     {
         auto start = std::chrono::high_resolution_clock::now();
-        EXPECT_NO_THROW(inference.predictProbability(vertical, north, east)); 
+        EXPECT_NO_THROW(inference.predictProbability(verticalProc1008, northProc1008, eastProc1008)); 
         auto stop = std::chrono::high_resolution_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds> (stop - start);
-        std::cout << duration.count()*1.e-6 << std::endl;
+        //std::cout << duration.count()*1.e-6 << std::endl;
+        averageEvaluationTime = averageEvaluationTime + duration.count()*1.e-6/nTries;
     }
+    std::cout << "Average evaluation time: " << averageEvaluationTime << std::endl;
     */
-
 }
 
 }

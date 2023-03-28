@@ -150,6 +150,10 @@ TEST(PickersCNNThreeComponentS, Preprocessing)
 
     Preprocessing processing;
 
+    EXPECT_NEAR(Inference::getMinimumAndMaximumPerturbation().first,
+                -0.85, 1.e-10);
+    EXPECT_NEAR(Inference::getMinimumAndMaximumPerturbation().second,
+                 0.85, 1.e-10);
     EXPECT_NEAR(processing.getTargetSamplingRate(),   100,  1.e-14);
     EXPECT_NEAR(processing.getTargetSamplingPeriod(), 0.01, 1.e-14);
 

@@ -55,6 +55,9 @@ public:
     /// @result The expected number of samples in a waveform.  This is
     ///         consistent with the length of the training examples.
     [[nodiscard]] static int getExpectedSignalLength() noexcept;
+    /// @result result.first is the minimum negative pick perturbation
+    ///         and result.second is the maximum positive in seconds.
+    [[nodiscard]] static std::pair<double, double> getMinimumAndMaximumPerturbation() noexcept;
     /// @}
 
     /// @name Model Evaluation

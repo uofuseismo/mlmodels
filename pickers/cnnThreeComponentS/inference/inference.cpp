@@ -100,6 +100,12 @@ U Inference::predict(const std::vector<U> &vertical,
     return pImpl->mOpenVINO.predict(vertical, north, east);
 }
 
+/// Min/max perturbation
+std::pair<double, double> Inference::getMinimumAndMaximumPerturbation() noexcept
+{
+    return std::pair<double, double> {MIN_PERTURBATION, MAX_PERTURBATION};
+}
+
 ///--------------------------------------------------------------------------///
 ///                           Template Instantiation                         ///
 ///--------------------------------------------------------------------------///

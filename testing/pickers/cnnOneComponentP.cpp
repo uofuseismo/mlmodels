@@ -132,6 +132,10 @@ TEST(PickersCNNOneComponentP, InferenceONNX)
 
     // Check some basics
     EXPECT_EQ(Inference::getExpectedSignalLength(), 400);
+    EXPECT_NEAR(Inference::getMinimumAndMaximumPerturbation().first,
+                -0.75, 1.e-10);
+    EXPECT_NEAR(Inference::getMinimumAndMaximumPerturbation().second,
+                 0.75, 1.e-10);
     EXPECT_NEAR(Inference::getSamplingRate(), 100, 1.e-14);
     Inference inference;
     EXPECT_NO_THROW(inference.load(onnxFile, Inference::ModelFormat::ONNX));

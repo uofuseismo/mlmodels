@@ -45,6 +45,9 @@ public:
               const ModelFormat format = ModelFormat::ONNX);
     /// @result True indicates the model is initialized and ready for use.
     [[nodiscard]] bool isInitialized() const noexcept;
+    /// @result result.first is the minimum negative pick perturbation
+    ///         and result.second is the maximum positive in seconds.
+    [[nodiscard]] static std::pair<double, double> getMinimumAndMaximumPerturbation() noexcept;
     /// @}
 
     /// @name Model Parameters

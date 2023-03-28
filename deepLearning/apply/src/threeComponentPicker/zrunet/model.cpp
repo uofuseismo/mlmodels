@@ -27,6 +27,7 @@
 #include <rtseis/utilities/normalization/zscore.hpp>
 #include "private/loadHDF5Weights.hpp"
 #include "uuss/threeComponentPicker/zrunet/model.hpp"
+//#include "modelOpenVino.hpp"
 
 using namespace UUSS::ThreeComponentPicker::ZRUNet;
 
@@ -879,9 +880,13 @@ void Model<UUSS::Device::CPU>::predictProbability(
     float *xPtr = X.data_ptr<float> ();
     // Feature rescale
     rescaleAndCopy(nSamples, vertical, north, east, xPtr);
+//auto start = std::chrono::high_resolution_clock::now();
     auto p = pImpl->mNetworks[0].forward(X, applySigmoid);
     float *pPtr = p.data_ptr<float> ();
     copy(nSamples, pPtr, proba);
+//auto stop = std::chrono::high_resolution_clock::now();
+//auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+//std::cout << "nsamples,time" << nSamples << " " << duration.count()*1.e-6 << std::endl;
 }
 
 template<>

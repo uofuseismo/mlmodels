@@ -190,7 +190,10 @@ UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::convertProbabilityToClas
     auto pSum = probabilityUp + probabilityDown + probabilityUnknown;
     if (std::abs(pSum - 1) > eps)
     {
-        throw std::invalid_argument("Probabilities do not sum to unity");
+        throw std::invalid_argument("Probabilities do not sum to unity ("
+                                  + std::to_string(probabilityUp) + ","
+                                  + std::to_string(probabilityDown) + ","
+                                  + std::to_string(probabilityUnknown) + ")");
     }
 
     auto pUp8 = static_cast<double> (probabilityUp);

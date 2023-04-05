@@ -169,7 +169,7 @@ UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::convertProbabilityToClas
     const T probabilityUnknown,
     const double threshold)
 {
-    constexpr T eps = std::numeric_limits<T>::epsilon()*100;
+    constexpr T eps{std::numeric_limits<T>::epsilon()*1000};
     if (threshold < 0 || threshold > 1)
     {
         throw std::invalid_argument("Threshold must be in range [0,1]");
@@ -187,13 +187,16 @@ UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::convertProbabilityToClas
         throw std::invalid_argument(
             "Unknown probability must be in range [0,1]");
     }
-    auto pSum = probabilityUp + probabilityDown + probabilityUnknown;
-    if (std::abs(pSum - 1) > eps)
+    constexpr T one{1};
+    T pSum = probabilityUp + probabilityDown + probabilityUnknown;
+    if (std::abs(pSum - one) > eps)
     {
         throw std::invalid_argument("Probabilities do not sum to unity ("
-                                  + std::to_string(probabilityUp) + ","
-                                  + std::to_string(probabilityDown) + ","
-                                  + std::to_string(probabilityUnknown) + ")");
+                                  + std::to_string(probabilityUp) + "+"
+                                  + std::to_string(probabilityDown) + "+"
+                                  + std::to_string(probabilityUnknown) + "="
+                                  + std::to_string(pSum) + ";"
+                                  + std::to_string(std::abs(pSum - one)) + ")");
     }
 
     auto pUp8 = static_cast<double> (probabilityUp);

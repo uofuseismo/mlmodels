@@ -78,8 +78,6 @@ public:
     /// @brief Predicts the probability of a sample corresponding to a
     ///        P arrival (1) or being noise (0).
     /// @param[in] vertical  The preprocessed signal on the vertical channel.
-    /// @param[in] north     The preprocessed signal on the north channel.
-    /// @param[in] east      The preprocessed signal on the east channel.
     /// @result The probability of the a sample corresponding to a P wave.
     /// @throws std::invalid_argument if the signal length is not equal
     ///         to \c getExpectedSignalLength() or any signals have an
@@ -91,8 +89,6 @@ public:
     ///        P arrival.  This uses a 500-sample sliding window that overlaps
     ///        with subsequent windows.
     /// @param[in] vertical  The preprocessed signal on the vertical channel.
-    /// @param[in] north     The preprocessed signal on the north channel.
-    /// @param[in] east      The preprocessed signal on the east channel.
     /// @note The first window will not zero-probabilities before the sample
     ///       254 (= 1008/2 - 500/2).  Likewise, the last window will not zero
     ///       the last 254 samples.

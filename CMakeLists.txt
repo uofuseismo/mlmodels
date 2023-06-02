@@ -67,6 +67,30 @@ if (${TORCH_FOUND})
 endif()
 
 ##########################################################################################
+#                                           Python                                       #
+##########################################################################################
+if (${WRAP_PYTHON})
+   message("Will build Python bindings")
+   find_package(pybind11 REQUIRED)
+   add_library(pyuussmlmodels MODULE
+               python/pyuussmlmodels.cpp
+               python/detectors.cpp
+               python/pickers.cpp
+               )
+   set_target_properties(pyuussmlmodels PROPERTIES
+                         PREFIX ""
+                         CXX_STANDARD 20
+                         CXX_STANDARD_REQUIRED YES
+                         CXX_EXTENSIONS NO)
+   target_include_directories(pyuussmlmodels
+                              PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+                                      $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>)
+   target_link_libraries(pyuussmlmodels
+                         PRIVATE pybind11::pybind11 pybind11::lto uussmlmodels) 
+endif()
+
+
+##########################################################################################
 #                                           Testing                                      #
 ##########################################################################################
 file(COPY ${CMAKE_SOURCE_DIR}/testing/data DESTINATION .)
@@ -110,9 +134,9 @@ write_basic_package_version_file(
     VERSION "${version}"
     COMPATIBILITY AnyNewerVersion
 )
-if (WRAP_PYTHON)
+if (${WRAP_PYTHON})
    message("add python result")
-   install(TARGETS uussmlmodels
+   install(TARGETS uussmlmodels pyuussmlmodels
            EXPORT ${PROJECT_NAME}-targets
            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
            LIBRARY  DESTINATION ${CMAKE_INSTALL_LIBDIR}

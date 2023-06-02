@@ -157,6 +157,12 @@ double Preprocessing::getTargetSamplingPeriod() noexcept
 
 }
 
+/// Reset class
+void Preprocessing::clear() noexcept
+{
+    pImpl = std::make_unique<PreprocessingImpl> ();
+}
+
 ///--------------------------------------------------------------------------///
 ///                              Template Instantiation                      ///
 ///--------------------------------------------------------------------------///

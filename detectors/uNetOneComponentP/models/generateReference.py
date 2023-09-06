@@ -68,6 +68,7 @@ def create_windows(n, center = 500, signal_length = 1008):
 #    return (v - v_min)/(v_max - v_min)
 
 if __name__ == "__main__":
+    #torch.set_num_threads(1)
     num_channels = 1
     signal_length = 1008
     center = 500 # Use middle 500 samples

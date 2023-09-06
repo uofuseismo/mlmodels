@@ -6,17 +6,25 @@
 #define MIN_PERTURBATION -0.75
 #define MAX_PERTURBATION  0.75
 using namespace UUSSMLModels::Pickers::CNNOneComponentP;
+#ifdef WITH_OPENVINO
 #include "openvino.hpp"
+#endif
 
 class Inference::InferenceImpl
 {
 public:
     /// Constructor
     explicit InferenceImpl(const Inference::Device device) :
-        mOpenVINO(device, MIN_PERTURBATION, MAX_PERTURBATION)
+#ifdef WITH_OPENVINO
+        mOpenVINO(device, MIN_PERTURBATION, MAX_PERTURBATION),
+#endif
+        mDevice(device)
     {
     }
+#ifdef WITH_OPENVINO
     OpenVINOImpl mOpenVINO;
+#endif
+    Inference::Device mDevice{Inference::Device::CPU};
     bool mUseOpenVINO{false};
     bool mInitialized{false};
 };

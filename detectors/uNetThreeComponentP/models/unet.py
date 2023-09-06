@@ -61,7 +61,6 @@ class UNet(torch.nn.Module):
         x1d = self.relu(x)
         x1d = self.bn1(x1d)
         x = self.maxpool(x1d)
-        #print('x1d.shape:', x1d.shape)
 
         x = self.conv21(x)
         x = self.relu(x)

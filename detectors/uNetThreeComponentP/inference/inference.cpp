@@ -14,18 +14,24 @@
 #define WINDOW_END   754
 
 using namespace UUSSMLModels::Detectors::UNetThreeComponentP;
+#ifdef WITH_OPENVINO
 #include "openvino.hpp"
+#endif
 
 class Inference::InferenceImpl
 {
 public:
     /// Constructor
     explicit InferenceImpl(const Inference::Device device) :
+#ifdef WITH_OPENVINO
         mOpenVINO(device),
+#endif
         mDevice(device)
     {
     }
+#ifdef WITH_OPENVINO
     OpenVINOImpl mOpenVINO;   
+#endif
     Inference::Device mDevice{Inference::Device::CPU};
     bool mUseOpenVINO{false};
     bool mInitialized{false};

@@ -20,6 +20,9 @@ if (${OpenVINO_Runtime_FOUND})
    message("OpenVINO runtime found")
    add_compile_definitions(WITH_OPENVINO)
 endif()
+if (NOT ${OpenVINO_Runtime_FOUND} AND NOT ${TORCH_FOUND})
+   message("WARNING: No deep learning inference will be performed")
+endif()
 
 configure_file(${CMAKE_SOURCE_DIR}/include/private/version.hpp.in
                ${CMAKE_SOURCE_DIR}/include/uussmlmodels/version.hpp)
@@ -39,6 +42,7 @@ set(INFERENCE_SRC
     detectors/uNetThreeComponentP/preprocessing/preprocessing.cpp
     detectors/uNetThreeComponentS/inference/inference.cpp
     detectors/uNetThreeComponentS/preprocessing/preprocessing.cpp
+    eventClassifiers/cnnThreeComponent/preprocessing/preprocessing.cpp
     firstMotionClassifiers/cnnOneComponentP/inference/inference.cpp
     firstMotionClassifiers/cnnOneComponentP/preprocessing/preprocessing.cpp
     pickers/cnnOneComponentP/inference/inference.cpp

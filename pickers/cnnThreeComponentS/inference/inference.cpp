@@ -6,17 +6,25 @@
 #define MIN_PERTURBATION -0.85
 #define MAX_PERTURBATION  0.85
 using namespace UUSSMLModels::Pickers::CNNThreeComponentS;
+#ifdef WITH_OPENVINO
 #include "openvino.hpp"
+#endif
 
 class Inference::InferenceImpl
 {
 public:
     /// Constructor
     explicit InferenceImpl(const Inference::Device device) :
-        mOpenVINO(device, MIN_PERTURBATION, MAX_PERTURBATION)
+#ifdef WITH_OPENVINO
+        mOpenVINO(device, MIN_PERTURBATION, MAX_PERTURBATION),
+#endif
+        mDevice(device)
     {
     }
+#ifdef WITH_OPENVINO
     OpenVINOImpl mOpenVINO;
+#endif
+    Inference::Device mDevice{Inference::Device::CPU};
     bool mUseOpenVINO{false};
     bool mInitialized{false};
 };
@@ -97,7 +105,11 @@ U Inference::predict(const std::vector<U> &vertical,
                      const std::vector<U> &east) const
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
+#ifdef WITH_OPENVINO
     return pImpl->mOpenVINO.predict(vertical, north, east);
+#else
+    throw std::runtime_error("Recompile with OpenVINO");
+#endif
 }
 
 /// Min/max perturbation

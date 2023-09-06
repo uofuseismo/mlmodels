@@ -1,5 +1,5 @@
-#ifndef UUSS_PYTHON_PICKERS_UNET_ONE_COMPONENT_P_INFERENCE_HPP
-#define UUSS_PYTHON_PICKERS_UNET_ONE_COMPONENT_P_INFERENCE_HPP
+#ifndef UUSS_PYTHON_PICKERS_HPP
+#define UUSS_PYTHON_PICKERS_HPP
 #include <vector>
 #include <memory>
 #include <pybind11/pybind11.h>

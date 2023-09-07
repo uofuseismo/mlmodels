@@ -103,7 +103,11 @@ template<typename U>
 U Inference::predict(const std::vector<U> &vertical) const
 {
     if (!isInitialized()){throw std::runtime_error("Class not initialized");}
+#ifdef WITH_OPENVINO
     return pImpl->mOpenVINO.predict(vertical);
+#else
+    throw std::runtime_error("Recompile with OpenVino");
+#endif
 }
 
 /// Min/max perturbation

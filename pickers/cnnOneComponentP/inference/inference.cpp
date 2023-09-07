@@ -76,9 +76,9 @@ void Inference::load(const std::string &fileName,
     }
     else if (format == Inference::ModelFormat::HDF5)
     {
+#ifdef WITH_OPENVINO
         Weights weights;
         weights.loadFromHDF5(fileName);
-#ifdef WITH_OPENVINO
         pImpl->mOpenVINO.createFromWeights(weights, 1);
         pImpl->mUseOpenVINO = true;
         pImpl->mInitialized = true;

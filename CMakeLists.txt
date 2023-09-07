@@ -20,8 +20,10 @@ if (${OpenVINO_Runtime_FOUND})
    message("OpenVINO runtime found")
    add_compile_definitions(WITH_OPENVINO)
 endif()
-if (NOT ${OpenVINO_Runtime_FOUND} AND NOT ${TORCH_FOUND})
-   message("WARNING: No deep learning inference will be performed")
+if (NOT ${OpenVINO_Runtime_FOUND})
+   if (NOT ${TORCH_FOUND})
+      message("WARNING: No deep learning inference will be performed")
+    endif()
 endif()
 
 configure_file(${CMAKE_SOURCE_DIR}/include/private/version.hpp.in

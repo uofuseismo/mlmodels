@@ -82,6 +82,7 @@ if (${WRAP_PYTHON})
                python/pyuussmlmodels.cpp
                python/detectors.cpp
                python/pickers.cpp
+               python/firstMotionClassifiers.cpp
                )
    set_target_properties(pyuussmlmodels PROPERTIES
                          PREFIX ""
@@ -93,6 +94,9 @@ if (${WRAP_PYTHON})
                                       $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/include>)
    target_link_libraries(pyuussmlmodels
                          PRIVATE pybind11::pybind11 pybind11::lto uussmlmodels) 
+   file(COPY ${CMAKE_SOURCE_DIR}/python/unit_test.py DESTINATION .)
+   add_test(NAME python_tests
+            COMMAND ${PYTHON_EXECUTABLE} -m pytest)
 endif()
 
 

@@ -4,9 +4,41 @@
 #include <pybind11/stl.h>
 #include "uussmlmodels/detectors/uNetOneComponentP/inference.hpp"
 #include "uussmlmodels/detectors/uNetOneComponentP/preprocessing.hpp"
+#include "uussmlmodels/detectors/uNetThreeComponentP/inference.hpp"
+#include "uussmlmodels/detectors/uNetThreeComponentP/preprocessing.hpp"
+#include "uussmlmodels/detectors/uNetThreeComponentS/inference.hpp"
+#include "uussmlmodels/detectors/uNetThreeComponentS/preprocessing.hpp"
 #include "detectors.hpp"
 
 using namespace UUSSMLModels::Python::Detectors;
+
+namespace
+{
+template<typename T>
+std::vector<T> bufferToVector(const pybind11::buffer_info &buffer)
+{
+    auto nSamples = static_cast<int> (buffer.size);
+    const T *pointer = (T *) (buffer.ptr);
+    if (pointer == nullptr)
+    {
+        throw std::invalid_argument("Buffer data is null");
+    }
+    std::vector<T> work(nSamples);
+    std::copy(pointer, pointer + nSamples, work.data());
+    return work;
+}
+template<typename T>
+pybind11::array_t<T, pybind11::array::c_style | pybind11::array::forcecast>
+   vectorToBuffer(const std::vector<T> &vector)
+{
+    pybind11::array_t<T, pybind11::array::c_style> buffer(vector.size());
+    pybind11::buffer_info bufferHandle = buffer.request();
+    auto pointer = static_cast<double *> (bufferHandle.ptr);
+    std::copy(vector.begin(), vector.end(), pointer);
+    return buffer;
+}
+
+}
 
 ///--------------------------------------------------------------------------///
 ///                               One Component P                            ///
@@ -33,20 +65,9 @@ UNetOneComponentP::Preprocessing::process(
     const double samplingRate)
 {
     pybind11::buffer_info xBuffer = x.request();
-    auto nSamples = static_cast<int> (xBuffer.size);
-    const double *xPointer = (double *) (xBuffer.ptr);
-    if (xPointer == nullptr)
-    {
-        throw std::invalid_argument("x is null");
-    }
-    std::vector<double> xWork(nSamples);
-    std::copy(xPointer, xPointer + nSamples, xWork.data());
+    auto xWork = ::bufferToVector<double>(x.request());
     auto xProcessed = pImpl->process(xWork, samplingRate);
-    pybind11::array_t<double, pybind11::array::c_style> y(xProcessed.size());
-    pybind11::buffer_info yBuffer = y.request();
-    auto yPointer = static_cast<double *> (yBuffer.ptr);
-    std::copy(xProcessed.begin(), xProcessed.end(), yPointer);
-    return y;
+    return ::vectorToBuffer(xProcessed);
 }
 
 void UNetOneComponentP::Preprocessing::clear() noexcept
@@ -113,8 +134,8 @@ UNetOneComponentP::Inference::predictProbability(
     const bool useSlidingWindow)
 {
     if (!isInitialized()){throw std::runtime_error("Detector not initialized");}
-    pybind11::buffer_info xBuffer = x.request();
-    auto nSamples = static_cast<int> (xBuffer.size);
+    auto xWork = ::bufferToVector<double>(x.request());
+    auto nSamples = static_cast<int> (xWork.size());
     if (nSamples < getMinimumSignalLength())
     {
         throw std::invalid_argument("Signal must be length of at least "
@@ -127,13 +148,6 @@ UNetOneComponentP::Inference::predictProbability(
             throw std::invalid_argument("Signal is not a valid length for non-sliding window");
         }
     }
-    const double *xPointer = (double *) (xBuffer.ptr);
-    if (xPointer == nullptr)
-    {   
-        throw std::invalid_argument("x is null");
-    }   
-    std::vector<double> xWork(nSamples);
-    std::copy(xPointer, xPointer + nSamples, xWork.data());
     std::vector<double> probabilitySignal;
     if (useSlidingWindow)
     {
@@ -143,14 +157,109 @@ UNetOneComponentP::Inference::predictProbability(
     {
         probabilitySignal = pImpl->predictProbability(xWork);
     }
-    pybind11::array_t<double, pybind11::array::c_style>
-        y(probabilitySignal.size());
-    pybind11::buffer_info yBuffer = y.request();
-    auto yPointer = static_cast<double *> (yBuffer.ptr);
-    std::copy(probabilitySignal.begin(), probabilitySignal.end(), yPointer);
-    return y;
-
+    return ::vectorToBuffer<double>(probabilitySignal);
 }
+
+///--------------------------------------------------------------------------///
+///                             Three Component P                            ///
+///--------------------------------------------------------------------------///
+
+UNetThreeComponentP::Preprocessing::Preprocessing() :
+    pImpl(std::make_unique<UUSSMLModels::Detectors::UNetThreeComponentP::Preprocessing> ())
+{
+}
+
+double UNetThreeComponentP::Preprocessing::getTargetSamplingPeriod() const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentP::Preprocessing::getTargetSamplingPeriod();
+}
+
+double UNetThreeComponentP::Preprocessing::getTargetSamplingRate() const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentP::Preprocessing::getTargetSamplingRate();
+}
+
+std::tuple<
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>,
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>,
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> >
+UNetThreeComponentP::Preprocessing::process(
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &vertical,
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &north,
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &east,
+    const double samplingRate)
+{
+    auto vWork = ::bufferToVector<double>(vertical.request());
+    auto nWork = ::bufferToVector<double>(north.request());
+    auto eWork = ::bufferToVector<double>(east.request());
+    if (vWork.size() != nWork.size() || vWork.size() != eWork.size())
+    {
+        throw std::invalid_argument("Inconsistent signal lengths");
+    }
+    auto processedSignals = pImpl->process(vWork, nWork, eWork, samplingRate);
+    auto vProcessed = ::vectorToBuffer<double> (std::get<0>(processedSignals));
+    auto nProcessed = ::vectorToBuffer<double> (std::get<1>(processedSignals));
+    auto eProcessed = ::vectorToBuffer<double> (std::get<2>(processedSignals));
+    return std::tuple {vProcessed, nProcessed, eProcessed};
+}
+
+void UNetThreeComponentP::Preprocessing::clear() noexcept
+{
+    pImpl->clear();
+}
+
+UNetThreeComponentP::Preprocessing::~Preprocessing() = default;
+
+///--------------------------------------------------------------------------///
+///                             Three Component S                            ///
+///--------------------------------------------------------------------------///
+
+UNetThreeComponentS::Preprocessing::Preprocessing() :
+    pImpl(std::make_unique<UUSSMLModels::Detectors::UNetThreeComponentS::Preprocessing> ())
+{
+}
+
+double UNetThreeComponentS::Preprocessing::getTargetSamplingPeriod() const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentS::Preprocessing::getTargetSamplingPeriod();
+}
+
+double UNetThreeComponentS::Preprocessing::getTargetSamplingRate() const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentS::Preprocessing::getTargetSamplingRate();
+}
+
+std::tuple<
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>,
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>,
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> >
+UNetThreeComponentS::Preprocessing::process(
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &vertical,
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &north,
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &east,
+    const double samplingRate)
+{
+    auto vWork = ::bufferToVector<double>(vertical.request());
+    auto nWork = ::bufferToVector<double>(north.request());
+    auto eWork = ::bufferToVector<double>(east.request());
+    if (vWork.size() != nWork.size() || vWork.size() != eWork.size())
+    {   
+        throw std::invalid_argument("Inconsistent signal lengths");
+    }   
+    auto processedSignals = pImpl->process(vWork, nWork, eWork, samplingRate);
+    auto vProcessed = ::vectorToBuffer<double> (std::get<0>(processedSignals));
+    auto nProcessed = ::vectorToBuffer<double> (std::get<1>(processedSignals));
+    auto eProcessed = ::vectorToBuffer<double> (std::get<2>(processedSignals));
+    return std::tuple {vProcessed, nProcessed, eProcessed};
+}
+
+void UNetThreeComponentS::Preprocessing::clear() noexcept
+{
+    pImpl->clear();
+}
+
+UNetThreeComponentS::Preprocessing::~Preprocessing() = default;
+
 
 ///--------------------------------------------------------------------------///
 ///                                Initialization                            ///
@@ -207,8 +316,9 @@ Read-Only Properties
         &UNetOneComponentP::Preprocessing::process,
         "Preprocesses the waveform.",
         pybind11::arg("vertical_channel_signal"),
-        pybind11::arg("samplingRate") = 100);
-        
+        pybind11::arg("sampling_rate") = 100);
+
+#if defined(WITH_TORCH) || defined(WITH_OPENVINO)
     pybind11::class_<UUSSMLModels::Python::Detectors::UNetOneComponentP::Inference>
        oneComponentPInference(oneComponentPModule, "Inference");
     oneComponentPInference.def(pybind11::init<> ());
@@ -262,4 +372,119 @@ Read-Only Properties
         "Processes the given signal either in a sliding-window sense (default) or as a one-off signal",
         pybind11::arg("signal"),
         pybind11::arg("use_sliding_window") = true); 
+#endif
+    ///----------------------------------------------------------------------///
+    ///                            Three Component P                         ///
+    ///----------------------------------------------------------------------///
+    pybind11::module threeComponentPModule = detectorsModule.def_submodule("UNetThreeComponentP");
+    /*  
+    pybind11::enum_<UUSSMLModels::Detectors::UNetThreeComponentP::Inference::Device> 
+        (threeComponentPModule, "Device")
+        .value("CPU", UUSSMLModels::Detectors::UNetThreeComponentP::Inference::Device::CPU,
+               "Perform the inference on the CPU.")
+        .value("GPU", UUSSMLModels::Detectors::UNetThreeComponentP::Inference::Device::GPU,
+               "Perform the inference on the GPU.");
+    */
+    pybind11::enum_<UUSSMLModels::Detectors::UNetThreeComponentP::Inference::ModelFormat> 
+        (threeComponentPModule, "ModelFormat")
+        .value("ONNX", UUSSMLModels::Detectors::UNetThreeComponentP::Inference::ModelFormat::ONNX,
+               "The model is specified in ONNX format.")
+        //.value("HDF5", UUSSMLModels::Detectors::UNetThreeComponentP::Inference::ModelFormat::HDF5,
+        //       "The model is specified in HDF5 format.");
+        ;
+    threeComponentPModule.attr("__doc__") = "P-phase detectors to be run on three-component sensors.";
+
+    pybind11::class_<UUSSMLModels::Python::Detectors::UNetThreeComponentP::Preprocessing>
+        threeComponentPPreprocessing(threeComponentPModule, "Preprocessing");
+    threeComponentPPreprocessing.def(pybind11::init<> ());
+    threeComponentPPreprocessing.doc() = R""""(
+The preprocessing class for the three-component P detector.
+
+Read-Only Properties
+    target_sampling_period : double
+        The sampling period in seconds of the output signals.
+    target_sampling_rate : double
+        The sampling rate in Hz of the the output signal.
+)"""";
+    threeComponentPPreprocessing.def_property_readonly(
+        "target_sampling_period",
+        &UNetThreeComponentP::Preprocessing::getTargetSamplingPeriod);
+    threeComponentPPreprocessing.def_property_readonly(
+        "target_sampling_rate",
+        &UNetThreeComponentP::Preprocessing::getTargetSamplingRate);
+    threeComponentPPreprocessing.def(
+        "clear",
+        &UNetThreeComponentP::Preprocessing::clear,
+        "Releases memory and resets the class.");
+    threeComponentPPreprocessing.def(
+        "process",
+        &UNetThreeComponentP::Preprocessing::process,
+R""""(
+Preprocesses the three-component waveform.  The result will be a tuple
+where the first output signal corresponds to the first (vertical)
+input signal, the second output signal corresponds to the second
+(north) input signal, and the third output signal corresponds to the
+third (east) input signal.   Note, all signals must be the same length.
+)"""",
+        pybind11::arg("vertical_signal"),
+        pybind11::arg("north_signal"),
+        pybind11::arg("east_signal"),
+        pybind11::arg("sampling_rate") = 100);
+    ///----------------------------------------------------------------------///
+    ///                            Three Component S                         ///
+    ///----------------------------------------------------------------------///
+    pybind11::module threeComponentSModule = detectorsModule.def_submodule("UNetThreeComponentS");
+    /*  
+    pybind11::enum_<UUSSMLModels::Detectors::UNetThreeComponentS::Inference::Device> 
+        (threeComponentSModule, "Device")
+        .value("CPU", UUSSMLModels::Detectors::UNetThreeComponentS::Inference::Device::CPU,
+               "Perform the inference on the CPU.")
+        .value("GPU", UUSSMLModels::Detectors::UNetThreeComponentS::Inference::Device::GPU,
+               "Perform the inference on the GPU.");
+    */
+    pybind11::enum_<UUSSMLModels::Detectors::UNetThreeComponentS::Inference::ModelFormat>
+        (threeComponentSModule, "ModelFormat")
+        .value("ONNX", UUSSMLModels::Detectors::UNetThreeComponentS::Inference::ModelFormat::ONNX,
+               "The model is specified in ONNX format.")
+        //.value("HDF5", UUSSMLModels::Detectors::UNetThreeComponentS::Inference::ModelFormat::HDF5,
+        //       "The model is specified in HDF5 format.");
+        ;
+    threeComponentSModule.attr("__doc__") = "S-phase detectors to be run on three-component sensors.";
+
+    pybind11::class_<UUSSMLModels::Python::Detectors::UNetThreeComponentS::Preprocessing>
+        threeComponentSPreprocessing(threeComponentSModule, "Preprocessing");
+    threeComponentSPreprocessing.def(pybind11::init<> ());
+    threeComponentSPreprocessing.doc() = R""""(
+The preprocessing class for the three-component S detector.
+
+Read-Only Properties
+    target_sampling_period : double
+        The sampling period in seconds of the output signals.
+    target_sampling_rate : double
+        The sampling rate in Hz of the the output signal.
+)"""";
+    threeComponentSPreprocessing.def_property_readonly(
+        "target_sampling_period",
+        &UNetThreeComponentS::Preprocessing::getTargetSamplingPeriod);
+    threeComponentSPreprocessing.def_property_readonly(
+        "target_sampling_rate",
+        &UNetThreeComponentS::Preprocessing::getTargetSamplingRate);
+    threeComponentSPreprocessing.def(
+        "clear",
+        &UNetThreeComponentS::Preprocessing::clear,
+        "Releases memory and resets the class.");
+    threeComponentSPreprocessing.def(
+        "process",
+        &UNetThreeComponentS::Preprocessing::process,
+R""""(
+Preprocesses the three-component waveform.  The result will be a tuple
+where the first output signal corresponds to the first (vertical)
+input signal, the second output signal corresponds to the second
+(north) input signal, and the third output signal corresponds to the
+third (east) input signal.   Note, all signals must be the same length.
+)"""",
+        pybind11::arg("vertical_signal"),
+        pybind11::arg("north_signal"),
+        pybind11::arg("east_signal"),
+        pybind11::arg("sampling_rate") = 100);
 }

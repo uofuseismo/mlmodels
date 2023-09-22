@@ -1,6 +1,7 @@
 #include "uussmlmodels/version.hpp"
 #include "detectors.hpp"
 #include "pickers.hpp"
+#include "firstMotionClassifiers.hpp"
 #include "eventClassifiers.hpp"
 #include <pybind11/pybind11.h>
 
@@ -12,5 +13,6 @@ PYBIND11_MODULE(pyuussmlmodels, m)
 
     UUSSMLModels::Python::Detectors::initialize(m);
     UUSSMLModels::Python::Pickers::initialize(m);
+    UUSSMLModels::Python::FirstMotionClassifiers::initialize(m);
 }
 

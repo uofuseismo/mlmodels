@@ -123,6 +123,12 @@ Preprocessing& Preprocessing::operator=(Preprocessing &&process) noexcept
     return *this;
 }
 
+/// Reset class
+void Preprocessing::clear() noexcept
+{
+    pImpl = std::make_unique<PreprocessingImpl> ();
+}
+
 /// Destructor
 Preprocessing::~Preprocessing() = default;
 

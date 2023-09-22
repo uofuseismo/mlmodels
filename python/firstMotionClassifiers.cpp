@@ -2,29 +2,29 @@
 #include <vector>
 #include <string>
 #include <pybind11/stl.h>
-#include "uussmlmodels/pickers/cnnOneComponentP/inference.hpp"
-#include "uussmlmodels/pickers/cnnOneComponentP/preprocessing.hpp"
-#include "pickers.hpp"
+#include "uussmlmodels/firstMotionClassifiers/cnnOneComponentP/inference.hpp"
+#include "uussmlmodels/firstMotionClassifiers/cnnOneComponentP/preprocessing.hpp"
+#include "firstMotionClassifiers.hpp"
 
-using namespace UUSSMLModels::Python::Pickers;
+using namespace UUSSMLModels::Python::FirstMotionClassifiers;
 
 ///--------------------------------------------------------------------------///
 ///                               One Component P                            ///
 ///--------------------------------------------------------------------------///
 
 CNNOneComponentP::Preprocessing::Preprocessing() :
-    pImpl(std::make_unique<UUSSMLModels::Pickers::CNNOneComponentP::Preprocessing> ())
+    pImpl(std::make_unique<UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Preprocessing> ())
 {
 }
 
 double CNNOneComponentP::Preprocessing::getTargetSamplingPeriod() const noexcept
 {
-    return UUSSMLModels::Pickers::CNNOneComponentP::Preprocessing::getTargetSamplingPeriod();
+    return UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Preprocessing::getTargetSamplingPeriod();
 }
 
 double CNNOneComponentP::Preprocessing::getTargetSamplingRate() const noexcept
 {
-    return UUSSMLModels::Pickers::CNNOneComponentP::Preprocessing::getTargetSamplingRate();
+    return UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Preprocessing::getTargetSamplingRate();
 }
 
 pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>
@@ -58,7 +58,7 @@ CNNOneComponentP::Preprocessing::~Preprocessing() = default;
 
 
 CNNOneComponentP::Inference::Inference() :
-    pImpl(std::make_unique<UUSSMLModels::Pickers::CNNOneComponentP::Inference> ())
+    pImpl(std::make_unique<UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference> ())
 {
 }
 
@@ -66,7 +66,7 @@ CNNOneComponentP::Inference::~Inference() = default;
 
 void CNNOneComponentP::Inference::load(
     const std::string &fileName,
-    const UUSSMLModels::Pickers::CNNOneComponentP::Inference::ModelFormat format)
+    const UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::ModelFormat format)
 {
     pImpl->load(fileName, format);
 }
@@ -76,26 +76,20 @@ bool CNNOneComponentP::Inference::isInitialized() const noexcept
     return pImpl->isInitialized();
 }
 
-std::pair<double, double>
-CNNOneComponentP::Inference::getMinimumAndMaximumPerturbation() const noexcept
-{
-    return UUSSMLModels::Pickers::CNNOneComponentP::Inference::getMinimumAndMaximumPerturbation();
-}
-
 double CNNOneComponentP::Inference::getSamplingRate() const noexcept
 {
-    return UUSSMLModels::Pickers::CNNOneComponentP::Inference::getSamplingRate();
+    return UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::getSamplingRate();
 }
 
 int CNNOneComponentP::Inference::getExpectedSignalLength() const noexcept
 {
-    return UUSSMLModels::Pickers::CNNOneComponentP::Inference::getExpectedSignalLength();
+    return UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::getExpectedSignalLength();
 }
 
 double CNNOneComponentP::Inference::predict(
     const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x)
 {
-    if (!isInitialized()){throw std::runtime_error("Picker not initialized");}
+    if (!isInitialized()){throw std::runtime_error("First motion classifier not initialized");}
     pybind11::buffer_info xBuffer = x.request();
     auto nSamples = static_cast<int> (xBuffer.size);
     if (nSamples != getExpectedSignalLength())
@@ -116,32 +110,32 @@ double CNNOneComponentP::Inference::predict(
 ///--------------------------------------------------------------------------///
 ///                                Initialization                            ///
 ///--------------------------------------------------------------------------///
-void UUSSMLModels::Python::Pickers::initialize(pybind11::module &m)
+void UUSSMLModels::Python::FirstMotionClassifiers::initialize(pybind11::module &m)
 {
-    pybind11::module pickersModule = m.def_submodule("Pickers");
-    pickersModule.attr("__doc__") = "Phase pick regressors for cleaning up preliminary P or S picks.";
+    pybind11::module fmModule = m.def_submodule("FirstMotionClassifiers");
+    fmModule.attr("__doc__") = "P pick classifiers that assign P picks to up/down/unknown polarity.";
     ///----------------------------------------------------------------------///
     ///                             One Component P                          ///
     ///----------------------------------------------------------------------///
-    pybind11::module oneComponentPModule = pickersModule.def_submodule("CNNOneComponentP");
+    pybind11::module oneComponentPModule = fmModule.def_submodule("CNNOneComponentP");
     /*
-    pybind11::enum_<UUSSMLModels::Pickers::CNNOneComponentP::Inference::Device> 
+    pybind11::enum_<UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::Device> 
         (oneComponentPModule, "Device")
-        .value("CPU", UUSSMLModels::Pickers::CNNOneComponentP::Inference::Device::CPU,
+        .value("CPU", UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::Device::CPU,
                "Perform the inference on the CPU.")
-        .value("GPU", UUSSMLModels::Pickers::CNNOneComponentP::Inference::Device::GPU,
+        .value("GPU", UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::Device::GPU,
                "Perform the inference on the GPU.");
     */
-    pybind11::enum_<UUSSMLModels::Pickers::CNNOneComponentP::Inference::ModelFormat>
+    pybind11::enum_<UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::ModelFormat>
         (oneComponentPModule, "ModelFormat")
-        .value("ONNX", UUSSMLModels::Pickers::CNNOneComponentP::Inference::ModelFormat::ONNX,
+        .value("ONNX", UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::ModelFormat::ONNX,
                "The model is specified in ONNX format.")
-        .value("HDF5", UUSSMLModels::Pickers::CNNOneComponentP::Inference::ModelFormat::HDF5,
+        .value("HDF5", UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::ModelFormat::HDF5,
                "The model is specified in HDF5 format.");
         ;
     oneComponentPModule.attr("__doc__") = "P-phase pick regressor to be run on single (vertical) channel stations.";
 
-    pybind11::class_<UUSSMLModels::Python::Pickers::CNNOneComponentP::Preprocessing>
+    pybind11::class_<UUSSMLModels::Python::FirstMotionClassifiers::CNNOneComponentP::Preprocessing>
         oneComponentPPreprocessing(oneComponentPModule, "Preprocessing");
     oneComponentPPreprocessing.def(pybind11::init<> ());
     oneComponentPPreprocessing.doc() = R""""(
@@ -171,11 +165,11 @@ Read-Only Properties
         pybind11::arg("samplingRate") = 100);
 
 #if defined(WITH_TORCH) || defined(WITH_OPENVINO)
-    pybind11::class_<UUSSMLModels::Python::Pickers::CNNOneComponentP::Inference>
+    pybind11::class_<UUSSMLModels::Python::FirstMotionClassifiers::CNNOneComponentP::Inference>
        oneComponentPInference(oneComponentPModule, "Inference");
     oneComponentPInference.def(pybind11::init<> ());
     oneComponentPInference.doc() = R""""(
-The processing class for the one-component P-pick regressor.
+The processing class for the one-component P-pick classifier.
 
 Read-Only Properties
 
@@ -197,19 +191,16 @@ Read-Only Properties
     oneComponentPInference.def_property_readonly(
         "expected_signal_length",
         &CNNOneComponentP::Inference::getExpectedSignalLength);
-    oneComponentPInference.def_property_readonly(
-        "minimum_and_maximum_perturbation",
-        &CNNOneComponentP::Inference::getMinimumAndMaximumPerturbation);
     oneComponentPInference.def(
         "load",
         &CNNOneComponentP::Inference::load,
         "Loads the weights from file.",
         pybind11::arg("file_name"),
-        pybind11::arg("model_format") = UUSSMLModels::Pickers::CNNOneComponentP::Inference::ModelFormat::ONNX);
+        pybind11::arg("model_format") = UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::ModelFormat::ONNX);
     oneComponentPInference.def(
         "predict",
         &CNNOneComponentP::Inference::predict,
-        "Computes the perturbation, measured in seconds, to add to the initial pick.",
+        "Predicts the signal as up/down/unknown.",
         pybind11::arg("signal"));
 #endif
 

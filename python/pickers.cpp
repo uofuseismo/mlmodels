@@ -4,7 +4,10 @@
 #include <pybind11/stl.h>
 #include "uussmlmodels/pickers/cnnOneComponentP/inference.hpp"
 #include "uussmlmodels/pickers/cnnOneComponentP/preprocessing.hpp"
+#include "uussmlmodels/pickers/cnnThreeComponentS/inference.hpp"
+#include "uussmlmodels/pickers/cnnThreeComponentS/preprocessing.hpp"
 #include "pickers.hpp"
+#include "buffer.hpp"
 
 using namespace UUSSMLModels::Python::Pickers;
 
@@ -32,21 +35,13 @@ CNNOneComponentP::Preprocessing::process(
     const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x,
     const double samplingRate)
 {
-    pybind11::buffer_info xBuffer = x.request();
-    auto nSamples = static_cast<int> (xBuffer.size);
-    const double *xPointer = (double *) (xBuffer.ptr);
-    if (xPointer == nullptr)
-    {
-        throw std::invalid_argument("x is null");
+    auto xWork = ::bufferToVector<double>(x.request());
+    if (samplingRate <= 0)
+    {   
+        throw std::invalid_argument("Sampling rate must be positive");
     }
-    std::vector<double> xWork(nSamples);
-    std::copy(xPointer, xPointer + nSamples, xWork.data());
     auto xProcessed = pImpl->process(xWork, samplingRate);
-    pybind11::array_t<double, pybind11::array::c_style> y(xProcessed.size());
-    pybind11::buffer_info yBuffer = y.request();
-    auto yPointer = static_cast<double *> (yBuffer.ptr);
-    std::copy(xProcessed.begin(), xProcessed.end(), yPointer);
-    return y;
+    return ::vectorToBuffer<double>(xProcessed);
 }
 
 void CNNOneComponentP::Preprocessing::clear() noexcept
@@ -96,21 +91,70 @@ double CNNOneComponentP::Inference::predict(
     const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x)
 {
     if (!isInitialized()){throw std::runtime_error("Picker not initialized");}
-    pybind11::buffer_info xBuffer = x.request();
-    auto nSamples = static_cast<int> (xBuffer.size);
+    auto xWork = ::bufferToVector<double>(x.request());
+    auto nSamples = static_cast<int> (xWork.size());
     if (nSamples != getExpectedSignalLength())
-    {
+    {   
         throw std::invalid_argument("Signal must be length = "
                                   + std::to_string(getExpectedSignalLength()));
-    }
-    const double *xPointer = (double *) (xBuffer.ptr);
-    if (xPointer == nullptr)
-    {
-        throw std::invalid_argument("x is null");
-    }
-    std::vector<double> xWork(nSamples);
-    std::copy(xPointer, xPointer + nSamples, xWork.data());
+    }   
     return pImpl->predict(xWork);
+}
+
+///--------------------------------------------------------------------------///
+///                               Three Component S                          ///
+///--------------------------------------------------------------------------///
+
+CNNThreeComponentS::Preprocessing::Preprocessing() :
+    pImpl(std::make_unique<UUSSMLModels::Pickers::CNNThreeComponentS::Preprocessing> ()) 
+{
+}
+
+double CNNThreeComponentS::Preprocessing::getTargetSamplingPeriod() const noexcept
+{
+    return UUSSMLModels::Pickers::CNNThreeComponentS::Preprocessing::getTargetSamplingPeriod();
+}
+
+double CNNThreeComponentS::Preprocessing::getTargetSamplingRate() const noexcept
+{
+    return UUSSMLModels::Pickers::CNNThreeComponentS::Preprocessing::getTargetSamplingRate();
+}
+
+void CNNThreeComponentS::Preprocessing::clear() noexcept
+{
+    pImpl->clear();
+}
+
+CNNThreeComponentS::Preprocessing::~Preprocessing() = default;
+
+std::tuple<
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>,
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>,
+    pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> >
+CNNThreeComponentS::Preprocessing::process(
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &vertical,
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &north,
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &east,
+    const double samplingRate)
+{
+    if (samplingRate <= 0)
+    {
+        throw std::invalid_argument("Sampling rate must be positive");
+    }
+    auto verticalWork = ::bufferToVector<double>(vertical.request());
+    auto northWork    = ::bufferToVector<double>(north.request());
+    auto eastWork     = bufferToVector<double>(east.request());
+    auto result
+        = pImpl->process(verticalWork, northWork, eastWork, samplingRate);
+    return std::tuple {::vectorToBuffer<double>(std::get<0> (result)),
+                       ::vectorToBuffer<double>(std::get<1> (result)),
+                       ::vectorToBuffer<double>(std::get<2> (result))};
+}
+
+
+CNNThreeComponentS::Inference::Inference() :
+    pImpl(std::make_unique<UUSSMLModels::Pickers::CNNThreeComponentS::Inference> ())
+{
 }
 
 ///--------------------------------------------------------------------------///
@@ -119,7 +163,7 @@ double CNNOneComponentP::Inference::predict(
 void UUSSMLModels::Python::Pickers::initialize(pybind11::module &m)
 {
     pybind11::module pickersModule = m.def_submodule("Pickers");
-    pickersModule.attr("__doc__") = "Phase pick regressors for cleaning up preliminary P or S picks.";
+    pickersModule.attr("__doc__") = "Phase pick regressors for refining preliminary P or S picks.";
     ///----------------------------------------------------------------------///
     ///                             One Component P                          ///
     ///----------------------------------------------------------------------///
@@ -166,9 +210,18 @@ Read-Only Properties
     oneComponentPPreprocessing.def(
         "process",
         &CNNOneComponentP::Preprocessing::process,
-        "Preprocesses the waveform.",
-        pybind11::arg("vertical_channel_signal"),
-        pybind11::arg("samplingRate") = 100);
+R""""(
+Preprocesses the single-channel vertical waveform.
+
+Parameters
+----------
+signal : np.array
+   The vertical-channel signal to preprocess.
+sampling_rate : float
+   The sampling rate of the signal in Hz.  This is assumed to be 100 Hz.
+)"""",
+        pybind11::arg("signal"),
+        pybind11::arg("sampling_rate") = 100);
 
 #if defined(WITH_TORCH) || defined(WITH_OPENVINO)
     pybind11::class_<UUSSMLModels::Python::Pickers::CNNOneComponentP::Inference>
@@ -213,4 +266,75 @@ Read-Only Properties
         pybind11::arg("signal"));
 #endif
 
+    ///----------------------------------------------------------------------///
+    ///                             One Component S                          ///
+    ///----------------------------------------------------------------------///
+    pybind11::module threeComponentSModule = pickersModule.def_submodule("CNNThreeComponentS");
+    /*
+    pybind11::enum_<UUSSMLModels::Pickers::CNNThreeComponentS::Inference::Device> 
+        (threeComponentSModule, "Device")
+        .value("CPU", UUSSMLModels::Pickers::CNNThreeComponentS::Inference::Device::CPU,
+               "Perform the inference on the CPU.")
+        .value("GPU", UUSSMLModels::Pickers::CNNThreeComponentS::Inference::Device::GPU,
+               "Perform the inference on the GPU.");
+    */
+    pybind11::enum_<UUSSMLModels::Pickers::CNNThreeComponentS::Inference::ModelFormat>
+        (threeComponentSModule, "ModelFormat")
+        .value("ONNX", UUSSMLModels::Pickers::CNNThreeComponentS::Inference::ModelFormat::ONNX,
+               "The model is specified in ONNX format.")
+        .value("HDF5", UUSSMLModels::Pickers::CNNThreeComponentS::Inference::ModelFormat::HDF5,
+               "The model is specified in HDF5 format.");
+        ;
+    threeComponentSModule.attr("__doc__") = "S-phase pick regressor to be run on three-channel signals.";
+
+    pybind11::class_<UUSSMLModels::Python::Pickers::CNNThreeComponentS::Preprocessing>
+        threeComponentSPreprocessing(threeComponentSModule, "Preprocessing");
+    threeComponentSPreprocessing.def(pybind11::init<> ());
+    threeComponentSPreprocessing.doc() = R""""(
+The preprocessing class for the three-component S pick regressor.
+
+Read-Only Properties
+    target_sampling_period : double
+        The sampling period in seconds of the output signal.
+    target_sampling_rate : double
+        The sampling rate in Hz of the the output signal.
+)"""";
+    threeComponentSPreprocessing.def_property_readonly(
+        "target_sampling_period",
+        &CNNThreeComponentS::Preprocessing::getTargetSamplingPeriod);
+    threeComponentSPreprocessing.def_property_readonly(
+        "target_sampling_rate",
+        &CNNThreeComponentS::Preprocessing::getTargetSamplingRate);
+    threeComponentSPreprocessing.def(
+        "clear",
+        &CNNThreeComponentS::Preprocessing::clear,
+        "Releases memory and resets the class.");
+    threeComponentSPreprocessing.def(
+        "process",
+        &CNNThreeComponentS::Preprocessing::process,
+R""""(
+Preprocesses the three-component waveform.  Note, all signals must be the
+same length.
+
+Parameters
+----------
+vertical_signal : np.array
+   The vertical signal to preprocess.
+north_signal : np.array
+   The north signal to preprocess.
+east_signal : np.array
+   The east signal to preprocess.
+sampling_rate : float
+   The sampling rate in Hz.  This is assumed to be 100 Hz.
+
+Returns
+-------
+A tuple where the first item is the processed first (vertical) input signal,
+the second item is the processed second (north) input signal, and the
+third item is the processed third (east) input signal.
+)"""",
+        pybind11::arg("vertical_signal"),
+        pybind11::arg("north_signal"),
+        pybind11::arg("east_signal"),
+        pybind11::arg("sampling_rate") = 100);
 }

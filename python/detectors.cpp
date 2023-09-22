@@ -9,9 +9,11 @@
 #include "uussmlmodels/detectors/uNetThreeComponentS/inference.hpp"
 #include "uussmlmodels/detectors/uNetThreeComponentS/preprocessing.hpp"
 #include "detectors.hpp"
+#include "buffer.hpp"
 
 using namespace UUSSMLModels::Python::Detectors;
 
+/*
 namespace
 {
 template<typename T>
@@ -39,6 +41,7 @@ pybind11::array_t<T, pybind11::array::c_style | pybind11::array::forcecast>
 }
 
 }
+*/
 
 ///--------------------------------------------------------------------------///
 ///                               One Component P                            ///
@@ -314,6 +317,16 @@ Read-Only Properties
     oneComponentPPreprocessing.def(
         "process",
         &UNetOneComponentP::Preprocessing::process,
+R""""(
+Preprocesses the single-channel vertical waveform.
+
+Parameters
+----------
+signal : np.array
+   The vertical-channel signal to preprocess.
+sampling_rate : float
+   The sampling rate of the signal in Hz.  This is assumed to be 100 Hz.
+)"""",
         "Preprocesses the waveform.",
         pybind11::arg("vertical_channel_signal"),
         pybind11::arg("sampling_rate") = 100);
@@ -420,11 +433,25 @@ Read-Only Properties
         "process",
         &UNetThreeComponentP::Preprocessing::process,
 R""""(
-Preprocesses the three-component waveform.  The result will be a tuple
-where the first output signal corresponds to the first (vertical)
-input signal, the second output signal corresponds to the second
-(north) input signal, and the third output signal corresponds to the
-third (east) input signal.   Note, all signals must be the same length.
+Preprocesses the three-component waveform.  Note, all signals must be the
+same length.
+
+Parameters
+----------
+vertical_signal : np.array
+   The vertical signal to preprocess.
+north_signal : np.array
+   The north signal to preprocess.
+east_signal : np.array
+   The east signal to preprocess.
+sampling_rate : float
+   The sampling rate in Hz.  This is assumed to be 100 Hz.
+
+Returns
+-------
+A tuple where the first item is the processed first (vertical) input signal,
+the second item is the processed second (north) input signal, and the
+third item is the processed third (east) input signal.
 )"""",
         pybind11::arg("vertical_signal"),
         pybind11::arg("north_signal"),
@@ -477,11 +504,25 @@ Read-Only Properties
         "process",
         &UNetThreeComponentS::Preprocessing::process,
 R""""(
-Preprocesses the three-component waveform.  The result will be a tuple
-where the first output signal corresponds to the first (vertical)
-input signal, the second output signal corresponds to the second
-(north) input signal, and the third output signal corresponds to the
-third (east) input signal.   Note, all signals must be the same length.
+Preprocesses the three-component waveform.  Note, all signals must be the
+same length.
+
+Parameters
+----------
+vertical_signal : np.array
+   The vertical signal to preprocess.
+north_signal : np.array
+   The north signal to preprocess.
+east_signal : np.array
+   The east signal to preprocess.
+sampling_rate : float
+   The sampling rate in Hz.  This is assumed to be 100 Hz.
+
+Returns
+-------
+A tuple where the first item is the processed first (vertical) input signal,
+the second item is the processed second (north) input signal, and the
+third item is the processed third (east) input signal.
 )"""",
         pybind11::arg("vertical_signal"),
         pybind11::arg("north_signal"),

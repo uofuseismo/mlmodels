@@ -40,9 +40,14 @@ namespace UUSSMLModels::Python::FirstMotionClassifiers
             void load(const std::string &fileName,
                       UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::ModelFormat format = UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::ModelFormat::ONNX);
             [[nodiscard]] bool isInitialized() const noexcept;
+            void setProbabilityThreshold(double threshold);
+            [[nodiscard]] double getProbabilityThreshold() const noexcept;
             [[nodiscard]] double getSamplingRate() const noexcept;
             [[nodiscard]] int getExpectedSignalLength() const noexcept;
-            [[nodiscard]] double predict(const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x);
+            [[nodiscard]] UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::FirstMotion
+                predict(const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x) const;
+            [[nodiscard]] std::tuple<double, double, double> predictProbability(
+                const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x) const;
             void clear() noexcept;
             ~Inference();
        private:

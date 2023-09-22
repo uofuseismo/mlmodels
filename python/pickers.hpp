@@ -63,8 +63,13 @@ namespace UUSSMLModels::Python::Pickers
         public:
             Preprocessing();
             void clear() noexcept;
-            [[nodiscard]] pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>
-                 process(const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x, 
+            std::tuple<
+                 pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>,
+                 pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>,
+                 pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> >
+                 process(const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &vertical,
+                         const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &north,
+                         const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &east,
                          double samplingRate = 100);
             [[nodiscard]] double getTargetSamplingRate() const noexcept;
             [[nodiscard]] double getTargetSamplingPeriod() const noexcept;

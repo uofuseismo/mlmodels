@@ -5,6 +5,7 @@
 #include "uussmlmodels/firstMotionClassifiers/cnnOneComponentP/inference.hpp"
 #include "uussmlmodels/firstMotionClassifiers/cnnOneComponentP/preprocessing.hpp"
 #include "firstMotionClassifiers.hpp"
+#include "buffer.hpp"
 
 using namespace UUSSMLModels::Python::FirstMotionClassifiers;
 
@@ -32,21 +33,13 @@ CNNOneComponentP::Preprocessing::process(
     const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x,
     const double samplingRate)
 {
-    pybind11::buffer_info xBuffer = x.request();
-    auto nSamples = static_cast<int> (xBuffer.size);
-    const double *xPointer = (double *) (xBuffer.ptr);
-    if (xPointer == nullptr)
+    auto xWork = ::bufferToVector<double>(x.request());
+    if (samplingRate <= 0)
     {
-        throw std::invalid_argument("x is null");
+        throw std::invalid_argument("Sampling rate must be positive");
     }
-    std::vector<double> xWork(nSamples);
-    std::copy(xPointer, xPointer + nSamples, xWork.data());
     auto xProcessed = pImpl->process(xWork, samplingRate);
-    pybind11::array_t<double, pybind11::array::c_style> y(xProcessed.size());
-    pybind11::buffer_info yBuffer = y.request();
-    auto yPointer = static_cast<double *> (yBuffer.ptr);
-    std::copy(xProcessed.begin(), xProcessed.end(), yPointer);
-    return y;
+    return ::vectorToBuffer<double>(xProcessed);
 }
 
 void CNNOneComponentP::Preprocessing::clear() noexcept
@@ -76,6 +69,20 @@ bool CNNOneComponentP::Inference::isInitialized() const noexcept
     return pImpl->isInitialized();
 }
 
+void CNNOneComponentP::Inference::setProbabilityThreshold(const double threshold)
+{
+    if (threshold < 0 || threshold > 1)
+    {
+        throw std::invalid_argument("Threshold must be in range [0,1]");
+    }
+    pImpl->setProbabilityThreshold(threshold);
+}
+
+double CNNOneComponentP::Inference::getProbabilityThreshold() const noexcept
+{
+    return pImpl->getProbabilityThreshold();
+}
+
 double CNNOneComponentP::Inference::getSamplingRate() const noexcept
 {
     return UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::getSamplingRate();
@@ -86,25 +93,34 @@ int CNNOneComponentP::Inference::getExpectedSignalLength() const noexcept
     return UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::getExpectedSignalLength();
 }
 
-double CNNOneComponentP::Inference::predict(
-    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x)
+UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::FirstMotion
+CNNOneComponentP::Inference::predict(
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x) const
 {
     if (!isInitialized()){throw std::runtime_error("First motion classifier not initialized");}
-    pybind11::buffer_info xBuffer = x.request();
-    auto nSamples = static_cast<int> (xBuffer.size);
+    auto xWork = ::bufferToVector<double>(x.request());
+    auto nSamples = static_cast<int> (xWork.size());
     if (nSamples != getExpectedSignalLength())
     {
         throw std::invalid_argument("Signal must be length = "
                                   + std::to_string(getExpectedSignalLength()));
     }
-    const double *xPointer = (double *) (xBuffer.ptr);
-    if (xPointer == nullptr)
-    {
-        throw std::invalid_argument("x is null");
-    }
-    std::vector<double> xWork(nSamples);
-    std::copy(xPointer, xPointer + nSamples, xWork.data());
     return pImpl->predict(xWork);
+}
+
+std::tuple<double, double, double>
+CNNOneComponentP::Inference::predictProbability(
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x) const
+{
+    if (!isInitialized()){throw std::runtime_error("First motion classifier not initialized");}
+    auto xWork = ::bufferToVector<double>(x.request());
+    auto nSamples = static_cast<int> (xWork.size());
+    if (nSamples != getExpectedSignalLength())
+    {   
+        throw std::invalid_argument("Signal must be length = "
+                                  + std::to_string(getExpectedSignalLength()));
+    }
+    return pImpl->predictProbability<double>(xWork);
 }
 
 ///--------------------------------------------------------------------------///
@@ -113,11 +129,22 @@ double CNNOneComponentP::Inference::predict(
 void UUSSMLModels::Python::FirstMotionClassifiers::initialize(pybind11::module &m)
 {
     pybind11::module fmModule = m.def_submodule("FirstMotionClassifiers");
-    fmModule.attr("__doc__") = "P pick classifiers that assign P picks to up/down/unknown polarity.";
+    fmModule.attr("__doc__") = R""""(
+P pick classifiers that assign the first motion of arrival to an 
+up, a down, or an unknown first motion.
+)"""";
     ///----------------------------------------------------------------------///
     ///                             One Component P                          ///
     ///----------------------------------------------------------------------///
     pybind11::module oneComponentPModule = fmModule.def_submodule("CNNOneComponentP");
+    pybind11::enum_<UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::FirstMotion> 
+        (oneComponentPModule, "FirstMotion")
+        .value("Up", UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::FirstMotion::Up,
+               "The first motion is up.")
+        .value("Down", UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::FirstMotion::Down,
+               "The first motion is down.")
+        .value("Unknown", UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::FirstMotion::Unknown,
+               "The first motion is unknown - i.e., neither up or down.");
     /*
     pybind11::enum_<UUSSMLModels::FirstMotionClassifiers::CNNOneComponentP::Inference::Device> 
         (oneComponentPModule, "Device")
@@ -160,9 +187,18 @@ Read-Only Properties
     oneComponentPPreprocessing.def(
         "process",
         &CNNOneComponentP::Preprocessing::process,
-        "Preprocesses the waveform.",
-        pybind11::arg("vertical_channel_signal"),
-        pybind11::arg("samplingRate") = 100);
+R""""(
+Preprocesses the single-channel vertical waveform.
+
+Parameters
+----------
+signal : np.array
+   The vertical-channel signal to preprocess.
+sampling_rate : float
+   The sampling rate of the signal in Hz.  This is assumed to be 100 Hz.
+)"""",
+        pybind11::arg("signal"),
+        pybind11::arg("sampling_rate") = 100);
 
 #if defined(WITH_TORCH) || defined(WITH_OPENVINO)
     pybind11::class_<UUSSMLModels::Python::FirstMotionClassifiers::CNNOneComponentP::Inference>
@@ -171,6 +207,19 @@ Read-Only Properties
     oneComponentPInference.doc() = R""""(
 The processing class for the one-component P-pick classifier.
 
+Read-Write Properties
+    probability_threshold : float
+        The posterior probability that a first-motion pick must exceed to be 
+        classified as an up or down pick.  For example, if this is 0.4 and the
+        up probability is 0.42, the down probability is 0.41, and the
+        unknown probability is 0.17 then this will classify as up since the up
+        class exceeds the threshold and has the largest posterior probability.
+        However, if this is 0.6 and the up probability is 0.5, the down
+        probability, is 0.2, and the unknown probability is 0.4 then
+        this will classify to unknown since the up probability did not exceed
+        0.6.  By default we approximate the Bayes's classifier and classify to
+        the class with the largest posterior probability - i.e., the default is
+        1/3.
 Read-Only Properties
 
     is_initialized : bool
@@ -182,6 +231,10 @@ Read-Only Properties
     minimum_and_maximum_pertrubation : double, double
         The minimum and maximum pick perturbation the model will produce measured in seconds.
 )"""";
+    oneComponentPInference.def_property(
+       "probability_threshold",
+        &CNNOneComponentP::Inference::getProbabilityThreshold,
+        &CNNOneComponentP::Inference::setProbabilityThreshold);
     oneComponentPInference.def_property_readonly(
         "is_initialized",
         &CNNOneComponentP::Inference::isInitialized);
@@ -200,7 +253,38 @@ Read-Only Properties
     oneComponentPInference.def(
         "predict",
         &CNNOneComponentP::Inference::predict,
-        "Predicts the signal as up/down/unknown.",
+R""""(
+Predicts the signal as Up, Down, or Unknown.
+
+Parameters
+signal : np.array
+    The signal whose first motion will be classified.  The pick should be
+    centered half-way into the window.  Also, this signal's length must
+    match the expected_signal_length.)
+
+Returns
+FirstMotion
+   The first motion which will be Up, Down, or Unknown. 
+)"""",
+        pybind11::arg("signal"));
+    oneComponentPInference.def(
+        "predict_probability",
+        &CNNOneComponentP::Inference::predictProbability,
+R""""(
+Predicts the posterior probability of the signal's first motion being
+up, down, and unknown.
+
+Parameters
+signal : np.array
+    The signal whose first motion will be classified.  The pick should be
+    centered half-way into the window.  Also, this signal's length must
+    match the expected_signal_length.)
+
+Returns
+A tuple where the first value is the probability of being up, the second
+value is the probability of being down, and the third probabiliy the 
+probability of being unknown.  These probabilities will sum to 1.
+)"""",
         pybind11::arg("signal"));
 #endif
 

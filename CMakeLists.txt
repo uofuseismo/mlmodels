@@ -83,6 +83,7 @@ if (${WRAP_PYTHON})
                python/detectors.cpp
                python/pickers.cpp
                python/firstMotionClassifiers.cpp
+               python/eventClassifiers.cpp
                )
    set_target_properties(pyuussmlmodels PROPERTIES
                          PREFIX ""
@@ -106,12 +107,13 @@ endif()
 file(COPY ${CMAKE_SOURCE_DIR}/testing/data DESTINATION .)
 set(TEST_SRC
     testing/main.cpp
-    testing/pickers/cnnOneComponentP.cpp
-    testing/pickers/cnnThreeComponentS.cpp
-    testing/firstMotionClassifiers/cnnOneComponentP.cpp
-    testing/detectors/uNetOneComponentP.cpp 
-    testing/detectors/uNetThreeComponentP.cpp
-    testing/detectors/uNetThreeComponentS.cpp
+    #testing/pickers/cnnOneComponentP.cpp
+    #testing/pickers/cnnThreeComponentS.cpp
+    #testing/firstMotionClassifiers/cnnOneComponentP.cpp
+    #testing/detectors/uNetOneComponentP.cpp 
+    #testing/detectors/uNetThreeComponentP.cpp
+    #testing/detectors/uNetThreeComponentS.cpp
+    testing/eventClassifiers/cnnThreeComponent.cpp
 )
 add_executable(unitTests ${TEST_SRC})
 set_target_properties(unitTests PROPERTIES

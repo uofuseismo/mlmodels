@@ -166,7 +166,7 @@ up, a down, or an unknown first motion.
         oneComponentPPreprocessing(oneComponentPModule, "Preprocessing");
     oneComponentPPreprocessing.def(pybind11::init<> ());
     oneComponentPPreprocessing.doc() = R""""(
-The preprocessing class for the one-component P pick regression.
+The preprocessing class for the one-component P pick first motion classifier.
 
 Read-Only Properties
     target_sampling_period : double

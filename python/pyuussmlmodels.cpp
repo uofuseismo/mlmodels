@@ -14,5 +14,6 @@ PYBIND11_MODULE(pyuussmlmodels, m)
     UUSSMLModels::Python::Detectors::initialize(m);
     UUSSMLModels::Python::Pickers::initialize(m);
     UUSSMLModels::Python::FirstMotionClassifiers::initialize(m);
+    UUSSMLModels::Python::EventClassifiers::initialize(m);
 }
 

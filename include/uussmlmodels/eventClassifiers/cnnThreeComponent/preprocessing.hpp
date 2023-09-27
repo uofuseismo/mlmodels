@@ -35,12 +35,27 @@ public:
     /// @name Process Waveforms
     /// @{
 
-    /// @brief Preprocesses the vertical, north, and east waveforms.
+    /// @brief Preprocesses the vertical waveforms and creates the corresponding
+    ///        scalograms.
+    /// @param[in] vertical      The waveform on the vertical channel.
+    /// @param[in] samplingRate  The sampling rate for the signals in Hz.
+    /// @result The amplitude scalogram for the vertical channel.
+    ///         This is an  [getScalogramLength() x getNumberOfScales()] matrix
+    ///         stored in row major order.
+    template<typename U>
+    [[nodiscard]] std::vector<U> process(const std::vector<U> &vertical,
+                                          double samplingRate = 100);
+
+    /// @brief Preprocesses the vertical, north, and east waveforms and creates
+    ///        the corresponding scalograms.
     /// @param[in] vertical      The waveform on the vertical channel.
     /// @param[in] north         The waveform on the north channel.
     /// @param[in] east          The waveform on the east channel.
     /// @param[in] samplingRate  The sampling rate for the signals in Hz.
-    /// @result The processed vertical, north, and east waveforms.
+    /// @result The amplitude scalograms for the vertical, north, and
+    ///         east waveforms.  These are each
+    ///         [getScalogramLength() x getNumberOfScales()] matrices
+    ///         stored in row major order.
     template<typename U>
     [[nodiscard]] std::tuple<std::vector<U>, std::vector<U>, std::vector<U>>
         process(const std::vector<U> &vertical,
@@ -52,11 +67,22 @@ public:
     /// @name Target Sampling Rate
     /// @{
 
-    /// @result The sampling rate of the processed signals in Hz.
-    [[nodiscard]] static double getTargetSamplingRate() noexcept;
-    /// @result The sampling period of the processed signals in seconds.
-    [[nodiscard]] static double getTargetSamplingPeriod() noexcept;
+    /// @result The sampling rate of the scalogram in Hz.
+    [[nodiscard]] static double getScalogramSamplingRate() noexcept;
+    /// @result The sampling period of the scalogram in seconds.
+    [[nodiscard]] static double getScalogramSamplingPeriod() noexcept;
     /// @}
+
+    /// @name Number of Windows
+    /// @{
+
+    /// @result The number of time samples in the scsalogram.
+    [[nodiscard]] static int getScalogramLength() noexcept;
+    /// @result The number of scales in each transform.
+    [[nodiscard]] static int getNumberOfScales() noexcept; 
+    /// @result The center frequencies of each in Hz.
+    [[nodiscard]] std::vector<double> getCenterFrequencies() const; 
+    /// @} 
 
     /// @name Operators
     /// @{

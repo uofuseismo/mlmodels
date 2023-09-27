@@ -179,7 +179,6 @@ double Preprocessing::getTargetSamplingRate() noexcept
 double Preprocessing::getTargetSamplingPeriod() noexcept
 {
     return TARGET_SAMPLING_PERIOD;
-
 }
 
 ///--------------------------------------------------------------------------///

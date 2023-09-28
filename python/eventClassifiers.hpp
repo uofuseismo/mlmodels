@@ -36,6 +36,8 @@ namespace UUSSMLModels::Python::EventClassifiers
                                    double samplingRate = 100);
             [[nodiscard]] double getScalogramSamplingRate() const noexcept;
             [[nodiscard]] double getScalogramSamplingPeriod() const noexcept;
+            [[nodiscard]] int getNumberOfScales() const noexcept;
+            [[nodiscard]] int getScalogramLength() const noexcept;
             [[nodiscard]] pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> getCenterFrequencies() const;
             ~Preprocessing();
 

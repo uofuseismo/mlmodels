@@ -62,6 +62,16 @@ CNNThreeComponent::Preprocessing::processVerticalChannel(
     return vOut;
 }
 
+int CNNThreeComponent::Preprocessing::getNumberOfScales() const noexcept
+{
+    return pImpl->getNumberOfScales();
+}
+
+int CNNThreeComponent::Preprocessing::getScalogramLength() const noexcept
+{
+    return pImpl->getScalogramLength();
+}
+
 std::tuple<
    pybind11::array_t<double>,//, pybind11::array::c_style | pybind11::array::forcecast>,
    pybind11::array_t<double>,//, pybind11::array::c_style | pybind11::array::forcecast>,
@@ -126,6 +136,10 @@ Classifiers used for determing an event type.
 The preprocessing class for the three-component wavform-based quarry blast/event classifier.
 
 Read-Only Properties
+    scalogram_length : int
+        The number of time domain samples in the scalogram.
+    number_of_scales : int
+        The number of scales in the scalogram.
     scalogram_sampling_period : double
         The sampling period in seconds of the output signal.
     scalogram_sampling_rate : double
@@ -136,6 +150,12 @@ Read-Only Properties
     threeComponentPreprocessing.def_property_readonly(
         "center_frequencies",
         &CNNThreeComponent::Preprocessing::getCenterFrequencies);
+    threeComponentPreprocessing.def_property_readonly(
+        "number_of_scales",
+        &CNNThreeComponent::Preprocessing::getNumberOfScales);
+    threeComponentPreprocessing.def_property_readonly(
+        "scalogram_length",
+        &CNNThreeComponent::Preprocessing::getScalogramLength);
     threeComponentPreprocessing.def_property_readonly(
         "scalogram_sampling_period",
         &CNNThreeComponent::Preprocessing::getScalogramSamplingPeriod);

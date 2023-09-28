@@ -58,7 +58,7 @@ CNNThreeComponent::Preprocessing::processVerticalChannel(
     auto vScalogram = pImpl->process(vWork, samplingRate);
     vScalogram = ::transpose(nSamples, nScales, vScalogram);
     auto vOut = ::vectorToBuffer<double> (vScalogram);
-    vOut.reshape( {nSamples, nScales} );
+    vOut = vOut.reshape( {nSamples, nScales} );
     return vOut;
 }
 

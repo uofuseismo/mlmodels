@@ -215,6 +215,22 @@ if (component >= 0)
                     = amplitudePointer[j*mTransformSignalLength + 2*i];
             }
         }
+        // Normalize
+        double maxAmplitude
+            = *std::max_element(
+                  processedData->begin(),
+                  processedData->begin() + mScalogramLength*N_SCALES);
+        double maxAmplitudeInverse{0};
+        if (maxAmplitude > 1.e-8)
+        {
+            maxAmplitudeInverse = 1./maxAmplitude;
+        }
+        std::for_each(processedData->begin(),
+                      processedData->begin() + mScalogramLength*N_SCALES,
+                      [&](const double v)
+                      {
+                          return v*maxAmplitudeInverse;
+                      });
 /*
  if (component >= 0)
 {

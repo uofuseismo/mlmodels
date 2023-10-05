@@ -1,3 +1,4 @@
+#define USE_SPECTROGRAM 1
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -8,10 +9,13 @@
 #include <cassert>
 #endif
 #include <rtseis/postProcessing/singleChannel/waveform.hpp>
-//#include <rtseis/transforms/slidingWindowRealDFTParameters.hpp>
+#ifdef USE_SPECTROGRAM
+#include <rtseis/transforms/spectrogram.hpp>
+#include <rtseis/transforms/slidingWindowRealDFTParameters.hpp>
+#else
 #include <rtseis/transforms/wavelets/morlet.hpp>
 #include <rtseis/transforms/continuousWavelet.hpp>
-//#include <rtseis/transforms/spectrogram.hpp>
+#endif
 #include "uussmlmodels/eventClassifiers/cnnThreeComponent/preprocessing.hpp"
 
 #define TARGET_SIGNAL_DURATION 45
@@ -21,6 +25,8 @@
 #define SCALOGRAM_SAMPLING_PERIOD 0.04
 #define SCALOGRAM_LENGTH 1125
 #define N_SCALES 17
+#define N_FREQUENCIES 51
+#define N_TIME_WINDOWS 72
 
 using namespace UUSSMLModels::EventClassifiers::CNNThreeComponent;
 
@@ -29,7 +35,7 @@ class Preprocessing::PreprocessingImpl
 public:
     PreprocessingImpl()
     {
-/*
+#ifdef USE_SPECTROGRAM
         RTSeis::Transforms::SlidingWindowRealDFTParameters parameters;
         parameters.setNumberOfSamples(mTransformSignalLength);
         parameters.setWindow(100,
@@ -43,17 +49,21 @@ public:
         mNumberOfFrequencies = mSpectrogram.getNumberOfFrequencies();
         mNumberOfTimeWindows = mSpectrogram.getNumberOfTransformWindows();
         mSpectrogramSize = mNumberOfTimeWindows*mNumberOfFrequencies;
-*/
+ #ifndef NDEBUG
+        assert(mNumberOfFrequencies == N_FREQUENCIES);
+        assert(mNumberOfTimeWindows == N_TIME_WINDOWS);
+ #endif
+#else
         // Initialize scalogram
         constexpr double omega0{6}; // tradeoff between time and frequency
         mMorlet.setParameter(omega0);
         mMorlet.enableNormalization();
         mMorlet.disableNormalization();
         // Map the given frequencies to scales for a Morlet wavelet
-#ifndef NDEBUG
+ #ifndef NDEBUG
         assert(mCenterFrequencies.size() == N_SCALES);
         assert(mScalogramLength == SCALOGRAM_LENGTH);
-#endif
+ #endif
         std::vector<double> scales(mCenterFrequencies.size());
         for (int i = 0; i < static_cast<int> (scales.size()); ++i)
         {
@@ -66,6 +76,7 @@ public:
                         TARGET_SAMPLING_RATE); 
         mScalogramSize = mCWT.getNumberOfScales()*mCWT.getNumberOfSamples();
         //std::cout << mTransformSignalLength << " " << mScalogramLength  << " " << mCenterFrequencies.size() << std::endl;
+#endif
     }
     void processWaveform(const std::vector<float> &data,
                          const double samplingPeriod,
@@ -100,7 +111,11 @@ public:
         assert(!data.empty());
         assert(samplingPeriod > 0); 
         assert(processedData != nullptr);
+ #ifdef USE_SPECTROGRAM
+        assert(mSpectogram.isInitialized());
+ #else
         assert(mCWT.isInitialized());
+ #endif
 #endif
         // Set the data
         mWave.setData(data);
@@ -141,19 +156,21 @@ public:
         }
         // Get the data
         auto workSpace = mWave.getData();
+        auto workSpaceLength = static_cast<int> (workSpace.size());
         if (workSpace.empty())
         {
             workSpace.resize(mTransformSignalLength, 0);
         }
-        if (static_cast<int> (workSpace.size()) < mTransformSignalLength)
+        if (workSpaceLength > mTransformSignalLength)
         {
             workSpace.resize(mTransformSignalLength);
         }
-        else if (static_cast<int> (workSpace.size()) > mTransformSignalLength)
+        else if (workSpaceLength < mTransformSignalLength)
         {
             workSpace.resize(mTransformSignalLength, 0);
         }
 /*
+int component = 0;
 if (component >= 0)
 {
     std::ofstream ofl;
@@ -176,7 +193,7 @@ if (component >= 0)
     ofl.close(); 
 }
 */
-/*
+#ifdef USE_SPECTROGRAM
         mSpectrogram.transform(workSpace.size(), workSpace.data());
         // Get the result
         if (static_cast<int> (processedData->size()) != mSpectrogramSize)
@@ -186,7 +203,19 @@ if (component >= 0)
         const double *amplitudePointer = mSpectrogram.getAmplitudePointer();
         std::copy(amplitudePointer, amplitudePointer + mSpectrogramSize,
                   processedData->data());
-*/
+        double maxAmplitude
+            = *std::max_element(processedData->begin(), processedData->end());
+        double maxAmplitudeInverse{0};
+        if (maxAmplitude > 1.e-8)
+        {
+            maxAmplitudeInverse = 1./maxAmplitude;
+        }
+        std::for_each(processedData->begin(), processedData->end(),
+                      [&](const double v)
+                      {
+                          return v*maxAmplitudeInverse;
+                      });
+#else
         mCWT.transform(workSpace.size(), workSpace.data());
         if (workSpace.size() < mScalogramSize)
         {
@@ -194,10 +223,10 @@ if (component >= 0)
         } 
         std::fill(workSpace.begin(), workSpace.end(), 0);
         auto amplitudePointer = workSpace.data();
-#ifndef NDEBUG
+ #ifndef NDEBUG
         assert(mTransformSignalLength*mCenterFrequencies.size()
                == mScalogramSize);
-#endif
+ #endif
         mCWT.getAmplitudeTransform(mTransformSignalLength,
                                    mCenterFrequencies.size(),
                                    &amplitudePointer);
@@ -231,6 +260,7 @@ if (component >= 0)
                       {
                           return v*maxAmplitudeInverse;
                       });
+#endif
 /*
  if (component >= 0)
 {
@@ -272,10 +302,16 @@ if (component >= 0)
  
     }
 ///private:
-    /// Spectrogram calculator
-    //RTSeis::Transforms::Spectrogram<double> mSpectrogram;
     /// Holds the data processing waveform
     RTSeis::PostProcessing::SingleChannel::Waveform<double> mWave;
+#ifdef USE_SPECTROGRAM
+    /// Spectrogram calculator
+    RTSeis::Transforms::Spectrogram<double> mSpectrogram;
+    /// Holds the spectrogram frequencies
+    std::vector<double> mFrequencies;
+    /// The times of the windows
+    std::vector<double> mTimeWindows;
+#else
     /// The Morlet wavelet
     RTSeis::Transforms::Wavelets::Morlet mMorlet;
     /// Continuous Wavelet Transform calculator
@@ -283,10 +319,7 @@ if (component >= 0)
     /// Holds the center frequencies of the scalogram
     std::vector<double> mCenterFrequencies{ 2,  3,  4,  5,  6,  7,  8,  9, 10,
                                            11, 12, 13, 14, 16, 17, 18, 19};
-    /// Holds the spectrogram frequencies
-    std::vector<double> mFrequencies;
-    /// The times of the windows
-    std::vector<double> mTimeWindows;
+#endif
     /// Anticipating 50 Hz sampling rate
     double mTargetSamplingPeriod{TARGET_SAMPLING_PERIOD};
     /// Remove trend
@@ -303,10 +336,19 @@ if (component >= 0)
     {
         static_cast<int> (TARGET_SIGNAL_DURATION*TARGET_SAMPLING_RATE) + 1
     };
+#ifdef USE_SPECTROGRAM
+    /// Number of frequencies in the spectorgram 
+    int mNumberOfFrequencies;
+    /// Number of time windows
+    int mNumberOfTimeWindows;
+    /// Number of windows in the spectogram
+    int mSpectrogramSize;
+#else
     // The number of signals in the output scalogram
     int mScalogramLength{mTransformSignalLength/2};
     /// The scaloegram size
     int mScalogramSize;
+#endif
     /// Filter passband
     std::pair<double, double> mCorners = {1, 20}; // 1 Hz to 20 Hz
     RTSeis::PostProcessing::SingleChannel::IIRPrototype mPrototype
@@ -377,10 +419,17 @@ Preprocessing::process(
     {
         throw std::invalid_argument("East signal is empty");
     }
+#ifdef USE_SPECTOGRAM
+    auto verticalSpectrogram = process(vertical, samplingRate);
+    auto northSpectrogram    = process(north,    samplingRate);
+    auto eastSpectrogram     = process(east,     samplingRate);
+    return std::tuple {verticalSpectrogram, northSpectrogram, eastSpectrogram};
+#else
     auto verticalScalogram = process(vertical, samplingRate);
     auto northScalogram    = process(north,    samplingRate);
     auto eastScalogram     = process(east,     samplingRate);
     return std::tuple {verticalScalogram, northScalogram, eastScalogram};
+#endif
 }
 
 /// Process
@@ -396,12 +445,46 @@ std::vector<U> Preprocessing::process(const std::vector<U> &vertical,
     {
         throw std::invalid_argument("Vertical signal is empty");
     }
-    auto nWork = getNumberOfScales()*getScalogramLength();
+#ifdef USE_SPECTROGRAM
+    auto nWork = getSpectrogramSize();
     std::vector<U> verticalSpectrogram(nWork, 0);
     pImpl->processWaveform(vertical, 1./samplingRate, &verticalSpectrogram);
     return verticalSpectrogram;
+#else
+    auto nWork = getNumberOfScales()*getScalogramLength();
+    std::vector<U> verticalScalogram(nWork, 0);
+    pImpl->processWaveform(vertical, 1./samplingRate, &verticalScalogram);
+    return verticalScalogram;
+#endif
 }
 
+/// The number of frequencies
+int Preprocessing::getNumberOfFrequencies() noexcept
+{
+    return N_FREQUENCIES;
+}
+
+std::vector<double> Preprocessing::getTimeWindows() const
+{
+    return pImpl->mTimeWindows;
+}
+
+std::vector<double> Preprocessing::getFrequencies() const
+{
+    return pImpl->mFrequencies;
+}
+
+int Preprocessing::getSpectrogramSize() noexcept
+{
+    return N_FREQUENCIES*N_TIME_WINDOWS;
+}
+
+int Preprocessing::getNumberOfTimeWindows() noexcept
+{
+    return N_TIME_WINDOWS;
+}
+
+/*
 /// Scalogram sampling rate/period
 double Preprocessing::getScalogramSamplingRate() noexcept
 {
@@ -429,6 +512,7 @@ int Preprocessing::getScalogramLength() noexcept
 {
     return SCALOGRAM_LENGTH;
 }
+*/
 
 ///--------------------------------------------------------------------------///
 ///                              Template Instantiation                      ///

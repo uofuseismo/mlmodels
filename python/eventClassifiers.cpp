@@ -1,3 +1,4 @@
+#include <pybind11/stl.h>
 #include <uussmlmodels/eventClassifiers/cnnThreeComponent/preprocessing.hpp>
 #include "eventClassifiers.hpp"
 #include "buffer.hpp"
@@ -6,15 +7,15 @@ using namespace UUSSMLModels::Python::EventClassifiers;
 
 namespace
 {
-std::vector<double> transpose(const int nSamples, const int nScales, const std::vector<double> &x)
+std::vector<double> transpose(const int nColumns, const int nRows, const std::vector<double> &x)
 {
     std::vector<double> y(x.size());
-    for (int i = 0; i < nSamples; ++i)
+    for (int i = 0; i < nColumns; ++i)
     {
-        for (int j = 0; j < nScales; ++j)
+        for (int j = 0; j < nRows; ++j)
         {
-            int ij = j*nSamples + i;
-            int ji = i*nScales  + j;
+            int ij = j*nColumns + i;
+            int ji = i*nRows    + j;
             y[ji] = x[ij];
         }
     }
@@ -28,6 +29,7 @@ CNNThreeComponent::Preprocessing::Preprocessing() :
 {
 }
 
+/*
 double CNNThreeComponent::Preprocessing::getScalogramSamplingRate() const noexcept
 {
     return pImpl->getScalogramSamplingRate();
@@ -37,6 +39,7 @@ double CNNThreeComponent::Preprocessing::getScalogramSamplingPeriod() const noex
 {
     return pImpl->getScalogramSamplingPeriod();
 }
+*/
 
 void CNNThreeComponent::Preprocessing::clear() noexcept
 {
@@ -52,6 +55,13 @@ CNNThreeComponent::Preprocessing::processVerticalChannel(
     {   
         throw std::invalid_argument("Sampling rate must be positive");
     }   
+    auto nFrequencies = pImpl->getNumberOfFrequencies();
+    auto nSamples     = pImpl->getNumberOfTimeWindows();
+    auto vWork = ::bufferToVector<double> (vertical.request());
+    auto vSpectrogram = pImpl->process(vWork, samplingRate);
+    auto vOut = ::vectorToBuffer<double> (vSpectrogram);
+    vOut = vOut.reshape( {nSamples, nFrequencies} );
+/*
     auto nScales  = pImpl->getNumberOfScales();
     auto nSamples = pImpl->getScalogramLength();
     auto vWork = ::bufferToVector<double> (vertical.request());
@@ -59,9 +69,31 @@ CNNThreeComponent::Preprocessing::processVerticalChannel(
     vScalogram = ::transpose(nSamples, nScales, vScalogram);
     auto vOut = ::vectorToBuffer<double> (vScalogram);
     vOut = vOut.reshape( {nSamples, nScales} );
+*/
     return vOut;
 }
 
+std::vector<double> CNNThreeComponent::Preprocessing::getFrequencies() const
+{
+    return pImpl->getFrequencies();
+}
+
+int CNNThreeComponent::Preprocessing::getNumberOfFrequencies() const noexcept
+{
+    return pImpl->getNumberOfFrequencies();
+}
+
+std::vector<double> CNNThreeComponent::Preprocessing::getTimeWindows() const
+{
+    return pImpl->getTimeWindows();
+}
+
+int CNNThreeComponent::Preprocessing::getNumberOfTimeWindows() const noexcept
+{
+    return pImpl->getNumberOfTimeWindows();
+}
+
+/*
 int CNNThreeComponent::Preprocessing::getNumberOfScales() const noexcept
 {
     return pImpl->getNumberOfScales();
@@ -71,6 +103,7 @@ int CNNThreeComponent::Preprocessing::getScalogramLength() const noexcept
 {
     return pImpl->getScalogramLength();
 }
+*/
 
 std::tuple<
    pybind11::array_t<double>,//, pybind11::array::c_style | pybind11::array::forcecast>,
@@ -87,6 +120,20 @@ CNNThreeComponent::Preprocessing::process(
     {
         throw std::invalid_argument("Sampling rate must be positive");
     }
+    auto nFrequencies = pImpl->getNumberOfFrequencies();
+    auto nSamples     = pImpl->getNumberOfTimeWindows();
+    auto vWork = ::bufferToVector<double> (vertical.request());
+    auto nWork = ::bufferToVector<double> (north.request());
+    auto eWork = ::bufferToVector<double> (east.request());
+    auto [vSpectrogram, nSpectrogram, eSpectrogram]
+        = pImpl->process(vWork, nWork, eWork, samplingRate);
+    auto vOut = ::vectorToBuffer<double> (vSpectrogram);
+    auto nOut = ::vectorToBuffer<double> (nSpectrogram);
+    auto eOut = ::vectorToBuffer<double> (eSpectrogram);
+    vOut = vOut.reshape( {nSamples, nFrequencies} );
+    nOut = nOut.reshape( {nSamples, nFrequencies} );
+    eOut = eOut.reshape( {nSamples, nFrequencies} );
+/*
     auto nScales  = pImpl->getNumberOfScales();
     auto nSamples = pImpl->getScalogramLength();
     auto vWork = ::bufferToVector<double> (vertical.request());
@@ -103,14 +150,17 @@ CNNThreeComponent::Preprocessing::process(
     vOut = vOut.reshape( {nSamples, nScales} );
     nOut = nOut.reshape( {nSamples, nScales} );
     eOut = eOut.reshape( {nSamples, nScales} );
+*/
     return std::tuple {vOut, nOut, eOut};
 }
  
+/*
 pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>
 CNNThreeComponent::Preprocessing::getCenterFrequencies() const
 {
     return ::vectorToBuffer<double>(pImpl->getCenterFrequencies());
 }
+*/
 
 CNNThreeComponent::Preprocessing::~Preprocessing() = default;
 
@@ -136,17 +186,29 @@ Classifiers used for determing an event type.
 The preprocessing class for the three-component wavform-based quarry blast/event classifier.
 
 Read-Only Properties
-    scalogram_length : int
-        The number of time domain samples in the scalogram.
-    number_of_scales : int
-        The number of scales in the scalogram.
-    scalogram_sampling_period : double
-        The sampling period in seconds of the output signal.
-    scalogram_sampling_rate : double
-        The sampling rate in Hz of the the output signal.
-    center_frequencies : np.array
-        The center frequencies in Hz of each scale.
+    frequencies : np.array
+        The frequencies of the short-time Fourier transform in Hz.
+    number_of_frequencies : int
+        The number of frequencies.
+    number_of_time_windows : int
+        The number of time windows.
+    time_windows : np.array
+        The start time of an short-time Fourier transform in seconds. 
 )"""";
+    threeComponentPreprocessing.def_property_readonly(
+        "frequencies",
+        &CNNThreeComponent::Preprocessing::getFrequencies);
+    threeComponentPreprocessing.def_property_readonly(
+        "number_of_frequencies",
+        &CNNThreeComponent::Preprocessing::getNumberOfFrequencies);
+    threeComponentPreprocessing.def_property_readonly(
+        "number_of_time_windows",
+        &CNNThreeComponent::Preprocessing::getNumberOfTimeWindows);
+    threeComponentPreprocessing.def_property_readonly(
+        "time_windows",
+        &CNNThreeComponent::Preprocessing::getTimeWindows);
+
+/*
     threeComponentPreprocessing.def_property_readonly(
         "center_frequencies",
         &CNNThreeComponent::Preprocessing::getCenterFrequencies);
@@ -162,6 +224,7 @@ Read-Only Properties
     threeComponentPreprocessing.def_property_readonly(
         "scalogram_sampling_rate",
         &CNNThreeComponent::Preprocessing::getScalogramSamplingRate);
+*/
     threeComponentPreprocessing.def(
         "clear",
         &CNNThreeComponent::Preprocessing::clear,
@@ -185,8 +248,8 @@ sampling_rate : float
 
 Returns
 -------
-The corresponding vertical, north, and east scalograms.  The first dimension
-is the temporal dimension and the second dimension is the frequency dimension.
+The corresponding vertical, north, and east spectrograms.  The first dimension
+is the temporary dimension and the second dimension is the frequency dimension.
 )"""",
         pybind11::arg("vertical"),
         pybind11::arg("north"),
@@ -207,7 +270,7 @@ sampling_rate : float
 
 Returns
 -------
-The corresponding vertical scalogram.  The first dimension is the temporal
+The corresponding vertical spectrogram.  The first dimension is the temporal
 dimension and the second dimension is the frequency dimension.
 
 Notes
@@ -215,11 +278,11 @@ Notes
 You can plot this by doing the following:
 
 frequencies = preprocess.center_frequencies
-sampling_period = preprocess.scalogram_sampling_period 
-[v_scalogram, n_scalogram, e_scalogram] = preprocess.process(vertical, north, east, 100.0)
+time_windows = preprocess.time_windows
+[v_spectrogram, n_spectrogram, e_spectrogram] = preprocess.process(vertical, north, east, 100.0)
 # Transpose converts from matrix indexing to cartesian indexing for plotting.  The
 # frequencies need to be reversed since matrices increase down and plots increase up 
-plt.imshow(v_scalogram[:,::-1].T, extent = [0, sampling_period*(v_scalogram.shape[0] - 1), frequencies[0], frequencies[-1]])
+plt.imshow(v_spectrogram[:,::-1].T, extent = [0, sampling_period*(v_spectorgram.shape[0] - 1), frequencies[0], frequencies[-1]])
 )"""",
         pybind11::arg("vertical"),
         pybind11::arg("sampling_rate") = 100);

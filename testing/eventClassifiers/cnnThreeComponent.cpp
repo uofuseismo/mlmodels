@@ -59,9 +59,12 @@ TEST(EventClassifiersCNNThreeComponent, Preprocessing)
     auto [vertical, north, east] = ::loadTextFile(eqFile);
     EXPECT_EQ(vertical.size(), 3001); 
     Preprocessing processing;
-    EXPECT_NEAR(processing.getScalogramSamplingRate(), 25, 1.e-10);
-    EXPECT_NEAR(processing.getScalogramSamplingPeriod(), 1./25., 1.e-10);
-                 processing.process(vertical, north, east, samplingRate);
+    EXPECT_EQ(processing.getNumberOfFrequencies(), 51);
+    EXPECT_EQ(processing.getNumberOfTimeWindows(), 72);
+    processing.process(vertical, north, east, samplingRate);
+    //EXPECT_NEAR(processing.getScalogramSamplingRate(), 25, 1.e-10);
+    //EXPECT_NEAR(processing.getScalogramSamplingPeriod(), 1./25., 1.e-10);
+    //             processing.process(vertical, north, east, samplingRate);
 }
 
 }

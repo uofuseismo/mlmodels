@@ -73,15 +73,27 @@ public:
     [[nodiscard]] static double getScalogramSamplingPeriod() noexcept;
     /// @}
 
-    /// @name Number of Windows
+    /// @name Output Dimensions and Corresponding Units
     /// @{
 
+    /// @result The number of time windows.
+    [[nodiscard]] static int getNumberOfTimeWindows() noexcept;
+    /// @result The number of frequencies.
+    [[nodiscard]] static int getNumberOfFrequencies() noexcept;
+    /// @result The size of the output scalogram.
+    [[nodiscard]] static int getSpectrogramSize() noexcept;
+    /// @result The frequencies of each bin in the short-time Fourier transform
+    ///         in Hz.
+    [[nodiscard]] std::vector<double> getFrequencies() const;
+    /// @result The time windows.
+    [[nodiscard]] std::vector<double> getTimeWindows() const;
+
     /// @result The number of time samples in the scsalogram.
-    [[nodiscard]] static int getScalogramLength() noexcept;
+    //[[nodiscard]] static int getScalogramLength() noexcept;
     /// @result The number of scales in each transform.
-    [[nodiscard]] static int getNumberOfScales() noexcept; 
+    //[[nodiscard]] static int getNumberOfScales() noexcept; 
     /// @result The center frequencies of each in Hz.
-    [[nodiscard]] std::vector<double> getCenterFrequencies() const; 
+    //[[nodiscard]] std::vector<double> getCenterFrequencies() const; 
     /// @} 
 
     /// @name Operators

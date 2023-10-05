@@ -34,11 +34,15 @@ namespace UUSSMLModels::Python::EventClassifiers
             pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>
             processVerticalChannel(const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &vertical,
                                    double samplingRate = 100);
-            [[nodiscard]] double getScalogramSamplingRate() const noexcept;
-            [[nodiscard]] double getScalogramSamplingPeriod() const noexcept;
-            [[nodiscard]] int getNumberOfScales() const noexcept;
-            [[nodiscard]] int getScalogramLength() const noexcept;
-            [[nodiscard]] pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> getCenterFrequencies() const;
+            [[nodiscard]] int getNumberOfFrequencies() const noexcept;
+            [[nodiscard]] int getNumberOfTimeWindows() const noexcept;
+            [[nodiscard]] std::vector<double> getFrequencies() const;
+            [[nodiscard]] std::vector<double> getTimeWindows() const;
+            //[[nodiscard]] double getScalogramSamplingRate() const noexcept;
+            //[[nodiscard]] double getScalogramSamplingPeriod() const noexcept;
+            //[[nodiscard]] int getNumberOfScales() const noexcept;
+            //[[nodiscard]] int getScalogramLength() const noexcept;
+            //[[nodiscard]] pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> getCenterFrequencies() const;
             ~Preprocessing();
 
             Preprocessing(const Preprocessing &) = delete;

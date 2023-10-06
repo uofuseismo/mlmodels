@@ -210,11 +210,12 @@ if (component >= 0)
         {
             maxAmplitudeInverse = 1./maxAmplitude;
         }
-        std::for_each(processedData->begin(), processedData->end(),
-                      [&](const double v)
-                      {
-                          return v*maxAmplitudeInverse;
-                      });
+        std::transform(processedData->begin(), processedData->end(),
+                       processedData->begin(),
+                       [&](const double v)
+                       {
+                           return v*maxAmplitudeInverse;
+                       });
 #else
         mCWT.transform(workSpace.size(), workSpace.data());
         if (workSpace.size() < mScalogramSize)
@@ -254,12 +255,12 @@ if (component >= 0)
         {
             maxAmplitudeInverse = 1./maxAmplitude;
         }
-        std::for_each(processedData->begin(),
-                      processedData->begin() + mScalogramLength*N_SCALES,
-                      [&](const double v)
-                      {
-                          return v*maxAmplitudeInverse;
-                      });
+        std::transform(processedData->begin(), processedData->end(),
+                       processedData->begin(),
+                       [&](const double v)
+                       {
+                           return v*maxAmplitudeInverse;
+                       });
 #endif
 /*
  if (component >= 0)

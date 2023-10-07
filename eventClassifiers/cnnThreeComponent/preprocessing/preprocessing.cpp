@@ -205,8 +205,8 @@ if (component >= 0)
                   processedData->data());
         double maxAmplitude
             = *std::max_element(processedData->begin(), processedData->end());
-        double maxAmplitudeInverse{0};
-        if (maxAmplitude > 1.e-8)
+        double maxAmplitudeInverse{1};
+        if (maxAmplitude > 1.e-6)
         {
             maxAmplitudeInverse = 1./maxAmplitude;
         }
@@ -250,8 +250,8 @@ if (component >= 0)
             = *std::max_element(
                   processedData->begin(),
                   processedData->begin() + mScalogramLength*N_SCALES);
-        double maxAmplitudeInverse{0};
-        if (maxAmplitude > 1.e-8)
+        double maxAmplitudeInverse{1};
+        if (maxAmplitude > 1.e-6)
         {
             maxAmplitudeInverse = 1./maxAmplitude;
         }

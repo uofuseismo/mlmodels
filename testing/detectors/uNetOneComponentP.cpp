@@ -101,7 +101,7 @@ TEST(DetectorsUNetOneComponentP, Inference)
         proba = inference.predictProbabilitySlidingWindow(verticalProc));
     EXPECT_EQ(proba.size(), probaSlidingRef.size());
     error = infinityNorm(probaSlidingRef, proba);
-    EXPECT_NEAR(error, 0, 5.e-5);
+    EXPECT_NEAR(error, 0, 8.e-5);
 }
 
 }

@@ -50,6 +50,22 @@ def test_p_one_component_p_detector_preprocessing():
    y = preprocessor.process(x, sampling_rate = sampling_rate)
    assert max(abs(y - y_ref)) < 1.e-1
 
+def test_p_one_component_p_detector():
+   try:
+        inference = pyuussmlmodels.Detectors.UNetOneComponentP.Inference()
+   except:
+        print("Not compiled with inference")
+        return
+   print("Performing P 1C UNet inference test...")
+   t, vertical_ref = read_time_series('data/detectors/uNetOneComponentP/PB.B206.EHZ.PROC.zrunet_p.txt')
+   t, p_ref        = read_time_series('data/detectors/uNetOneComponentP/PB.B206.P_PROBA.SLIDING.txt')
+   inference.load('../detectors/uNetOneComponentP/models/detectorsUNetOneComponentP.onnx',
+                  pyuussmlmodels.Detectors.UNetOneComponentP.ModelFormat.ONNX)
+   assert inference.is_initialized
+   p_signal = inference.predict_probability(vertical_ref, use_sliding_window = True)
+   assert len(p_signal) == len(p_ref)
+   assert max(abs(p_signal - p_ref)) < 1.e-4
+
 def test_p_three_component_p_detector_preprocessing():
    print("Performing P 3C UNet preprocessing test...")
    t, vertical = read_time_series('data/detectors/uNetThreeComponentP/PB.B206.EHZ.zrunet_p.txt') 
@@ -73,6 +89,25 @@ def test_p_three_component_p_detector_preprocessing():
    assert max(abs(vertical_proc - vertical_ref)) < 1.e-1
    assert max(abs(north_proc - north_ref)) < 1.e-1
    assert max(abs(east_proc - east_ref)) < 1.e-1
+
+def test_p_three_component_p_detector():
+   try:
+        inference = pyuussmlmodels.Detectors.UNetThreeComponentP.Inference()
+   except:
+        print("Not compiled with inference")
+        return
+   print("Performing P 3C UNet inference test...")
+   t, vertical_ref = read_time_series('data/detectors/uNetThreeComponentP/PB.B206.EHZ.PROC.zrunet_p.txt')
+   t, north_ref    = read_time_series('data/detectors/uNetThreeComponentP/PB.B206.EH1.PROC.zrunet_p.txt')
+   t, east_ref     = read_time_series('data/detectors/uNetThreeComponentP/PB.B206.EH2.PROC.zrunet_p.txt')
+   t, p_ref        = read_time_series('data/detectors/uNetThreeComponentP/PB.B206.P_PROBA.SLIDING.txt')
+   inference.load('../detectors/uNetThreeComponentP/models/detectorsUNetThreeComponentP.onnx', 
+                  pyuussmlmodels.Detectors.UNetThreeComponentP.ModelFormat.ONNX)
+   assert inference.is_initialized
+   p_signal = inference.predict_probability(vertical_ref, north_ref, east_ref, use_sliding_window = True)
+   assert len(p_signal) == len(p_ref)
+   assert max(abs(p_signal - p_ref)) < 1.e-4
+
    
 def test_p_three_component_s_detector_preprocessing():
    print("Performing S 3C UNet preprocessing test...")
@@ -129,6 +164,24 @@ def test_s_three_component_pick_regressor_preprocessing():
    assert max(abs(n_proc - north_ref)) < 1.e-2
    assert max(abs(e_proc - east_ref)) < 1.e-2
 
+def test_s_three_component_s_detector():
+   try:
+        inference = pyuussmlmodels.Detectors.UNetThreeComponentS.Inference()
+   except:
+        print("Not compiled with inference")
+        return 
+   print("Performing S 3C UNet inference test...")
+   t, vertical_ref = read_time_series('data/detectors/uNetThreeComponentS/PB.B206.EHZ.PROC.zrunet_s.txt')
+   t, north_ref    = read_time_series('data/detectors/uNetThreeComponentS/PB.B206.EH1.PROC.zrunet_s.txt')
+   t, east_ref     = read_time_series('data/detectors/uNetThreeComponentS/PB.B206.EH2.PROC.zrunet_s.txt')
+   t, p_ref        = read_time_series('data/detectors/uNetThreeComponentS/PB.B206.S_PROBA.SLIDING.txt')
+   inference.load('../detectors/uNetThreeComponentS/models/detectorsUNetThreeComponentS.onnx', 
+                  pyuussmlmodels.Detectors.UNetThreeComponentS.ModelFormat.ONNX)
+   assert inference.is_initialized
+   p_signal = inference.predict_probability(vertical_ref, north_ref, east_ref, use_sliding_window = True)
+   assert len(p_signal) == len(p_ref)
+   assert max(abs(p_signal - p_ref)) < 1.e-4
+
 def test_p_one_component_first_motion_classifier_preprocessing():
    print("Performing P 1C first motion preprocessing test...")
    t, x = read_time_series('data/firstMotionClassifiers/cnnOneComponentP/uu.gzu.ehz.01.txt')
@@ -153,3 +206,8 @@ if __name__ == "__main__":
    test_s_three_component_pick_regressor_preprocessing()
    test_p_one_component_first_motion_classifier_preprocessing()
     
+   # Inference
+   test_p_three_component_p_detector()
+   test_s_three_component_s_detector()
+   test_p_one_component_p_detector()
+

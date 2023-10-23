@@ -214,6 +214,101 @@ void UNetThreeComponentP::Preprocessing::clear() noexcept
 UNetThreeComponentP::Preprocessing::~Preprocessing() = default;
 
 ///--------------------------------------------------------------------------///
+
+/// Constructor
+UNetThreeComponentP::Inference::Inference() :
+    pImpl(std::make_unique<UUSSMLModels::Detectors::UNetThreeComponentP::Inference> ())
+{
+}
+
+/// Destructor
+UNetThreeComponentP::Inference::~Inference() = default;
+
+/// Process
+void UNetThreeComponentP::Inference::load(
+    const std::string &fileName,
+    const UUSSMLModels::Detectors::UNetThreeComponentP::Inference::ModelFormat format)
+{
+    pImpl->load(fileName, format);
+}
+
+/// Initialized
+bool UNetThreeComponentP::Inference::isInitialized() const noexcept
+{
+    return pImpl->isInitialized();
+}
+
+double UNetThreeComponentP::Inference::getSamplingRate() const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentP::Inference::getSamplingRate();
+}
+
+int UNetThreeComponentP::Inference::getMinimumSignalLength() const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentP::Inference::getMinimumSignalLength();
+}
+
+int UNetThreeComponentP::Inference::getExpectedSignalLength() const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentP::Inference::getExpectedSignalLength();
+}
+
+bool UNetThreeComponentP::Inference::isValidSignalLength(int nSamples) const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentP::Inference::isValidSignalLength(nSamples);
+}
+
+std::pair<int, int> UNetThreeComponentP::Inference::getCentralWindowStartEndIndex() const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentP::Inference::getCentralWindowStartEndIndex();
+}
+
+/// Predict probability
+pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> 
+UNetThreeComponentP::Inference::predictProbability(
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &vertical, 
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &north,
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &east,
+    const bool useSlidingWindow)
+{
+    if (!isInitialized()){throw std::runtime_error("Detector not initialized");}
+    auto vWork = ::bufferToVector<double>(vertical.request());
+    auto nWork = ::bufferToVector<double>(north.request());
+    auto eWork = ::bufferToVector<double>(east.request());
+    if (vWork.size() != nWork.size())
+    {
+        throw std::invalid_argument("Vertical signal length must equal north signal length");
+    }
+    if (vWork.size() != eWork.size())
+    {
+        throw std::invalid_argument("Vertical signal length must equal east signal length");
+    }
+    auto nSamples = static_cast<int> (vWork.size());
+    if (nSamples < getMinimumSignalLength())
+    {   
+        throw std::invalid_argument("Signal must be length of at least "
+                                  + std::to_string(getMinimumSignalLength()));
+    }
+    if (!useSlidingWindow)
+    {
+        if (isValidSignalLength(nSamples))
+        {
+            throw std::invalid_argument("Signal is not a valid length for non-sliding window");
+        }
+    }
+    std::vector<double> probabilitySignal;
+    if (useSlidingWindow)
+    {   
+        probabilitySignal = pImpl->predictProbabilitySlidingWindow(vWork, nWork, eWork);
+    }
+    else
+    {
+        probabilitySignal = pImpl->predictProbability(vWork, nWork, eWork);
+    }
+    return ::vectorToBuffer<double>(probabilitySignal);
+}
+
+///--------------------------------------------------------------------------///
 ///                             Three Component S                            ///
 ///--------------------------------------------------------------------------///
 
@@ -263,6 +358,100 @@ void UNetThreeComponentS::Preprocessing::clear() noexcept
 
 UNetThreeComponentS::Preprocessing::~Preprocessing() = default;
 
+///--------------------------------------------------------------------------///
+
+/// Constructor
+UNetThreeComponentS::Inference::Inference() :
+    pImpl(std::make_unique<UUSSMLModels::Detectors::UNetThreeComponentS::Inference> ())
+{
+}
+
+/// Destructor
+UNetThreeComponentS::Inference::~Inference() = default;
+
+/// Process
+void UNetThreeComponentS::Inference::load(
+    const std::string &fileName,
+    const UUSSMLModels::Detectors::UNetThreeComponentS::Inference::ModelFormat format)
+{
+    pImpl->load(fileName, format);
+}
+
+/// Initialized
+bool UNetThreeComponentS::Inference::isInitialized() const noexcept
+{
+    return pImpl->isInitialized();
+}
+
+double UNetThreeComponentS::Inference::getSamplingRate() const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentS::Inference::getSamplingRate();
+}
+
+int UNetThreeComponentS::Inference::getMinimumSignalLength() const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentS::Inference::getMinimumSignalLength();
+}
+
+int UNetThreeComponentS::Inference::getExpectedSignalLength() const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentS::Inference::getExpectedSignalLength();
+}
+
+bool UNetThreeComponentS::Inference::isValidSignalLength(int nSamples) const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentS::Inference::isValidSignalLength(nSamples);
+}
+
+std::pair<int, int> UNetThreeComponentS::Inference::getCentralWindowStartEndIndex() const noexcept
+{
+    return UUSSMLModels::Detectors::UNetThreeComponentS::Inference::getCentralWindowStartEndIndex();
+}
+
+/// Predict probability
+pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>
+UNetThreeComponentS::Inference::predictProbability(
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &vertical,
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &north,
+    const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &east,
+    const bool useSlidingWindow)
+{
+    if (!isInitialized()){throw std::runtime_error("Detector not initialized");}
+    auto vWork = ::bufferToVector<double>(vertical.request());
+    auto nWork = ::bufferToVector<double>(north.request());
+    auto eWork = ::bufferToVector<double>(east.request());
+    if (vWork.size() != nWork.size())
+    {
+        throw std::invalid_argument("Vertical signal length must equal north signal length");
+    }
+    if (vWork.size() != eWork.size())
+    {
+        throw std::invalid_argument("Vertical signal length must equal east signal length");
+    }
+    auto nSamples = static_cast<int> (vWork.size());
+    if (nSamples < getMinimumSignalLength())
+    {
+        throw std::invalid_argument("Signal must be length of at least "
+                                  + std::to_string(getMinimumSignalLength()));
+    }
+    if (!useSlidingWindow)
+    {
+        if (isValidSignalLength(nSamples))
+        {
+            throw std::invalid_argument("Signal is not a valid length for non-sliding window");
+        }
+    }
+    std::vector<double> probabilitySignal;
+    if (useSlidingWindow)
+    {
+        probabilitySignal = pImpl->predictProbabilitySlidingWindow(vWork, nWork, eWork);
+    }
+    else
+    {
+        probabilitySignal = pImpl->predictProbability(vWork, nWork, eWork);
+    }
+    return ::vectorToBuffer<double>(probabilitySignal);
+}
 
 ///--------------------------------------------------------------------------///
 ///                                Initialization                            ///
@@ -336,7 +525,7 @@ sampling_rate : float
        oneComponentPInference(oneComponentPModule, "Inference");
     oneComponentPInference.def(pybind11::init<> ());
     oneComponentPInference.doc() = R""""(
-The processing class for the one-component P detector.
+The inference class for the one-component P detector.
 
 Read-Only Properties
 
@@ -382,7 +571,24 @@ Read-Only Properties
     oneComponentPInference.def(
         "predict_probability",
         &UNetOneComponentP::Inference::predictProbability,
-        "Processes the given signal either in a sliding-window sense (default) or as a one-off signal",
+R""""(
+Performs inference on the preporcessed the one-component waveform.
+
+Parameters
+----------
+vertical_signal : np.array
+   The vertical signal on which to perform inference.
+use_sliding_window : bool 
+   If true, then this will apply a sliding window the central samples
+   of the waveform (see central_window_start_end_index()).  Otherwise, this
+   performs a one-off inference on the expected_signal_length() signal. 
+
+Returns
+-------
+A probability signal with sampling rate given by sampling_rate().  When this
+is near one then the sample is likely corresponding to a P wave.  Otherwise,
+the sample likely corresponds to noise.
+)"""",
         pybind11::arg("signal"),
         pybind11::arg("use_sliding_window") = true); 
 #endif
@@ -457,6 +663,85 @@ third item is the processed third (east) input signal.
         pybind11::arg("north_signal"),
         pybind11::arg("east_signal"),
         pybind11::arg("sampling_rate") = 100);
+#if defined(WITH_TORCH) || defined(WITH_OPENVINO)
+    pybind11::class_<UUSSMLModels::Python::Detectors::UNetThreeComponentP::Inference>
+       threeComponentPInference(threeComponentPModule, "Inference");
+    threeComponentPInference.def(pybind11::init<> ());
+    threeComponentPInference.doc() = R""""(
+The inference class for the three-component P detector.
+
+Read-Only Properties
+
+    is_initialized : bool
+        True indicates the class is initialized.
+    sampling_rate : double
+        The sampling rate of the input signal and output probability signal.
+    minimum_signal_length : int
+        The minimum signal length required to apply the classifier.
+    expected_signal_length : int
+        When not using the sliding window inference this is the expected signal length.
+    central_window_start_end_index : int, int
+        An artifact of the training is that only the central portion of the
+        window is valid.  This defines that window.  In the sliding window
+        implementation the first n and last m samples are likely not valid.
+ 
+)"""";
+    threeComponentPInference.def_property_readonly(
+        "is_initialized",
+        &UNetThreeComponentP::Inference::isInitialized);
+    threeComponentPInference.def_property_readonly(
+        "sampling_rate",
+        &UNetThreeComponentP::Inference::getSamplingRate);
+    threeComponentPInference.def_property_readonly(
+        "minimum_signal_length",
+        &UNetThreeComponentP::Inference::getMinimumSignalLength);
+    threeComponentPInference.def_property_readonly(
+        "expected_signal_length",
+        &UNetThreeComponentP::Inference::getExpectedSignalLength);
+    threeComponentPInference.def_property_readonly(
+        "central_window_start_end_index",
+        &UNetThreeComponentP::Inference::getCentralWindowStartEndIndex);
+    threeComponentPInference.def(
+        "valid_signal_length",
+        &UNetThreeComponentP::Inference::isValidSignalLength,
+        "Determines whether or not the given signal length is valid for the non-sliding window processing.");
+    threeComponentPInference.def(
+        "load",
+        &UNetThreeComponentP::Inference::load,
+        "Loads the weights from file.",
+        pybind11::arg("file_name"),
+        pybind11::arg("model_format") = UUSSMLModels::Detectors::UNetThreeComponentP::Inference::ModelFormat::ONNX);
+    threeComponentPInference.def(
+        "predict_probability",
+        &UNetThreeComponentP::Inference::predictProbability,
+R""""(
+Performs inference on the preporcessed the three-component waveform.  Note, all
+signals must be the same length.
+
+Parameters
+----------
+vertical_signal : np.array
+   The vertical signal on which to perform inference.
+north_signal : np.array
+   The north signal on which to perform inference.
+east_signal : np.array
+   The east signal to preprocess.
+use_sliding_window : bool 
+   If true, then this will apply a sliding window the central samples
+   of the waveform (see central_window_start_end_index()).  Otherwise, this
+   performs a one-off inference on the expected_signal_length() signal. 
+
+Returns
+-------
+A probability signal with sampling rate given by sampling_rate().  When this
+is near one then the sample is likely corresponding to a P wave.  Otherwise,
+the sample likely corresponds to noise.
+)"""",
+        pybind11::arg("vertical_signal"),
+        pybind11::arg("north_signal"),
+        pybind11::arg("east_signal"),
+        pybind11::arg("use_sliding_window") = true);
+#endif
     ///----------------------------------------------------------------------///
     ///                            Three Component S                         ///
     ///----------------------------------------------------------------------///
@@ -528,4 +813,83 @@ third item is the processed third (east) input signal.
         pybind11::arg("north_signal"),
         pybind11::arg("east_signal"),
         pybind11::arg("sampling_rate") = 100);
+#if defined(WITH_TORCH) || defined(WITH_OPENVINO)
+    pybind11::class_<UUSSMLModels::Python::Detectors::UNetThreeComponentS::Inference>
+       threeComponentSInference(threeComponentSModule, "Inference");
+    threeComponentSInference.def(pybind11::init<> ());
+    threeComponentSInference.doc() = R""""(
+The inference class for the three-component S detector.
+
+Read-Only Properties
+
+    is_initialized : bool
+        True indicates the class is initialized.
+    sampling_rate : double
+        The sampling rate of the input signal and output probability signal.
+    minimum_signal_length : int
+        The minimum signal length required to apply the classifier.
+    expected_signal_length : int
+        When not using the sliding window inference this is the expected signal length.
+    central_window_start_end_index : int, int
+        An artifact of the training is that only the central portion of the
+        window is valid.  This defines that window.  In the sliding window
+        implementation the first n and last m samples are likely not valid.
+ 
+)"""";
+    threeComponentSInference.def_property_readonly(
+        "is_initialized",
+        &UNetThreeComponentS::Inference::isInitialized);
+    threeComponentSInference.def_property_readonly(
+        "sampling_rate",
+        &UNetThreeComponentS::Inference::getSamplingRate);
+    threeComponentSInference.def_property_readonly(
+        "minimum_signal_length",
+        &UNetThreeComponentS::Inference::getMinimumSignalLength);
+    threeComponentSInference.def_property_readonly(
+        "expected_signal_length",
+        &UNetThreeComponentS::Inference::getExpectedSignalLength);
+    threeComponentSInference.def_property_readonly(
+        "central_window_start_end_index",
+        &UNetThreeComponentS::Inference::getCentralWindowStartEndIndex);
+    threeComponentSInference.def(
+        "valid_signal_length",
+        &UNetThreeComponentS::Inference::isValidSignalLength,
+        "Determines whether or not the given signal length is valid for the non-sliding window processing.");
+    threeComponentSInference.def(
+        "load",
+        &UNetThreeComponentS::Inference::load,
+        "Loads the weights from file.",
+        pybind11::arg("file_name"),
+        pybind11::arg("model_format") = UUSSMLModels::Detectors::UNetThreeComponentS::Inference::ModelFormat::ONNX);
+    threeComponentSInference.def(
+        "predict_probability",
+        &UNetThreeComponentS::Inference::predictProbability,
+R""""(
+Performs inference on the preporcessed the three-component waveform.  Note, all
+signals must be the same length.
+
+Parameters
+----------
+vertical_signal : np.array
+   The vertical signal on which to perform inference.
+north_signal : np.array
+   The north signal on which to perform inference.
+east_signal : np.array
+   The east signal to preprocess.
+use_sliding_window : bool 
+   If true, then this will apply a sliding window the central samples
+   of the waveform (see central_window_start_end_index()).  Otherwise, this
+   performs a one-off inference on the expected_signal_length() signal. 
+
+Returns
+-------
+A probability signal with sampling rate given by sampling_rate().  When this
+is near one then the sample is likely corresponding to an S wave.  Otherwise,
+the sample likely corresponds to noise.
+)"""",
+        pybind11::arg("vertical_signal"),
+        pybind11::arg("north_signal"),
+        pybind11::arg("east_signal"),
+        pybind11::arg("use_sliding_window") = true);
+#endif
 }

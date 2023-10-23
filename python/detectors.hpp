@@ -105,7 +105,9 @@ namespace UUSSMLModels::Python::Detectors
             [[nodiscard]] bool isValidSignalLength(int nSamples) const noexcept;
             [[nodiscard]] std::pair<int, int> getCentralWindowStartEndIndex() const noexcept;
             [[nodiscard]] pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>
-               predictProbability(const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x,
+               predictProbability(const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &vertical, 
+                                  const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &north,
+                                  const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &east,
                                   const bool useSlidingWindow);
 
             ~Inference();
@@ -153,7 +155,9 @@ namespace UUSSMLModels::Python::Detectors
             [[nodiscard]] bool isValidSignalLength(int nSamples) const noexcept;
             [[nodiscard]] std::pair<int, int> getCentralWindowStartEndIndex() const noexcept;
             [[nodiscard]] pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast>
-               predictProbability(const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &x, 
+               predictProbability(const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &vertical, 
+                                  const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &north,
+                                  const pybind11::array_t<double, pybind11::array::c_style | pybind11::array::forcecast> &east,
                                   const bool useSlidingWindow);
 
             ~Inference();

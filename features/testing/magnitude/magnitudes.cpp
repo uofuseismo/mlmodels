@@ -232,7 +232,7 @@ TEST(FeaturesMagnitude, SFeatures)
     auto tSignal = features.getTransverseVelocitySignal();
 
 auto ofl = std::ofstream("rt.txt");
-for (int i = 0; i < rSignal.size(); ++i)
+for (int i = 0; i < static_cast<int> (rSignal.size()); ++i)
 {
  ofl << i*0.01 << " " << rSignal[i] << " " << tSignal[i] << std::endl;
 }

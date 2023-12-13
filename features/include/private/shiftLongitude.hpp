@@ -1,5 +1,6 @@
 #ifndef PRIVATE_SHIFTLONGITUDE
 #define PRIVATE_SHIFTLONGITUDE
+#include <limits>
 #ifndef NDEBUG
 #include <cassert>
 #endif

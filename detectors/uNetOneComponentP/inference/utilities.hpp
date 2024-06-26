@@ -1,6 +1,7 @@
 #ifndef UTILITIES_HPP
 #define UTILITIES_HPP
 #include <iostream>
+#include <functional>
 #include <numeric>
 #include <algorithm>
 #include <limits>

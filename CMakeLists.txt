@@ -40,6 +40,9 @@ set(PUBLIC_HEADERS
     ${CMAKE_SOURCE_DIR}/include/uussmlmodels/detectors/uNetOneComponentP/preprocessing.hpp
 )
 set(INFERENCE_SRC
+    associators/phaseLink/inference/arrival.cpp
+    associators/phaseLink/inference/inference.cpp
+    associators/phaseLink/inference/pick.cpp
     detectors/uNetOneComponentP/inference/inference.cpp
     detectors/uNetOneComponentP/preprocessing/preprocessing.cpp
     detectors/uNetThreeComponentP/inference/inference.cpp
@@ -109,6 +112,7 @@ endif()
 file(COPY ${CMAKE_SOURCE_DIR}/testing/data DESTINATION .)
 set(TEST_SRC
     testing/main.cpp
+testing/associators/phaseLink.cpp
     testing/pickers/cnnOneComponentP.cpp
     testing/pickers/cnnThreeComponentS.cpp
     testing/firstMotionClassifiers/cnnOneComponentP.cpp

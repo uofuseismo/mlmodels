@@ -61,7 +61,20 @@ public:
     [[nodiscard]] int getSimulationSize() const noexcept;
     /// @}
 
-    void associate(const std::vector<Pick> &picks, const double threshold = 0.5) const;
+    /// @param[in] picks   The picks to associate.
+    /// @param[in] minimumClusterSize  At least this many picks must be
+    ///                                associated to the root pick.  
+    ///                                Otherwise, the cluster will not be
+    ///                                built and the root pick is 
+    ///                                popped from the front.
+    /// @param[in] threshold  The posterior probability of which a pick
+    ///                       must exceed to be labeled as bound to the root
+    ///                       pick.
+    /// @result An array of ic clusters where ic'th arrival has
+    ///         n associated arrivals.
+    [[nodiscard]] std::vector<std::vector<Arrival>> associate(const std::vector<Pick> &picks,
+                                                              int minimumClusterSize = 5,
+                                                              const double threshold = 0.5) const;
 
     /// @brief Predicts the posterior probability of each phase being linked
     ///        to the root arrival.

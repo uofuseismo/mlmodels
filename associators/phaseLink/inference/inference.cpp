@@ -59,9 +59,6 @@ int buildPickMatrix(const std::vector<::PickFeature> &picks,
         xData[i*nFeatures + 2] = (picks[i].t - t0)/timeWindow;
         xData[i*nFeatures + 3] = picks[i].isP ? 0 : 1;
         xData[i*nFeatures + 4] = 0;
-std::cout << xData[i*nFeatures  ] << "," << xData[i*nFeatures+1] << "," 
-          << xData[i*nFeatures+2] << "," << xData[i*nFeatures+3] << ","
-          << xData[i*nFeatures+4] << std::endl;
     }
     for (int i = nPickRows; i < simulationSize; ++i)
     {
@@ -70,6 +67,15 @@ std::cout << xData[i*nFeatures  ] << "," << xData[i*nFeatures+1] << ","
 #endif
         xData[i*nFeatures + 4] = 1;
     }
+/*
+for (int i = 0; i < nPickRows + 1; ++i)
+{
+std::cout << xData[i*nFeatures  ] << "," << xData[i*nFeatures+1] << "," 
+          << xData[i*nFeatures+2] << "," << xData[i*nFeatures+3] << "," 
+          << xData[i*nFeatures+4] << std::endl;
+}
+std::cout << nPickRows << std::endl;
+*/
     return nPickRows;
 }
 }
@@ -231,15 +237,17 @@ int Inference::getNumberOfFeatures() noexcept
 }
 
 /// Associate
-void Inference::associate(const std::vector<Pick> &picksIn,
-                          const double threshold) const
+std::vector<std::vector<Arrival>>
+Inference::associate(const std::vector<Pick> &picksIn,
+                     const int minimumClusterSizeIn,
+                     const double threshold) const
 {
-int minimumClusterSize{5};
-    std::vector<std::vector<Arrival>> allArrivals;
     if (threshold < 0 || threshold > 1)
     {
         throw std::invalid_argument("Threshold must be in range [0,1]");
     }
+    int minimumClusterSize = std::max(1, minimumClusterSizeIn);
+    std::vector<std::vector<Arrival>> allArrivals;
     const double timeWindow = pImpl->mTimeWindow;
     std::vector<::PickFeature> picks;
     picks.reserve(picksIn.size());
@@ -268,7 +276,7 @@ int minimumClusterSize{5};
         }
     }
     // Done? 
-    if (picks.empty()){return;}
+    if (picks.empty()){return allArrivals;}
     // Sort in time order
     std::sort(picks.begin(), picks.end(),
               [](const auto &lhs, const auto &rhs)
@@ -316,15 +324,16 @@ int minimumClusterSize{5};
                                            &X);
         // Associate
         auto probability = predictProbability<float> (X);
+        //for (int i =0 ; i < nPickRows + 1; ++i){std::cout << probability[i] << std::endl;}
         // Count instances 
         auto clusterSize = std::count_if(probability.begin() + 1, probability.end(), 
                                          [threshold](const auto p)
                                          {
                                              return p > threshold;
                                          }) + 1;
-        if (clusterSize >= minimumClusterSize)
+        if (clusterSize > minimumClusterSize)
         {
-            std::cout << clusterSize << std::endl;
+            //std::cout << clusterSize << std::endl;
             // Purge the associated picks in this window.  It's actually
             // easier to go backwards since we delete as we go.
             std::vector<Arrival> arrivals;
@@ -336,7 +345,8 @@ int minimumClusterSize{5};
                 if (i == 0 || probability[i] > threshold)
                 {
                     Arrival arrival(picksIn.at(picks.at(i).originalIndex));
-                    arrival.setProbability(probability[i]);
+                    //std::cout << i << " " << picks.at(i).originalIndex << " " << probability[i] << std::endl;
+                    arrival.setProbability(probability.at(i));
                     arrivals.push_back(arrival);
                     picks.erase(picks.begin() + i);
                     nCopied = nCopied + 1;
@@ -346,9 +356,7 @@ int minimumClusterSize{5};
             assert(nCopied == clusterSize);
 #endif
             // This actually sorts the picks
-            std::reverse_copy(arrivals.begin(), arrivals.end(),
-                              arrivals.begin());
- std::cout << arrivals.size() << std::endl;
+            std::reverse(arrivals.begin(), arrivals.end());
             // Copy
             allArrivals.push_back(std::move(arrivals));
         }
@@ -358,7 +366,7 @@ int minimumClusterSize{5};
             picks.erase(picks.begin());
         }
     }
-getchar();
+    return allArrivals;
 }
 
 ///--------------------------------------------------------------------------///

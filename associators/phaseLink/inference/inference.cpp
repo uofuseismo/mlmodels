@@ -1,9 +1,11 @@
+#include <iostream>
 #include <string>
 #include <limits>
 #include <cmath>
 #include <vector>
 #include <algorithm>
 #include <numeric>
+#include <filesystem>
 #ifndef NDEBUG
 #include <cassert>
 #endif
@@ -153,7 +155,7 @@ void Inference::load(const std::string &fileName,
     pImpl->mOpenVINO.load(fileName);
     pImpl->mInitialized = true;
 #else
-    throw std::runtime_errow("Compile with OpenVINO");
+    throw std::runtime_error("Compile with OpenVINO");
 #endif
 }
 

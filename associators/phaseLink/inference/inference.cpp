@@ -18,9 +18,7 @@
 #define N_FEATURES 5
 
 using namespace UUSSMLModels::Associators::PhaseLink;
-#ifdef WITH_OPENVINO
 #include "openvino.hpp"
-#endif
 
 namespace
 {

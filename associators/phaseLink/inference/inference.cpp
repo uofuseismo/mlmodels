@@ -263,15 +263,22 @@ Inference::associate(const std::vector<Pick> &picksIn,
             auto idx = pImpl->mStationMap.find(name);
             if (idx != pImpl->mStationMap.end())
             {
-                auto xNormalized = idx->second.first;
-                auto yNormalized = idx->second.second;
+std::cout << name << " " << idx->first << " " << " " << idx->second.first << " " << idx->second.second << std::endl;
+                double xNormalized = idx->second.first;
+                double yNormalized = idx->second.second;
                 auto phase = picksIn[iPick].getPhase();
+                bool isP = true;
+                if (phase == Pick::Phase::S){isP = false;}
                 ::PickFeature pickFeature{xNormalized,
                                           yNormalized,
                                           picksIn[iPick].getTime(),
                                           iPick,
-                                          phase == Pick::Phase::P ? true : false};
+                                          isP};
                 picks.push_back(pickFeature);
+            }
+            else
+            {
+ std::cout << "Doesnt exist" << " " << picksIn[iPick].getStation() << std::endl;
             }
         }
     }
@@ -288,6 +295,38 @@ Inference::associate(const std::vector<Pick> &picksIn,
     auto simulationSize = getSimulationSize();
     auto nFeatures = getNumberOfFeatures();
     std::vector<float> X(simulationSize*nFeatures, 0.0f);
+for (int k = 0; k < nIterations; ++k)
+{
+if (nIterations - k < minimumClusterSize){continue;}
+std::vector<PickFeature> picksToAssociate(picks.begin() + k, picks.end());
+        // Build the pick matrix
+        auto nPickRows = ::buildPickMatrix(picksToAssociate, 
+                                           simulationSize,
+                                           nFeatures,
+                                           timeWindow,
+                                           &X);
+        // Associate
+        auto probability = predictProbability<float> (X);
+        // Count instances 
+        auto clusterSize = std::count_if(probability.begin(),
+                                         probability.begin() + nPickRows,
+                                         [threshold](const auto p)
+                                         {
+                                             return p > threshold;
+                                         });
+if (clusterSize > 0)
+{
+for (int i = 0; i < probability.size(); ++i)
+{
+if (probability[i] > threshold)
+{
+ std::cout << std::setprecision(14) << k << " "<< clusterSize << " " << i << " " << picksIn[picksToAssociate[i].originalIndex].getStation() << " " << picksIn[picksToAssociate[i].originalIndex].getTime() << std::endl;
+}
+}
+}
+getchar();
+}
+getchar();
     for (int k = 0; k < nIterations; ++k)
     {
         // Are we done?
@@ -324,9 +363,16 @@ Inference::associate(const std::vector<Pick> &picksIn,
                                            &X);
         // Associate
         auto probability = predictProbability<float> (X);
+        // If the first pick isn't related to itself then no way
+        if (probability[0] < threshold)
+        {
+            picks.erase(picks.begin());
+            continue;
+        }
         //for (int i =0 ; i < nPickRows + 1; ++i){std::cout << probability[i] << std::endl;}
         // Count instances 
-        auto clusterSize = std::count_if(probability.begin() + 1, probability.end(), 
+        auto clusterSize = std::count_if(probability.begin() + 1,
+                                         probability.begin() + nPickRows,
                                          [threshold](const auto p)
                                          {
                                              return p > threshold;
@@ -342,11 +388,11 @@ Inference::associate(const std::vector<Pick> &picksIn,
                  i >= 0;
                  --i)
             {
-                if (i == 0 || probability[i] > threshold)
+                if (probability[i] > threshold)
                 {
                     Arrival arrival(picksIn.at(picks.at(i).originalIndex));
-                    //std::cout << i << " " << picks.at(i).originalIndex << " " << probability[i] << std::endl;
-                    arrival.setProbability(probability.at(i));
+                    std::cout << i << " " << picks.at(i).originalIndex << " " << probability[i] << " " << arrival.getStation() << std::endl;
+                    arrival.setProbability(probability[i]);
                     arrivals.push_back(arrival);
                     picks.erase(picks.begin() + i);
                     nCopied = nCopied + 1;
@@ -359,6 +405,7 @@ Inference::associate(const std::vector<Pick> &picksIn,
             std::reverse(arrivals.begin(), arrivals.end());
             // Copy
             allArrivals.push_back(std::move(arrivals));
+getchar();
         }
         else
         {
